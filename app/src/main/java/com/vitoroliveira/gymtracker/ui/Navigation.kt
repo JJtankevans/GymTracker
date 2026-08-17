@@ -1,0 +1,204 @@
+package com.vitoroliveira.gymtracker.ui
+
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.vitoroliveira.gymtracker.ui.auth.LoginScreen
+import com.vitoroliveira.gymtracker.ui.auth.SignUpScreen
+import com.vitoroliveira.gymtracker.ui.exercise.ExerciseDetailScreen
+import com.vitoroliveira.gymtracker.ui.exercise.ExerciseScreen
+import com.vitoroliveira.gymtracker.ui.home.HomeScreen
+import com.vitoroliveira.gymtracker.ui.musclegroup.MuscleGroupScreen
+import com.vitoroliveira.gymtracker.ui.profile.ProfileScreen
+import com.vitoroliveira.gymtracker.ui.workout.ActiveWorkoutScreen
+import com.vitoroliveira.gymtracker.ui.workout.StartWorkoutSheet
+import com.vitoroliveira.gymtracker.ui.history.HistoryScreen
+import com.vitoroliveira.gymtracker.ui.workout.WorkoutDetailScreen
+import java.net.URLDecoder
+import java.net.URLEncoder
+
+sealed class Screen(val route: String) {
+    object Login : Screen("login")
+    object SignUp : Screen("signup")
+    object Home : Screen("home")
+    object Profile : Screen("profile")
+    object MuscleGroups : Screen("muscle_groups")
+
+    // Preparado para o Passo 12 (Fase 4) — histórico de treinos.
+    object History : Screen("history")
+
+    // Novo — Detalhe do Treino (Passo 12.5), navegado a partir do Histórico
+    object WorkoutDetail : Screen("workout_detail/{workoutId}") {
+        fun createRoute(workoutId: String) = "workout_detail/$workoutId"
+    }
+
+    object Exercises : Screen("exercises/{groupId}/{groupName}") {
+        fun createRoute(groupId: String, groupName: String) =
+            "exercises/$groupId/${URLEncoder.encode(groupName, "UTF-8")}"
+    }
+
+    // Preparado para o Passo 13 (Fase 4) — gráfico de progressão de carga.
+    // Ainda não tem tela implementada, só a rota reservada.
+    object ExerciseDetail : Screen("exercise_detail/{exerciseId}/{exerciseName}") {
+        fun createRoute(exerciseId: String, exerciseName: String) =
+            "exercise_detail/$exerciseId/${URLEncoder.encode(exerciseName, "UTF-8")}"
+    }
+
+    object ActiveWorkout : Screen("active_workout/{muscleGroupId}/{muscleGroupName}") {
+        fun createRoute(muscleGroupId: String?, muscleGroupName: String?) =
+            "active_workout/${muscleGroupId ?: "null"}/${muscleGroupName ?: "Treino Livre"}"
+    }
+}
+
+@Composable
+fun GymTrackerNavHost() {
+    val navController = rememberNavController()
+
+    NavHost(
+        navController = navController,
+        startDestination = Screen.Login.route
+    ) {
+        composable(Screen.Login.route) {
+            LoginScreen(
+                onNavigateToSignUp = { navController.navigate(Screen.SignUp.route) },
+                onLoginSuccess = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.SignUp.route) {
+            SignUpScreen(
+                onNavigateToLogin = { navController.popBackStack() },
+                onSignUpSuccess = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.Home.route) {
+            var showStartWorkoutSheet by remember { mutableStateOf(false) }
+
+            HomeScreen(
+                onNavigateToMuscleGroups = {
+                    navController.navigate(Screen.MuscleGroups.route)
+                },
+                onNavigateToHistory = {
+                    navController.navigate(Screen.History.route)
+                },
+                onNavigateToProfile = {
+                    navController.navigate(Screen.Profile.route)
+                },
+                onStartWorkoutClick = { showStartWorkoutSheet = true }
+            )
+
+            if (showStartWorkoutSheet) {
+                StartWorkoutSheet(
+                    onStartWorkout = { muscleGroupId, muscleGroupName ->
+                        showStartWorkoutSheet = false
+                        navController.navigate(
+                            Screen.ActiveWorkout.createRoute(muscleGroupId, muscleGroupName)
+                        )
+                    },
+                    onDismiss = { showStartWorkoutSheet = false }
+                )
+            }
+        }
+
+
+        composable(Screen.MuscleGroups.route) {
+            MuscleGroupScreen(
+                onNavigateToExercises = { groupId, groupName ->
+                    navController.navigate(
+                        Screen.Exercises.createRoute(groupId, groupName)
+                    )
+                }
+            )
+        }
+
+        composable(Screen.Exercises.route) { backStackEntry ->
+            val groupId = backStackEntry.arguments?.getString("groupId")
+            val groupNameEncoded = backStackEntry.arguments?.getString("groupName") ?: ""
+            val groupName = URLDecoder.decode(groupNameEncoded, "UTF-8")
+
+            ExerciseScreen(
+                muscleGroupId = groupId,
+                muscleGroupName = groupName,
+                onNavigateToDetail = { exerciseId, exerciseName ->
+                    navController.navigate(
+                        Screen.ExerciseDetail.createRoute(exerciseId, exerciseName)
+                    )
+                }
+            )
+        }
+
+        composable(Screen.ExerciseDetail.route) { backStackEntry ->
+            val exerciseId = backStackEntry.arguments?.getString("exerciseId") ?: return@composable
+            val exerciseNameEncoded = backStackEntry.arguments?.getString("exerciseName") ?: ""
+            val exerciseName = URLDecoder.decode(exerciseNameEncoded, "UTF-8")
+
+            ExerciseDetailScreen(
+                exerciseId = exerciseId,
+                exerciseName = exerciseName,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.Profile.route) {
+            ProfileScreen(
+                onLogout = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.ActiveWorkout.route) { backStackEntry ->
+            val muscleGroupId = backStackEntry.arguments
+                ?.getString("muscleGroupId")
+                ?.takeIf { it != "null" }
+            val muscleGroupName = backStackEntry.arguments
+                ?.getString("muscleGroupName")
+                ?.takeIf { it != "null" }
+
+            ActiveWorkoutScreen(
+                muscleGroupId = muscleGroupId,
+                muscleGroupName = muscleGroupName,
+                onWorkoutFinished = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.ActiveWorkout.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.History.route) {
+            HistoryScreen(
+                onWorkoutClick = { workoutId ->
+                    navController.navigate(Screen.WorkoutDetail.createRoute(workoutId))
+                }
+            )
+        }
+
+        composable(Screen.WorkoutDetail.route) { backStackEntry ->
+            val workoutId = backStackEntry.arguments?.getString("workoutId")
+                ?: return@composable
+
+            WorkoutDetailScreen(
+                workoutId = workoutId,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+    }
+}
