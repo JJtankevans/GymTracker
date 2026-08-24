@@ -13,7 +13,7 @@ import com.vitoroliveira.gymtracker.ui.auth.SignUpScreen
 import com.vitoroliveira.gymtracker.ui.exercise.ExerciseDetailScreen
 import com.vitoroliveira.gymtracker.ui.exercise.ExerciseScreen
 import com.vitoroliveira.gymtracker.ui.home.HomeScreen
-import com.vitoroliveira.gymtracker.ui.musclegroup.MuscleGroupScreen
+import com.vitoroliveira.gymtracker.ui.muscleGroup.MuscleGroupScreen
 import com.vitoroliveira.gymtracker.ui.profile.ProfileScreen
 import com.vitoroliveira.gymtracker.ui.workout.ActiveWorkoutScreen
 import com.vitoroliveira.gymtracker.ui.workout.StartWorkoutSheet
@@ -121,7 +121,8 @@ fun GymTrackerNavHost() {
                     navController.navigate(
                         Screen.Exercises.createRoute(groupId, groupName)
                     )
-                }
+                },
+                onBack = { navController.popBackStack() }
             )
         }
 
@@ -137,7 +138,8 @@ fun GymTrackerNavHost() {
                     navController.navigate(
                         Screen.ExerciseDetail.createRoute(exerciseId, exerciseName)
                     )
-                }
+                },
+                onBack = { navController.popBackStack() }
             )
         }
 
@@ -159,7 +161,8 @@ fun GymTrackerNavHost() {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
                     }
-                }
+                },
+                onBack = { navController.popBackStack() }
             )
         }
 
@@ -178,7 +181,8 @@ fun GymTrackerNavHost() {
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.ActiveWorkout.route) { inclusive = true }
                     }
-                }
+                },
+                onBack = { navController.popBackStack() }
             )
         }
 
@@ -186,7 +190,8 @@ fun GymTrackerNavHost() {
             HistoryScreen(
                 onWorkoutClick = { workoutId ->
                     navController.navigate(Screen.WorkoutDetail.createRoute(workoutId))
-                }
+                },
+                onBack = { navController.popBackStack() }
             )
         }
 

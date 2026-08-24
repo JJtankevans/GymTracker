@@ -6,6 +6,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,6 +29,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun HistoryScreen(
     onWorkoutClick: (String) -> Unit = {},
+    onBack: () -> Unit = {},
     viewModel: HistoryViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -34,6 +37,7 @@ fun HistoryScreen(
     HistoryScreenContent(
         uiState = uiState,
         onWorkoutClick = onWorkoutClick,
+        onBack = onBack,
         onDismissError = viewModel::clearError
     )
 }
@@ -43,6 +47,7 @@ fun HistoryScreen(
 fun HistoryScreenContent(
     uiState: HistoryUiState,
     onWorkoutClick: (String) -> Unit = {},
+    onBack: () -> Unit = {},
     onDismissError: () -> Unit = {}
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -55,7 +60,16 @@ fun HistoryScreenContent(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Histórico") }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Histórico") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+                    }
+                }
+            )
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
@@ -162,12 +176,13 @@ private fun HistoryScreenPreviewWithData() {
                     durationMinutes = 50
                 )
             )
-        )
+        ),
+        onBack = {}
     )
 }
 
 @Preview
 @Composable
 private fun HistoryScreenPreviewEmpty() {
-    GymTrackerTheme {HistoryScreenContent(uiState = HistoryUiState())}
+    GymTrackerTheme { HistoryScreenContent(uiState = HistoryUiState(), onBack = {}) }
 }

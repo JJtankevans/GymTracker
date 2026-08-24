@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -36,6 +37,7 @@ fun ExerciseScreen(
     muscleGroupId: String?,
     muscleGroupName: String?,
     onNavigateToDetail: (String, String) -> Unit,
+    onBack: () -> Unit = {},
     exerciseViewModel: ExerciseViewModel = koinViewModel(),
     muscleGroupViewModel: MuscleGroupViewModel = koinViewModel()
 ) {
@@ -52,6 +54,7 @@ fun ExerciseScreen(
         uiState = exerciseState,
         availableGroups = groupState.muscleGroups,
         onNavigateToDetail = onNavigateToDetail,
+        onBack = onBack,
         onFilterChange = { groupId -> exerciseViewModel.filterByMuscleGroup(groupId) },
         onCreate = { name, groupId, sets, reps, notes ->
             exerciseViewModel.createExercise(name, groupId, sets, reps, notes)
@@ -69,6 +72,7 @@ fun ExerciseScreenContent(
     uiState: ExerciseUiState,
     availableGroups: List<MuscleGroup>,
     onNavigateToDetail: (String, String) -> Unit,
+    onBack: () -> Unit = {},
     onFilterChange: (String?) -> Unit,
     onCreate: (String, String?, Int, Int, String?) -> Unit,
     onUpdate: (Exercise) -> Unit,
@@ -97,7 +101,14 @@ fun ExerciseScreenContent(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(title = { Text(screenTitle) })
+            TopAppBar(
+                title = { Text(screenTitle) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+                    }
+                }
+            )
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { showCreateDialog = true }) {
@@ -446,6 +457,7 @@ fun ExerciseScreenEmptyPreview() {
             uiState = ExerciseUiState(),
             availableGroups = emptyList(),
             onNavigateToDetail = { _, _ -> },
+            onBack = {},
             onFilterChange = {},
             onCreate = { _, _, _, _, _ -> },
             onUpdate = {},
@@ -474,6 +486,7 @@ fun ExerciseScreenWithDataPreview() {
                 MuscleGroup(id = "g2", name = "Treino B", colorHex = "#F44336"),
             ),
             onNavigateToDetail = { _, _ -> },
+            onBack = {},
             onFilterChange = {},
             onCreate = { _, _, _, _, _ -> },
             onUpdate = {},

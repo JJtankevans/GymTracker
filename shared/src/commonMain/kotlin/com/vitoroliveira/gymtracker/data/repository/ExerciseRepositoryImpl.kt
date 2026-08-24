@@ -31,7 +31,9 @@ class ExerciseRepositoryImpl(
             ?: throw IllegalStateException("Usuário não autenticado")
 
         return supabase.postgrest["exercises"]
-            .insert(exercise.copy(profileId = userId))
+            .insert(exercise.copy(profileId = userId)) {
+                select()
+            }
             .decodeSingle()
     }
 

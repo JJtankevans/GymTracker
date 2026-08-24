@@ -9,6 +9,9 @@ import com.vitoroliveira.gymtracker.data.model.WorkoutSet
 interface WorkoutRepository {
     suspend fun startWorkout(muscleGroupId: String?): Workout
     suspend fun finishWorkout(workoutId: String)
+    suspend fun deleteWorkout(workoutId: String)
+    suspend fun getActiveWorkout(): Workout?
+    suspend fun updateFinishedExercises(workoutId: String, finishedExerciseIds: List<String>)
     suspend fun getHistory(): List<Workout>
     suspend fun addSet(workoutSet: WorkoutSet): WorkoutSet
     suspend fun getSetsForWorkout(workoutId: String): List<WorkoutSet>

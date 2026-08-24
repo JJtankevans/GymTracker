@@ -21,13 +21,45 @@ class WorkoutRepositoryImpl(
             ?: throw IllegalStateException("Usuário não autenticado")
 
         return supabase.postgrest["workouts"]
-            .insert(Workout(profileId = userId, muscleGroupId = muscleGroupId))
+            .insert(Workout(profileId = userId, muscleGroupId = muscleGroupId)){
+                select()
+            }
             .decodeSingle()
     }
 
     override suspend fun finishWorkout(workoutId: String) {
         supabase.postgrest["workouts"]
             .update({ set("finished_at", "now()") }) {
+                filter { eq("id", workoutId) }
+            }
+    }
+
+    override suspend fun deleteWorkout(workoutId: String) {
+        supabase.postgrest["workouts"]
+            .delete {
+                filter { eq("id", workoutId) }
+            }
+    }
+
+    override suspend fun getActiveWorkout(): Workout? {
+        val userId = supabase.auth.currentUserOrNull()?.id
+            ?: throw IllegalStateException("Usuário não autenticado")
+
+        return supabase.postgrest["workouts"]
+            .select {
+                filter {
+                    eq("profile_id", userId)
+                    filter("finished_at", FilterOperator.IS, null)
+                }
+                order("started_at", Order.DESCENDING)
+                limit(1)
+            }
+            .decodeSingleOrNull()
+    }
+
+    override suspend fun updateFinishedExercises(workoutId: String, finishedExerciseIds: List<String>) {
+        supabase.postgrest["workouts"]
+            .update({ set("finished_exercise_ids", finishedExerciseIds) }) {
                 filter { eq("id", workoutId) }
             }
     }
@@ -45,7 +77,9 @@ class WorkoutRepositoryImpl(
 
     override suspend fun addSet(workoutSet: WorkoutSet): WorkoutSet {
         return supabase.postgrest["workout_sets"]
-            .insert(workoutSet)
+            .insert(workoutSet){
+                select()
+            }
             .decodeSingle()
     }
 

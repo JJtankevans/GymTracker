@@ -1,4 +1,4 @@
-package com.vitoroliveira.gymtracker.ui.musclegroup
+package com.vitoroliveira.gymtracker.ui.muscleGroup
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -36,6 +37,7 @@ val availableColors = listOf(
 @Composable
 fun MuscleGroupScreen(
     onNavigateToExercises: (String, String) -> Unit,
+    onBack: () -> Unit = {},
     viewModel: MuscleGroupViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -43,6 +45,7 @@ fun MuscleGroupScreen(
     MuscleGroupScreenContent(
         uiState = uiState,
         onNavigateToExercises = onNavigateToExercises,
+        onBack = onBack,
         onCreate = { name, color -> viewModel.createMuscleGroup(name, color) },
         onUpdate = { muscleGroup -> viewModel.updateMuscleGroup(muscleGroup) },
         onDelete = { id -> viewModel.deleteMuscleGroup(id) },
@@ -55,6 +58,7 @@ fun MuscleGroupScreen(
 fun MuscleGroupScreenContent(
     uiState: MuscleGroupUiState,
     onNavigateToExercises: (String, String) -> Unit,
+    onBack: () -> Unit = {},
     onCreate: (String, String) -> Unit,
     onUpdate: (MuscleGroup) -> Unit,
     onDelete: (String) -> Unit,
@@ -84,7 +88,12 @@ fun MuscleGroupScreenContent(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Grupos Musculares") }
+                title = { Text("Grupos Musculares") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+                    }
+                }
             )
         },
         floatingActionButton = {
@@ -365,6 +374,7 @@ fun MuscleGroupScreenEmptyPreview() {
         MuscleGroupScreenContent(
             uiState = MuscleGroupUiState(),
             onNavigateToExercises = { _, _ -> },
+            onBack = {},
             onCreate = { _, _ -> },
             onUpdate = {},
             onDelete = {},
@@ -386,6 +396,7 @@ fun MuscleGroupScreenWithDataPreview() {
                 )
             ),
             onNavigateToExercises = { _, _ -> },
+            onBack = {},
             onCreate = { _, _ -> },
             onUpdate = {},
             onDelete = {},

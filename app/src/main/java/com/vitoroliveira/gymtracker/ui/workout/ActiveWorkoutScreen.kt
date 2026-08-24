@@ -1,13 +1,16 @@
 package com.vitoroliveira.gymtracker.ui.workout
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,6 +25,8 @@ import com.vitoroliveira.gymtracker.presentation.TimerState
 import com.vitoroliveira.gymtracker.presentation.viewmodel.WorkoutUiState
 import com.vitoroliveira.gymtracker.presentation.viewmodel.WorkoutViewModel
 import com.vitoroliveira.gymtracker.ui.theme.GymTrackerTheme
+import com.vitoroliveira.gymtracker.ui.theme.SuccessGreen
+import com.vitoroliveira.gymtracker.ui.utils.formatWeightInput
 import org.koin.compose.viewmodel.koinViewModel
 
 // Opções de tempo de descanso em segundos
@@ -32,6 +37,7 @@ fun ActiveWorkoutScreen(
     muscleGroupId: String?,
     muscleGroupName: String?,
     onWorkoutFinished: () -> Unit,
+    onBack: () -> Unit = {},
     viewModel: WorkoutViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -57,7 +63,11 @@ fun ActiveWorkoutScreen(
         onResumeTimer = { viewModel.resumeTimer() },
         onCancelTimer = { viewModel.cancelTimer() },
         onFinishWorkout = { viewModel.finishWorkout() },
-        onClearError = { viewModel.clearError() }
+        onClearError = { viewModel.clearError() },
+        onResumeWorkout = { viewModel.resumeWorkout(it) },
+        onDiscardWorkout = { viewModel.discardAndStartNew(muscleGroupId) },
+        onToggleExerciseFinished = { viewModel.toggleExerciseFinished(it) },
+        onBack = onBack
     )
 }
 
@@ -72,7 +82,11 @@ fun ActiveWorkoutScreenContent(
     onResumeTimer: () -> Unit,
     onCancelTimer: () -> Unit,
     onFinishWorkout: () -> Unit,
-    onClearError: () -> Unit
+    onClearError: () -> Unit,
+    onResumeWorkout: (com.vitoroliveira.gymtracker.data.model.Workout) -> Unit,
+    onDiscardWorkout: () -> Unit,
+    onToggleExerciseFinished: (String) -> Unit,
+    onBack: () -> Unit = {}
 ) {
     var showFinishDialog by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -98,6 +112,11 @@ fun ActiveWorkoutScreenContent(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
+                    }
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
                     }
                 },
                 actions = {
@@ -148,14 +167,19 @@ fun ActiveWorkoutScreenContent(
                 items(uiState.exercises, key = { it.id ?: it.name }) { exercise ->
                     val setsForExercise = uiState.completedSets
                         .filter { it.exerciseId == exercise.id }
+                    
+                    val isFinished = uiState.activeWorkout?.finishedExerciseIds
+                        ?.contains(exercise.id) == true
 
                     ExerciseWorkoutCard(
                         exercise = exercise,
                         completedSets = setsForExercise,
+                        isFinished = isFinished,
                         onAddSet = { reps, weight ->
                             exercise.id?.let { onAddSet(it, reps, weight) }
                         },
-                        onStartTimer = onStartTimer
+                        onStartTimer = onStartTimer,
+                        onToggleFinished = { exercise.id?.let { onToggleExerciseFinished(it) } }
                     )
                 }
 
@@ -186,6 +210,24 @@ fun ActiveWorkoutScreenContent(
             dismissButton = {
                 TextButton(onClick = { showFinishDialog = false }) {
                     Text("Continuar treinando")
+                }
+            }
+        )
+    }
+
+    if (uiState.activeWorkoutToRecover != null) {
+        AlertDialog(
+            onDismissRequest = { },
+            title = { Text("Treino em andamento") },
+            text = { Text("Você tem um treino iniciado anteriormente. Deseja continuar ou iniciar um novo?") },
+            confirmButton = {
+                Button(onClick = { onResumeWorkout(uiState.activeWorkoutToRecover!!) }) {
+                    Text("Continuar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onDiscardWorkout) {
+                    Text("Iniciar Novo")
                 }
             }
         )
@@ -259,34 +301,63 @@ fun TimerCard(
 fun ExerciseWorkoutCard(
     exercise: Exercise,
     completedSets: List<WorkoutSet>,
+    isFinished: Boolean,
     onAddSet: (reps: Int, weightKg: Double) -> Unit,
-    onStartTimer: (Int) -> Unit
+    onStartTimer: (Int) -> Unit,
+    onToggleFinished: () -> Unit
 ) {
     var reps by remember { mutableStateOf(exercise.defaultReps.toString()) }
-    var weight by remember { mutableStateOf("0") }
+    var weight by remember { mutableStateOf("") }
     var showTimerOptions by remember { mutableStateOf(false) }
+
+    val borderStroke = if (isFinished) {
+        BorderStroke(2.dp, SuccessGreen)
+    } else null
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(16.dp),
+        border = borderStroke
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            // Nome do exercício
-            Text(
-                text = exercise.name,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
+            // Nome do exercício + Botão de finalizar
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = exercise.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "${exercise.defaultSets} séries × ${exercise.defaultReps} reps",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
 
-            Text(
-                text = "${exercise.defaultSets} séries × ${exercise.defaultReps} reps",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+                if (completedSets.size >= exercise.defaultSets || isFinished) {
+                    IconButton(
+                        onClick = onToggleFinished,
+                        colors = IconButtonDefaults.iconButtonColors(
+                            contentColor = if (isFinished) SuccessGreen 
+                                           else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    ) {
+                        Icon(
+                            imageVector = if (isFinished) Icons.Default.DoneAll else Icons.Default.Check,
+                            contentDescription = "Finalizar exercício"
+                        )
+                    }
+                }
+            }
 
             // Séries já registradas
             if (completedSets.isNotEmpty()) {
@@ -333,7 +404,7 @@ fun ExerciseWorkoutCard(
 
                 OutlinedTextField(
                     value = weight,
-                    onValueChange = { weight = it },
+                    onValueChange = { weight = formatWeightInput(it) },
                     label = { Text("Peso (kg)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.weight(1f),
@@ -347,7 +418,7 @@ fun ExerciseWorkoutCard(
             Button(
                 onClick = {
                     val repsInt = reps.toIntOrNull() ?: return@Button
-                    val weightDouble = weight.toDoubleOrNull() ?: return@Button
+                    val weightDouble = weight.replace(",", ".").toDoubleOrNull() ?: return@Button
                     onAddSet(repsInt, weightDouble)
                     showTimerOptions = true
                 },
@@ -429,7 +500,11 @@ fun ActiveWorkoutScreenPreview() {
             onResumeTimer = {},
             onCancelTimer = {},
             onFinishWorkout = {},
-            onClearError = {}
+            onClearError = {},
+            onResumeWorkout = {},
+            onDiscardWorkout = {},
+            onToggleExerciseFinished = {},
+            onBack = {}
         )
     }
 }

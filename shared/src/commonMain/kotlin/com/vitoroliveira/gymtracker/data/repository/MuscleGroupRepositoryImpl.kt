@@ -23,7 +23,9 @@ class MuscleGroupRepositoryImpl(
             ?: throw IllegalStateException("Usuário não autenticado")
 
         return supabase.postgrest["muscle_groups"]
-            .insert(muscleGroup.copy(profileId = userId))
+            .insert(muscleGroup.copy(profileId = userId)){
+                select()
+            }
             .decodeSingle()
     }
 

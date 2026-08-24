@@ -5,6 +5,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -21,6 +22,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun ProfileScreen(
     onLogout: () -> Unit,
+    onBack: () -> Unit = {},
     viewModel: ProfileViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -32,6 +34,7 @@ fun ProfileScreen(
 
     ProfileScreenContent(
         uiState = uiState,
+        onBack = onBack,
         onUpdateWeeklyGoal = { viewModel.updateWeeklyGoal(it) },
         onSignOut = { viewModel.signOut() },
         onClearMessages = { viewModel.clearMessages() }
@@ -42,6 +45,7 @@ fun ProfileScreen(
 @Composable
 fun ProfileScreenContent(
     uiState: ProfileUiState,
+    onBack: () -> Unit = {},
     onUpdateWeeklyGoal: (Int) -> Unit,
     onSignOut: () -> Unit,
     onClearMessages: () -> Unit
@@ -69,7 +73,14 @@ fun ProfileScreenContent(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(title = { Text("Perfil") })
+            TopAppBar(
+                title = { Text("Perfil") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+                    }
+                }
+            )
         }
     ) { padding ->
 
@@ -225,6 +236,7 @@ fun ProfileScreenPreview() {
                     weeklyGoal = 4
                 )
             ),
+            onBack = {},
             onUpdateWeeklyGoal = {},
             onSignOut = {},
             onClearMessages = {}
