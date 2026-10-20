@@ -102,3 +102,10 @@ Armadilha: com treino ativo aberto, "Iniciar" na Home pula o sheet e vai direto 
 - Associação feita pela pose do desenho. Ficaram de fora 6 desenhos ambíguos (r2c3 elevação inclinada, r2c5 barra no peito, r4c5 remada no banco inclinado, r5c2 extensão lombar, r5c4 sumô, r1c4 flexão diamante): `docs/folhas/folha1.jpeg` guarda a folha para revisão.
 - Folha 2 do Thiago (WhatsApp 12.35.54 em Downloads) ainda NÃO usada; a pedido dele ficou para depois.
 - Script de corte (flood fill do fundo + bolsões + agrupamento de peças): estava no scratchpad da sessão e não foi versionado; se precisar de novo, refazer ou pedir.
+
+## Atualização 7 (folha 2, 20/10/2026)
+- Folha 2 (`docs/folhas/folha2.jpeg`, estilo mais simples, 30 desenhos) cortada e associada pela pose: +17 exercícios. Agora **41 de 56** têm imagem (supinos, crucifixo, agachamento livre, leg press, extensora, mesa flexora, terra, terra romeno, puxada, remada baixa, remada curvada, desenvolvimento com barra, rosca direta, prancha).
+- Correção: o desenho sentado da folha 1 (r6c2) era a **cadeira flexora**, não a mesa flexora; renomeado. A mesa flexora (deitada) vem da folha 2.
+- Duas folhas têm estilos diferentes (a 1 é mais realista/sombreada, a 2 é mais plana). Vão aparecer misturados no catálogo até gerar tudo no mesmo estilo.
+- NÃO conferido no celular: o aparelho ficou sem rede (dados móveis caíram) e o app abre vazio sem internet. Conferir o catálogo (Grupos > um grupo > +) quando a rede voltar.
+- Sem imagem ainda: abdominal na polia, agachamento no Smith, cadeira abdutora, desenvolvimento na máquina, elevação pélvica, glúteo na polia, hack squat, panturrilha sentado e no leg press, rosca martelo, rosca na polia, supino fechado, supino na máquina, tríceps testa, remada na máquina (confira `docs/IMAGENS_EXERCICIOS.md` contra a pasta).
