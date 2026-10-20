@@ -58,3 +58,8 @@ Pendente / ideias:
 - Referências por faixa etária e por peso corporal exato (hoje fixas por sexo).
 - Mais exercícios com padrão de força (remada, rosca, leg press) — precisam de fonte confiável.
 - 1RM usa média de reps por dia (a view só guarda carga máxima e reps totais); melhorar com a melhor série real.
+
+## Supabase real (ygbrrypyydxnuskrobeu)
+- Sondagem só leitura com a chave publicável: tabelas base (profiles, muscle_groups, exercises, workouts, workout_sets e as 2 views) existem e respondem vazio para anônimo; social e body_weights ainda NÃO existem.
+- O conector do Supabase da sessão não enxerga esse projeto, então as migrations não foram aplicadas por mim. Rodar `docs/supabase/APLICAR_TUDO.sql` no SQL Editor (testado do zero num Postgres 16 local; transação única).
+- Depois: conferir a RLS (anon não deve ler nada) e o cadastro (trigger handle_new_user).

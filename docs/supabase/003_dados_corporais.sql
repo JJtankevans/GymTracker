@@ -22,11 +22,15 @@ create index if not exists idx_body_weights_profile_date on public.body_weights 
 alter table public.body_weights enable row level security;
 
 -- Peso é dado pessoal: só o dono lê e escreve. Nada de leitura por grupo/amigo.
+drop policy if exists "dono lê seus pesos" on public.body_weights;
 create policy "dono lê seus pesos" on public.body_weights
   for select using (profile_id = auth.uid());
+drop policy if exists "dono registra seus pesos" on public.body_weights;
 create policy "dono registra seus pesos" on public.body_weights
   for insert with check (profile_id = auth.uid());
+drop policy if exists "dono altera seus pesos" on public.body_weights;
 create policy "dono altera seus pesos" on public.body_weights
   for update using (profile_id = auth.uid()) with check (profile_id = auth.uid());
+drop policy if exists "dono apaga seus pesos" on public.body_weights;
 create policy "dono apaga seus pesos" on public.body_weights
   for delete using (profile_id = auth.uid());
