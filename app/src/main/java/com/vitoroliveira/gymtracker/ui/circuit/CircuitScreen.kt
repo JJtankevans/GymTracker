@@ -96,7 +96,7 @@ fun CircuitScreen(
                 c.phase == CircuitPhase.IDLE -> CircuitSetup(
                     muscleGroupName = muscleGroupName,
                     exercises = w.exercises,
-                    lastWeights = w.baselines.mapValues { it.value.lastWeightKg },
+                    lastWeights = suggestedWeights(w.exercises, w.baselines),
                     learner = circuitVm.learner,
                     onStart = { steps -> circuitVm.start(steps) }
                 )
@@ -330,5 +330,20 @@ fun CircuitRunContent(
         Spacer(Modifier.height(12.dp))
     }
     com.vitoroliveira.gymtracker.ui.components.ConfettiBurst(c.completed.size)
+    }
+}
+
+/** Última carga de cada exercício; se nunca foi feito, usa a sugestão (quando dá para calcular). */
+@androidx.compose.runtime.Composable
+private fun suggestedWeights(
+    exercises: List<com.vitoroliveira.gymtracker.data.model.Exercise>,
+    baselines: Map<String, com.vitoroliveira.gymtracker.data.model.ExerciseBaseline>
+): Map<String, Double?> {
+    val body = com.vitoroliveira.gymtracker.ui.components.LocalBodyData.current
+    return remember(body, exercises, baselines) {
+        exercises.mapNotNull { e -> e.id?.let { id ->
+            val b = baselines[id]
+            id to (b?.lastWeightKg ?: com.vitoroliveira.gymtracker.ui.components.suggestLoad(body, e.name, null, null, e.defaultReps)?.weightKg)
+        } }.toMap()
     }
 }

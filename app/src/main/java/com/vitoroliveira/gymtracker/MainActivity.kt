@@ -30,10 +30,13 @@ class MainActivity : ComponentActivity() {
             val themeId by prefs.themeId.collectAsState()
             val reactive by prefs.musicReactive.collectAsState()
             val intensity by prefs.intensity.collectAsState()
+            val bodyData by koinInject<com.vitoroliveira.gymtracker.presentation.body.BodyRepository>().data.collectAsState()
             val musicState by music.state.collectAsState()
             val accent = if (reactive) musicState.nowPlaying?.accent else null
             GymTrackerTheme(spec = AppThemes.byId(themeId), accent = accent, intensity = intensity) {
-                GymTrackerNavHost()
+                androidx.compose.runtime.CompositionLocalProvider(
+                    com.vitoroliveira.gymtracker.ui.components.LocalBodyData provides bodyData
+                ) { GymTrackerNavHost() }
             }
         }
     }

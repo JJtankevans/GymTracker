@@ -4,6 +4,11 @@ import com.vitoroliveira.gymtracker.presentation.circuit.CircuitViewModel
 import com.vitoroliveira.gymtracker.presentation.circuit.TimingStore
 import com.vitoroliveira.gymtracker.ui.circuit.PrefsTimingStore
 import org.koin.core.module.dsl.viewModel
+import com.vitoroliveira.gymtracker.presentation.body.BodyStore
+import com.vitoroliveira.gymtracker.presentation.body.BodyRepository
+import com.vitoroliveira.gymtracker.presentation.body.BodyViewModel
+import com.vitoroliveira.gymtracker.presentation.body.EvolutionViewModel
+import com.vitoroliveira.gymtracker.ui.body.PrefsBodyStore
 import com.vitoroliveira.gymtracker.ui.music.MusicController
 import com.vitoroliveira.gymtracker.ui.music.SocialPrefs
 import com.vitoroliveira.gymtracker.ui.music.WorkoutTrackRecorder
@@ -19,4 +24,8 @@ val uiModule = module {
     single { WorkoutTrackRecorder(get(), get(), get()) }
     single<TimingStore> { PrefsTimingStore(androidContext()) }
     viewModel { CircuitViewModel(get()) }
+    single<BodyStore> { PrefsBodyStore(androidContext()) }
+    single { BodyRepository(get()) }
+    viewModel { BodyViewModel(get()) }
+    viewModel { EvolutionViewModel(get(), get()) }
 }

@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
@@ -36,6 +37,7 @@ fun HomeScreen(
     onNavigateToProfile: () -> Unit,
     onStartWorkoutClick: () -> Unit,
     onNavigateToThemes: () -> Unit = {},
+    onNavigateToEvolution: () -> Unit = {},
     viewModel: HomeViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -53,6 +55,7 @@ fun HomeScreen(
         onNavigateToProfile = onNavigateToProfile,
         onStartWorkoutClick = onStartWorkoutClick,
         onNavigateToThemes = onNavigateToThemes,
+        onNavigateToEvolution = onNavigateToEvolution,
         onClearError = { viewModel.clearError() },
         topSlot = { com.vitoroliveira.gymtracker.ui.music.MiniPlayer() }
     )
@@ -68,6 +71,7 @@ fun HomeScreenContent(
     onStartWorkoutClick: () -> Unit,
     onClearError: () -> Unit,
     onNavigateToThemes: () -> Unit = {},
+    onNavigateToEvolution: () -> Unit = {},
     topSlot: @Composable () -> Unit = {}
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -85,6 +89,9 @@ fun HomeScreenContent(
             ThemedTopAppBar(
                 title = { Text("GymTracker") },
                 actions = {
+                    IconButton(onClick = onNavigateToEvolution) {
+                        Icon(Icons.Default.ShowChart, contentDescription = "Evolução")
+                    }
                     IconButton(onClick = onNavigateToThemes) {
                         Icon(Icons.Default.Palette, contentDescription = "Aparência")
                     }

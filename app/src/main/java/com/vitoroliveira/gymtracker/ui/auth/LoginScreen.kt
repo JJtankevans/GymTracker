@@ -4,6 +4,8 @@ import com.vitoroliveira.gymtracker.ui.theme.ThemedScaffold
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,6 +49,7 @@ fun LoginScreenContent(
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var showPassword by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.isLoggedIn) {
         if (uiState.isLoggedIn) onLoginSuccess()
@@ -91,7 +94,15 @@ fun LoginScreenContent(
                 value = password,
                 onValueChange = { password = it },
                 label = { Text("Senha") },
-                visualTransformation = PasswordVisualTransformation(),
+                visualTransformation = if (showPassword) androidx.compose.ui.text.input.VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    androidx.compose.material3.IconButton(onClick = { showPassword = !showPassword }) {
+                        androidx.compose.material3.Icon(
+                            if (showPassword) androidx.compose.material.icons.Icons.Default.VisibilityOff else androidx.compose.material.icons.Icons.Default.Visibility,
+                            contentDescription = if (showPassword) "Ocultar senha" else "Mostrar senha"
+                        )
+                    }
+                },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true

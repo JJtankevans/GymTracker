@@ -33,6 +33,8 @@ import com.vitoroliveira.gymtracker.ui.theme.Intensity
 import com.vitoroliveira.gymtracker.ui.theme.LocalIntensity
 import com.vitoroliveira.gymtracker.ui.theme.Decor
 import com.vitoroliveira.gymtracker.ui.components.ConfettiBurst
+import com.vitoroliveira.gymtracker.ui.components.LoadSuggestionChip
+import com.vitoroliveira.gymtracker.ui.components.rememberLoadSuggestion
 import com.vitoroliveira.gymtracker.ui.components.GlitchText
 import com.vitoroliveira.gymtracker.ui.components.LiftingDumbbell
 import com.vitoroliveira.gymtracker.ui.utils.formatKg
@@ -95,7 +97,8 @@ fun FocusWorkoutBody(
             val id = e.id ?: e.name
             val sets = uiState.completedSets.filter { it.exerciseId == e.id }.sortedBy { it.setNumber }
             val base = e.id?.let { uiState.baselines[it] }
-            val (reps, kg) = inputs[id] ?: Pair(base?.lastReps ?: e.defaultReps, base?.lastWeightKg ?: 0.0)
+            val suggestion = rememberLoadSuggestion(e.name, base?.lastWeightKg, base?.lastReps, e.defaultReps)
+            val (reps, kg) = inputs[id] ?: Pair(base?.lastReps ?: e.defaultReps, base?.lastWeightKg ?: suggestion?.weightKg ?: 0.0)
             val newRecord = e.id in uiState.newRecordExerciseIds
 
             Column(
@@ -110,6 +113,9 @@ fun FocusWorkoutBody(
                     "Série ${sets.size + 1} de ${e.defaultSets}" + (base?.lastWeightKg?.let { "  ·  última: ${formatKg(it)} kg × ${base.lastReps ?: "-"}" } ?: ""),
                     style = MaterialTheme.typography.titleSmall, color = cs.onSurfaceVariant, textAlign = TextAlign.Center
                 )
+                if (suggestion != null && suggestion.weightKg != kg) {
+                    LoadSuggestionChip(suggestion, onApply = { inputs[id] = reps to it })
+                }
                 if (newRecord) Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.EmojiEvents, null, tint = cs.tertiary); Spacer(Modifier.width(6.dp))
                     Text("Novo recorde de carga!", color = cs.tertiary, fontWeight = FontWeight.Bold)

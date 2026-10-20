@@ -39,6 +39,9 @@ import com.vitoroliveira.gymtracker.ui.utils.formatKg
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
+/** Linha horizontal de referência (ex.: "Intermediário") desenhada atrás da série. */
+data class ChartReference(val label: String, val value: Double, val color: Color? = null)
+
 /**
  * Gráfico de linha com área em gradiente, animação de entrada e seleção por
  * toque/arraste. Usa só cores do tema, então combina com qualquer um deles.
@@ -50,7 +53,11 @@ fun LineChart(
     modifier: Modifier = Modifier,
     valueText: (Double) -> String = { "${formatKg(it)} kg" },
     lineColor: Color = MaterialTheme.colorScheme.primary,
-    accentColor: Color = MaterialTheme.colorScheme.tertiary
+    accentColor: Color = MaterialTheme.colorScheme.tertiary,
+    references: List<ChartReference> = emptyList(),
+    /** Faixa sombreada (ex.: peso "normal" pelo IMC). */
+    band: ClosedFloatingPointRange<Double>? = null,
+    bandLabel: String? = null
 ) {
     if (values.isEmpty()) return
     val measurer = rememberTextMeasurer()
@@ -95,12 +102,31 @@ fun LineChart(
         val chartBottom = size.height - bottomPad
         val chartH = chartBottom - chartTop
 
-        var lo = values.min()
-        var hi = values.max()
+        val extra = references.map { it.value } + listOfNotNull(band?.start, band?.endInclusive)
+        var lo = (values + extra).min()
+        var hi = (values + extra).max()
         if (hi - lo < 1e-6) { lo -= 1.0; hi += 1.0 }
         val pad = (hi - lo) * 0.15
         lo -= pad; hi += pad
         fun yOf(v: Double) = chartBottom - ((v - lo) / (hi - lo)).toFloat() * chartH
+
+        // faixa de referência (fica atrás de tudo)
+        if (band != null) {
+            val yTop = yOf(band.endInclusive); val yBot = yOf(band.start)
+            drawRect(accentColor.copy(alpha = 0.12f), Offset(leftPx, yTop), Size(size.width - leftPx - rightPx, yBot - yTop))
+            if (bandLabel != null) {
+                val bm = measurer.measure(bandLabel, labelStyle)
+                drawText(bm, topLeft = Offset(size.width - rightPx - bm.size.width - 4.dp.toPx(), yTop + 2.dp.toPx()))
+            }
+        }
+        references.forEach { r ->
+            val y = yOf(r.value)
+            val c = r.color ?: accentColor
+            drawLine(c.copy(alpha = 0.8f), Offset(leftPx, y), Offset(size.width - rightPx, y), 1.5.dp.toPx(),
+                pathEffect = PathEffect.dashPathEffect(floatArrayOf(14f, 8f)))
+            val rm = measurer.measure("${r.label} ${formatKg(r.value)}", labelStyle.copy(color = c))
+            drawText(rm, topLeft = Offset(size.width - rightPx - rm.size.width - 4.dp.toPx(), y - rm.size.height - 1.dp.toPx()))
+        }
 
         // grade + rótulos do eixo Y
         for (t in 0..3) {

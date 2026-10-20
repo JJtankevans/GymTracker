@@ -7,6 +7,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
@@ -27,6 +28,7 @@ fun ProfileScreen(
     onLogout: () -> Unit,
     onBack: () -> Unit = {},
     onNavigateToThemes: () -> Unit = {},
+    onNavigateToEvolution: () -> Unit = {},
     viewModel: ProfileViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -40,6 +42,7 @@ fun ProfileScreen(
         uiState = uiState,
         onBack = onBack,
         onNavigateToThemes = onNavigateToThemes,
+        onNavigateToEvolution = onNavigateToEvolution,
         onUpdateWeeklyGoal = { viewModel.updateWeeklyGoal(it) },
         onSignOut = { viewModel.signOut() },
         onClearMessages = { viewModel.clearMessages() }
@@ -52,6 +55,7 @@ fun ProfileScreenContent(
     uiState: ProfileUiState,
     onBack: () -> Unit = {},
     onNavigateToThemes: () -> Unit = {},
+    onNavigateToEvolution: () -> Unit = {},
     onUpdateWeeklyGoal: (Int) -> Unit,
     onSignOut: () -> Unit,
     onClearMessages: () -> Unit
@@ -192,6 +196,17 @@ fun ProfileScreenContent(
                 HorizontalDivider()
 
                 Spacer(modifier = Modifier.height(32.dp))
+
+                OutlinedButton(
+                    onClick = onNavigateToEvolution,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.ShowChart, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Evolução e meus dados")
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedButton(
                     onClick = onNavigateToThemes,

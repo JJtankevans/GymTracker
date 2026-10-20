@@ -42,3 +42,19 @@ Nenhum projeto Supabase da sua conta se chama GymTracker, então **não alterei 
 - Insano: fundo 3x mais rápido, faixa de luz varrendo + vinheta pulsando, confete em cada série (Focus e Circuito), halter animado no treino, glitch RGB em Neon/Terminal, equalizador no mini player.
 - Calmo: decoração mais discreta, confete mínimo, sem equalizador.
 - Pendente: temas com "versão" própria mais absurda (ex.: chuva de código, fogo real no Magma), variação nas telas de histórico/perfil/grupos.
+
+## Quinta rodada — dados corporais, sugestão de carga e evolução
+Feito:
+- Olhinho para mostrar/ocultar a senha (login e cadastro).
+- "Meus dados" (altura, ano de nascimento, sexo; tudo opcional) e histórico de peso corporal, guardados no aparelho. Opção de perguntar o peso ao iniciar cada treino.
+- Sugestão de carga ao registrar série (modos Focus, clássico e Circuito): com histórico usa dupla progressão (bateu a meta de reps → sobe ~2,5% arredondado ao degrau de 2,5 kg; muito abaixo → reduz ~5%; no meio → mantém). Sem histórico, só para os 4 básicos, parte de ~70% da carga de um Iniciante pelo peso corporal (mais conservador acima de 50 anos).
+- Tela Evolução: peso corporal com faixa de IMC normal (OMS) e, para supino/agachamento/terra/desenvolvimento, 1RM estimado por sessão com linhas de nível (Iniciante→Elite) e quanto falta para o próximo.
+- Referências: StrengthLog (percentis 5/25/50/75/95). Os múltiplos do peso corporal foram calculados para ~80 kg (homens) e ~60 kg (mulheres); mais pesado = múltiplo um pouco menor.
+- SQL 003 (peso/altura/nascimento/sexo no Supabase, RLS só do dono) validado localmente. O app ainda não sincroniza isso com a nuvem.
+
+Pendente / ideias:
+- Sincronizar dados corporais com o Supabase (003) quando houver projeto.
+- Sugestão considerando RPE/fadiga e deload automático a cada N semanas.
+- Referências por faixa etária e por peso corporal exato (hoje fixas por sexo).
+- Mais exercícios com padrão de força (remada, rosca, leg press) — precisam de fonte confiável.
+- 1RM usa média de reps por dia (a view só guarda carga máxima e reps totais); melhorar com a melhor série real.

@@ -33,13 +33,18 @@ fun StartWorkoutSheet(
     viewModel: MuscleGroupViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val bodyVm: com.vitoroliveira.gymtracker.presentation.body.BodyViewModel = koinViewModel()
+    val body by bodyVm.data.collectAsState()
 
     ModalBottomSheet(onDismissRequest = onDismiss) {
         StartWorkoutSheetContent(
             uiState = uiState,
             onStartWorkout = onStartWorkout,
             onStartCircuit = onStartCircuit,
-            onDismiss = onDismiss
+            onDismiss = onDismiss,
+            weighIn = if (body.profile.askWeightEachWorkout) WeighIn(body.latestKg) { kg ->
+                bodyVm.logWeight(com.vitoroliveira.gymtracker.ui.components.todayEpochDay(), kg)
+            } else null
         )
     }
 }
@@ -49,10 +54,16 @@ fun StartWorkoutSheetContent(
     uiState: MuscleGroupUiState,
     onStartWorkout: (muscleGroupId: String?, muscleGroupName: String?) -> Unit,
     onDismiss: () -> Unit,
-    onStartCircuit: (muscleGroupId: String?, muscleGroupName: String?) -> Unit = { _, _ -> }
+    onStartCircuit: (muscleGroupId: String?, muscleGroupName: String?) -> Unit = { _, _ -> },
+    weighIn: WeighIn? = null
 ) {
     var circuit by remember { mutableStateOf(false) }
-    val start: (String?, String?) -> Unit = { id, name -> if (circuit) onStartCircuit(id, name) else onStartWorkout(id, name) }
+    var weightText by remember(weighIn?.initialKg) { mutableStateOf(weighIn?.initialKg?.let { com.vitoroliveira.gymtracker.ui.utils.formatKg(it) } ?: "") }
+    val start: (String?, String?) -> Unit = { id, name ->
+        // peso do dia é opcional: só registra se for um número válido
+        weighIn?.let { w -> weightText.replace(',', '.').toDoubleOrNull()?.let(w.onLog) }
+        if (circuit) onStartCircuit(id, name) else onStartWorkout(id, name)
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -73,6 +84,14 @@ fun StartWorkoutSheetContent(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
+        if (weighIn != null) {
+            Spacer(modifier = Modifier.height(12.dp))
+            OutlinedTextField(
+                value = weightText, onValueChange = { weightText = it.filter { c -> c.isDigit() || c == ',' || c == '.' } },
+                label = { Text("Seu peso hoje (kg) — opcional") }, singleLine = true, modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal)
+            )
+        }
         Spacer(modifier = Modifier.height(12.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
@@ -193,3 +212,5 @@ fun StartWorkoutSheetPreview() {
         )
     }
 }
+/** Campo opcional de peso do dia na hora de iniciar o treino. */
+class WeighIn(val initialKg: Double?, val onLog: (Double) -> Unit)

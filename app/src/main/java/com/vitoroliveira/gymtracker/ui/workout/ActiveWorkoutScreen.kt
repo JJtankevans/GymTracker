@@ -429,9 +429,13 @@ fun ExerciseWorkoutCard(
     var repsTouched by remember { mutableStateOf(false) }
     var showTimerOptions by remember { mutableStateOf(false) }
 
+    val suggestion = com.vitoroliveira.gymtracker.ui.components.rememberLoadSuggestion(
+        exercise.name, baseline?.lastWeightKg, baseline?.lastReps, exercise.defaultReps
+    )
     // Pré-preenche com a última vez (sem sobrescrever o que o usuário já digitou)
-    LaunchedEffect(baseline) {
-        baseline?.lastWeightKg?.let { if (weight.isBlank()) weight = formatKg(it) }
+    LaunchedEffect(baseline, suggestion?.weightKg) {
+        val w = baseline?.lastWeightKg ?: suggestion?.weightKg
+        w?.let { if (weight.isBlank()) weight = formatKg(it) }
         baseline?.lastReps?.let { if (!repsTouched) reps = it.toString() }
     }
 
@@ -466,6 +470,9 @@ fun ExerciseWorkoutCard(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    if (suggestion != null && formatKg(suggestion.weightKg) != weight) {
+                        com.vitoroliveira.gymtracker.ui.components.LoadSuggestionChip(suggestion, onApply = { weight = formatKg(it) })
+                    }
                     if (baseline?.lastWeightKg != null) {
                         Text(
                             text = "Última vez: ${formatKg(baseline.lastWeightKg!!)} kg × ${baseline.lastReps ?: "-"}" +
