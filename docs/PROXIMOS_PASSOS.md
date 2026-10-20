@@ -63,3 +63,4 @@ Pendente / ideias:
 - Sondagem só leitura com a chave publicável: tabelas base (profiles, muscle_groups, exercises, workouts, workout_sets e as 2 views) existem e respondem vazio para anônimo; social e body_weights ainda NÃO existem.
 - O conector do Supabase da sessão não enxerga esse projeto, então as migrations não foram aplicadas por mim. Rodar `docs/supabase/APLICAR_TUDO.sql` no SQL Editor (testado do zero num Postgres 16 local; transação única).
 - Depois: conferir a RLS (anon não deve ler nada) e o cadastro (trigger handle_new_user).
+- Alerta "Security Definer View" em public.public_profiles (painel do Supabase): a view era SECURITY DEFINER de propósito. Trocada por função `public_profiles()` (004; 002 já atualizado). No app: rpc("public_profiles").

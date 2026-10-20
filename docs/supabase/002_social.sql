@@ -398,11 +398,15 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
 $$;
 
 -- ============================================================================
--- View segura de perfis públicos (só colunas inofensivas, respeitando a visibilidade)
+-- Perfis públicos (só colunas inofensivas, respeitando a visibilidade).
+-- É função (não view) para não disparar o alerta "Security Definer View" do Supabase; ver 004.
 -- ============================================================================
-CREATE OR REPLACE VIEW public_profiles WITH (security_invoker = false) AS
-  SELECT id, username, full_name, avatar_url, bio, visibility, created_at
-    FROM profiles WHERE can_view_profile(id);
+CREATE OR REPLACE FUNCTION public_profiles()
+RETURNS TABLE (id UUID, username TEXT, full_name TEXT, avatar_url TEXT, bio TEXT, visibility TEXT, created_at TIMESTAMPTZ)
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT p.id, p.username, p.full_name, p.avatar_url, p.bio, p.visibility::text, p.created_at
+    FROM public.profiles p WHERE public.can_view_profile(p.id);
+$$;
 
 -- ============================================================================
 -- RLS
@@ -501,10 +505,8 @@ CREATE POLICY wt_delete ON workout_tracks FOR DELETE USING (profile_id = auth.ui
 -- ============================================================================
 -- Permissões: nada para anon; funções só para usuários logados
 -- ============================================================================
-REVOKE ALL ON public_profiles FROM anon;
-GRANT SELECT ON public_profiles TO authenticated;
 
-REVOKE EXECUTE ON FUNCTION join_group(UUID), join_group_by_code(TEXT), join_challenge(UUID, TEXT, TEXT),
+REVOKE EXECUTE ON FUNCTION public_profiles(), join_group(UUID), join_group_by_code(TEXT), join_challenge(UUID, TEXT, TEXT),
   challenge_standings(UUID), profile_top_tracks(UUID, INTEGER), profile_stats(UUID) FROM PUBLIC, anon;
-GRANT  EXECUTE ON FUNCTION join_group(UUID), join_group_by_code(TEXT), join_challenge(UUID, TEXT, TEXT),
+GRANT  EXECUTE ON FUNCTION public_profiles(), join_group(UUID), join_group_by_code(TEXT), join_challenge(UUID, TEXT, TEXT),
   challenge_standings(UUID), profile_top_tracks(UUID, INTEGER), profile_stats(UUID) TO authenticated;

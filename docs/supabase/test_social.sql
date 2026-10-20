@@ -40,7 +40,7 @@ reset role;
 -- B: privado (padrão)
 set role authenticated; select set_config('request.jwt.claim.sub', 'bbbbbbbb-0000-0000-0000-000000000002', false);
 select 'B vê grupo privado antes de entrar (esperado 0):' t, count(*) from groups;
-select 'B vê perfil de A via public_profiles (esperado 1):' t, count(*) from public_profiles where username not like 'b%';
+select 'B vê perfil de A via public_profiles (esperado 1):' t, count(*) from public_profiles() where username not like 'b%';
 select 'B lê perfil de A direto (esperado 0):' t, count(*) from profiles where id<>auth.uid();
 select 'B vê post público de A (esperado 1 — o do treino longo e o curto = 2):' t, count(*) from feed_posts;
 select 'B vê músicas de A (esperado 2):' t, count(*) from workout_tracks;
