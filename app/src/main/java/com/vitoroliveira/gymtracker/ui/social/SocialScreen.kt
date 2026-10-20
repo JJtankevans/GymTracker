@@ -393,7 +393,7 @@ private fun PeopleTab(state: SocialUiState, a: SocialActions) {
         if (list.isEmpty()) item(key = "empty") {
             Empty(
                 "Ninguém por aqui",
-                "Só aparecem perfis públicos (ou de quem você já segue). Peça pra galera deixar o perfil público em Privacidade."
+                "Aparecem perfis públicos e os que aceitam seguidores. Peça pra galera ajustar a privacidade do perfil."
             )
         }
         items(list, key = { "u" + it.profile.id }) { PersonRow(it, a) }

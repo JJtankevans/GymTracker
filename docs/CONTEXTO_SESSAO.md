@@ -128,3 +128,8 @@ Ainda não testado: perfil privado/"só seguidores" + pedido de seguir + aceitar
 - Placar do desafio validado com treino DENTRO do período (thiagobr 1º com 1 treino, Deus 2º com 0). Corrigido "1 treinos" → "1 treino" (`ChallengeMetric.format`, singular de treinos/dias/séries, testes novos) e nome longo colado na contagem.
 - Ainda falta: perfil privado/"só seguidores" + pedido de seguir + aceitar (exige trocar para a v.oliveira no celular; o Thiago topou), desafio em equipes, privacidade de música, sair do grupo/desafio, tela "Tentar de novo".
 - Aviso: toques por adb na parte de cima da tela podem abrir notificações do celular (WhatsApp pessoal do Thiago). Não interagir com elas.
+
+## Atualização 11 (perfil "Só seguidores" não era encontrável, 20/10/2026)
+- Teste com as duas contas: a Deus colocou o perfil em "Só seguidores"; a thiagobr deixou de seguir e a Deus SUMIU de Pessoas e da busca ("Ninguém por aqui") → não dá para pedir para seguir. O trigger `trg_follow_status` já cria o pedido 'pending' e o app já lista/aceita pedidos; faltava só descobrir o perfil.
+- Correção escrita (NÃO aplicada no Supabase): `docs/supabase/005_perfis_so_seguidores_descobriveis.sql` — `public_profiles()` passa a devolver também perfis 'followers' (bio escondida até seguir). "Privado" continua invisível. O Thiago precisa rodar no SQL Editor; depois retestar: thiagobr pede para seguir a Deus → Deus (logada) aceita em Pessoas → thiagobr vê o perfil/posts.
+- Estado agora: thiagobr NÃO segue mais a Deus; Deus está em "Só seguidores".
