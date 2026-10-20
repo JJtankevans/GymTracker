@@ -96,3 +96,9 @@ Armadilha: com treino ativo aberto, "Iniciar" na Home pula o sheet e vai direto 
 - `ExerciseArt` (ExerciseCatalogSheet.kt) usa o drawable `ex_<nome>` se existir e senão o ícone do equipamento; usado no catálogo, na lista de exercícios e em Recordes. Validado no celular com um PNG de teste (já removido).
 - `docs/IMAGENS_EXERCICIOS.md`: formato (PNG quadrado, fundo transparente, `res/drawable-nodpi/`) e tabela com as 56 chaves. O Thiago vai gerar as imagens (referências: silhueta roxa com o músculo em vermelho).
 - `shared/build` deixou de ser rastreado pelo git; `.gitignore` ignora `build/` e `.kotlin/`.
+
+## Atualização 6 (primeiras ilustrações, 20/10/2026)
+- Folha 1 do Thiago (`docs/folhas/folha1.jpeg`, 30 desenhos 5×6) cortada com fundo transparente em 384×384 e colocada em `app/src/main/res/drawable-nodpi/` com a chave do exercício: **24 de 56** exercícios já têm imagem. Validado no catálogo no celular.
+- Associação feita pela pose do desenho. Ficaram de fora 6 desenhos ambíguos (r2c3 elevação inclinada, r2c5 barra no peito, r4c5 remada no banco inclinado, r5c2 extensão lombar, r5c4 sumô, r1c4 flexão diamante): `docs/folhas/folha1.jpeg` guarda a folha para revisão.
+- Folha 2 do Thiago (WhatsApp 12.35.54 em Downloads) ainda NÃO usada; a pedido dele ficou para depois.
+- Script de corte (flood fill do fundo + bolsões + agrupamento de peças): estava no scratchpad da sessão e não foi versionado; se precisar de novo, refazer ou pedir.
