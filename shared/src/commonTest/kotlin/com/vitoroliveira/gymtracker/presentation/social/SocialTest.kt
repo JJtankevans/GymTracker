@@ -224,6 +224,7 @@ class SocialTest {
     @Test fun textoDasEstatisticasDoFeed() {
         val stats = JsonObject(mapOf("minutes" to JsonPrimitive(45), "sets" to JsonPrimitive(18), "volume_kg" to JsonPrimitive(5200.5)))
         assertEquals("45 min · 18 séries · 5.200 kg", formatFeedStats(stats))
+        assertEquals("1 min · 1 série · 96 kg", formatFeedStats(JsonObject(mapOf("minutes" to JsonPrimitive(1), "sets" to JsonPrimitive(1), "volume_kg" to JsonPrimitive(96)))))
         assertEquals("", formatFeedStats(JsonObject(emptyMap())))
         assertEquals("Peito", feedGroupName(JsonObject(mapOf("group" to JsonPrimitive("Peito")))))
     }

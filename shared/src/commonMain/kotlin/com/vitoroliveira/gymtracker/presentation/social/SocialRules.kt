@@ -145,7 +145,7 @@ private fun JsonObject.num(key: String): Double? = (this[key] as? JsonPrimitive)
 fun formatFeedStats(stats: JsonObject): String {
     val parts = buildList {
         stats.num("minutes")?.takeIf { it > 0 }?.let { add("${formatInt(it)} min") }
-        stats.num("sets")?.takeIf { it > 0 }?.let { add("${formatInt(it)} séries") }
+        stats.num("sets")?.takeIf { it > 0 }?.let { add("${formatInt(it)} ${if (it == 1.0) "série" else "séries"}") }
         stats.num("volume_kg")?.takeIf { it > 0 }?.let { add("${formatInt(it)} kg") }
     }
     return parts.joinToString(" · ")

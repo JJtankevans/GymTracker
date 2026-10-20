@@ -56,7 +56,9 @@ data class NewGroup(
     val name: String,
     val description: String?,
     val privacy: String,
-    @SerialName("max_members") val maxMembers: Int?
+    @SerialName("max_members") val maxMembers: Int?,
+    /** Gerado pelo app: o INSERT não pode pedir a linha de volta (a política de leitura só vale depois do trigger que põe o dono como membro). */
+    val id: String = ""
 )
 
 @Serializable
@@ -103,7 +105,9 @@ data class NewChallenge(
     val target: Double?,
     @SerialName("min_minutes_per_workout") val minMinutesPerWorkout: Int,
     @SerialName("max_workouts_per_day") val maxWorkoutsPerDay: Int,
-    @SerialName("max_participants") val maxParticipants: Int?
+    @SerialName("max_participants") val maxParticipants: Int?,
+    /** Gerado pelo app, pelo mesmo motivo de [NewGroup.id]. */
+    val id: String = ""
 )
 
 @Serializable

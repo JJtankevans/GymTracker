@@ -1,5 +1,7 @@
 package com.vitoroliveira.gymtracker.data.repository
 
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 import com.vitoroliveira.gymtracker.data.model.Challenge
 import com.vitoroliveira.gymtracker.data.model.ChallengeParticipant
 import com.vitoroliveira.gymtracker.data.model.FeedPost
@@ -141,8 +143,12 @@ class SocialRepositoryImpl(private val supabase: SupabaseClient) : SocialReposit
     override suspend fun groupMembers(groupId: String): List<GroupMember> =
         supabase.postgrest["group_members"].select { filter { eq("group_id", groupId) } }.decodeList()
 
-    override suspend fun createGroup(group: NewGroup): SocialGroup =
-        supabase.postgrest["groups"].insert(group) { select() }.decodeSingle()
+    @OptIn(ExperimentalUuidApi::class)
+    override suspend fun createGroup(group: NewGroup): SocialGroup {
+        val id = Uuid.random().toString()
+        supabase.postgrest["groups"].insert(group.copy(id = id))
+        return supabase.postgrest["groups"].select { filter { eq("id", id) } }.decodeSingle()
+    }
 
     override suspend fun joinGroup(groupId: String) {
         supabase.postgrest.rpc("join_group", buildJsonObject { put("p_group", groupId) })
@@ -168,8 +174,12 @@ class SocialRepositoryImpl(private val supabase: SupabaseClient) : SocialReposit
     override suspend fun myParticipations(): List<ChallengeParticipant> =
         supabase.postgrest["challenge_participants"].select { filter { eq("profile_id", me()) } }.decodeList()
 
-    override suspend fun createChallenge(challenge: NewChallenge): Challenge =
-        supabase.postgrest["challenges"].insert(challenge) { select() }.decodeSingle()
+    @OptIn(ExperimentalUuidApi::class)
+    override suspend fun createChallenge(challenge: NewChallenge): Challenge {
+        val id = Uuid.random().toString()
+        supabase.postgrest["challenges"].insert(challenge.copy(id = id))
+        return supabase.postgrest["challenges"].select { filter { eq("id", id) } }.decodeSingle()
+    }
 
     override suspend fun joinChallenge(challengeId: String, team: String?) {
         supabase.postgrest.rpc("join_challenge", buildJsonObject {
