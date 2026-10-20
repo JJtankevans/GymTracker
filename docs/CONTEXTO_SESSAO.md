@@ -133,3 +133,7 @@ Ainda não testado: perfil privado/"só seguidores" + pedido de seguir + aceitar
 - Teste com as duas contas: a Deus colocou o perfil em "Só seguidores"; a thiagobr deixou de seguir e a Deus SUMIU de Pessoas e da busca ("Ninguém por aqui") → não dá para pedir para seguir. O trigger `trg_follow_status` já cria o pedido 'pending' e o app já lista/aceita pedidos; faltava só descobrir o perfil.
 - Correção escrita (NÃO aplicada no Supabase): `docs/supabase/005_perfis_so_seguidores_descobriveis.sql` — `public_profiles()` passa a devolver também perfis 'followers' (bio escondida até seguir). "Privado" continua invisível. O Thiago precisa rodar no SQL Editor; depois retestar: thiagobr pede para seguir a Deus → Deus (logada) aceita em Pessoas → thiagobr vê o perfil/posts.
 - Estado agora: thiagobr NÃO segue mais a Deus; Deus está em "Só seguidores".
+
+## Atualização 12 (pedido de seguir, 20/10/2026)
+- O Thiago rodou o SQL 005 no Supabase. Validado no celular (thiagobr): a Deus ("Só seguidores") aparece de novo em Pessoas com "Seguir"; ao tocar vira "Pedido enviado"; o perfil dela mostra "@Deus · Só seguidores", "Cancelar pedido" e "Esta pessoa não compartilha os números" (bio/números/posts escondidos até aceitar).
+- Falta: logar na v.oliveira e aceitar o pedido (Pessoas > pedidos), depois voltar à thiagobr e ver o perfil/posts/números dela.
