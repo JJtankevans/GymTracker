@@ -40,6 +40,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.vitoroliveira.gymtracker.data.catalog.ExerciseCatalog
@@ -382,11 +383,11 @@ fun ProfileSheet(
             view.stats?.let { s ->
                 Text("Números", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 ThemedCard(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
-                    Row(Modifier.padding(14.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Stat("${s.workouts}", "treinos")
-                        Stat("${s.activeDays}", "dias ativos")
-                        Stat("${s.sets}", "séries")
-                        Stat(com.vitoroliveira.gymtracker.presentation.social.formatInt(s.volumeKg), "kg")
+                    Row(Modifier.padding(vertical = 14.dp, horizontal = 8.dp)) {
+                        Stat("${s.workouts}", "treinos", Modifier.weight(1f))
+                        Stat("${s.activeDays}", "dias ativos", Modifier.weight(1f))
+                        Stat("${s.sets}", "séries", Modifier.weight(1f))
+                        Stat(com.vitoroliveira.gymtracker.presentation.social.formatInt(s.volumeKg), "kg", Modifier.weight(1f))
                     }
                 }
             }
@@ -412,10 +413,10 @@ fun ProfileSheet(
 }
 
 @Composable
-private fun Stat(value: String, label: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.primary)
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+private fun Stat(value: String, label: String, modifier: Modifier = Modifier) {
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.primary, maxLines = 1)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 

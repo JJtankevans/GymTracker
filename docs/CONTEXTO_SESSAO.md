@@ -116,3 +116,9 @@ Armadilha: com treino ativo aberto, "Iniciar" na Home pula o sheet e vai direto 
 - O post do treino apareceu no feed sozinho (trigger do banco ao finalizar). Corrigido "1 séries" → "1 série" (`formatFeedStats`, teste novo).
 - Falta (precisa trocar para a conta thiagobr): seguir a Deus, ver o treino dela no feed, reagir, entrar no grupo pelo código `e3aab77a`, entrar no desafio e conferir o placar, perfil privado + pedido de seguir/aceitar, editar post.
 - Dados de teste ficaram nas duas contas (grupo, desafio, post, treinos curtos).
+
+## Atualização 9 (Social com as duas contas, 20/10/2026)
+Contas de teste: thiagobr (thiago, @AqueleQueTrazALuz, "Você" no app) e v.oliveira042997 (@Deus). O Thiago troca a conta no celular (eu não digito senha).
+Validado no aparelho com as duas contas: perfil público aparece em Pessoas; seguir (perfil público = "Seguindo" na hora); perfil com números (13 treinos, 13 dias, 365 séries, 115.210 kg); post da outra conta no feed; reação (liga/desliga); grupo privado entrando por código (`e3aab77a`; o grupo não aparece na lista de quem não é membro); desafio aberto (aparece "Entrar", entrou, placar com os dois); treino finalizado gera post sozinho; editar post (legenda salva, "Post atualizado").
+Corrigido: números do perfil de outra pessoa estavam colados ("365115.210") → colunas com weight (SocialDialogs.kt `Stat`).
+Ainda não testado: perfil privado/"só seguidores" + pedido de seguir + aceitar; placar com treinos DENTRO do período do desafio (fazer um treino de ≥1 min agora, com as duas contas inscritas); desafio em equipes; privacidade de música; sair do grupo/desafio; tela "Tentar de novo".
