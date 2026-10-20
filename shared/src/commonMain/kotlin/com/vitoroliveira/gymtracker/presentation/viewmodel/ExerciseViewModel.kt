@@ -6,6 +6,7 @@ import com.vitoroliveira.gymtracker.presentation.toUserMessage
 import kotlin.coroutines.cancellation.CancellationException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.vitoroliveira.gymtracker.data.catalog.CatalogExercise
 import com.vitoroliveira.gymtracker.data.model.Exercise
 import com.vitoroliveira.gymtracker.domain.repository.ExerciseRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,6 +17,8 @@ import kotlinx.coroutines.launch
 data class ExerciseUiState(
     val isLoading: Boolean = false,
     val exercises: List<Exercise> = emptyList(),
+    /** Nomes de todos os exercícios do usuário, mesmo com filtro de grupo (o nome é único por usuário). */
+    val allNames: List<String> = emptyList(),
     val selectedMuscleGroupId: String? = null,
     val errorMessage: String? = null,
     val successMessage: String? = null
@@ -36,19 +39,20 @@ class ExerciseViewModel(
      * Carrega todos os exercícios, ou apenas os do grupo muscular
      * selecionado no filtro atual (se houver).
      */
-    fun loadExercises() {
+    fun loadExercises(clearError: Boolean = true) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            _uiState.value = _uiState.value.copy(
+                isLoading = true,
+                errorMessage = if (clearError) null else _uiState.value.errorMessage
+            )
             try {
                 val groupId = _uiState.value.selectedMuscleGroupId
-                val exercises = if (groupId != null) {
-                    repository.getByMuscleGroup(groupId)
-                } else {
-                    repository.getAll()
-                }
+                val all = repository.getAll()
+                val exercises = if (groupId != null) all.filter { it.muscleGroupId == groupId } else all
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    exercises = exercises
+                    exercises = exercises,
+                    allNames = all.map { it.name }
                 )
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
@@ -110,6 +114,37 @@ class ExerciseViewModel(
                     isLoading = false,
                     errorMessage = e.toUserMessage("Erro ao criar exercício")
                 )
+            }
+        }
+    }
+
+    /** Adiciona vários exercícios do catálogo de uma vez (séries/reps padrão de cada um). */
+    fun createMany(items: List<CatalogExercise>, muscleGroupId: String?) {
+        if (items.isEmpty()) return
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            try {
+                items.forEach { ex ->
+                    repository.insert(
+                        Exercise(
+                            name = ex.name, muscleGroupId = muscleGroupId,
+                            defaultSets = ex.sets, defaultReps = ex.reps, notes = ex.hint
+                        )
+                    )
+                }
+                loadExercises()
+                _uiState.value = _uiState.value.copy(
+                    successMessage = if (items.size == 1) "Exercício '${items[0].name}' criado com sucesso"
+                    else "${items.size} exercícios adicionados"
+                )
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                // alguns podem ter entrado antes do erro: recarrega sem apagar a mensagem
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = e.toUserMessage("Erro ao adicionar os exercícios")
+                )
+                loadExercises(clearError = false)
             }
         }
     }

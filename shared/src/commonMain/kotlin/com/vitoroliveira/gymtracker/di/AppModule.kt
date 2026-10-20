@@ -36,17 +36,23 @@ fun appModule(supabaseClient: SupabaseClient) = module {
     single<ExerciseRepository> { ExerciseRepositoryImpl(get()) }
     single<WorkoutRepository> { WorkoutRepositoryImpl(get()) }
     single<ProfileRepository> { ProfileRepositoryImpl(get()) }
+    single<com.vitoroliveira.gymtracker.domain.repository.SocialRepository> {
+        com.vitoroliveira.gymtracker.data.repository.SocialRepositoryImpl(get())
+    }
     single<com.vitoroliveira.gymtracker.domain.repository.TrackRepository> { com.vitoroliveira.gymtracker.data.repository.TrackRepositoryImpl(get()) }
 
     // ViewModels
     viewModel { SessionViewModel(get()) }
     viewModel { AuthViewModel(get()) }
-    viewModel { MuscleGroupViewModel(get()) }
+    factory { com.vitoroliveira.gymtracker.domain.usecase.CreateWorkoutFromTemplate(get(), get()) }
+    viewModel { MuscleGroupViewModel(get(), get()) }
     viewModel { ExerciseViewModel(get()) }
     viewModel { ProfileViewModel(get(), get()) }
     viewModel { WorkoutViewModel(get(), get()) }
     viewModel { HomeViewModel(get(), get(), get()) }
     viewModel { HistoryViewModel(get(), get()) }
+    viewModel { com.vitoroliveira.gymtracker.presentation.records.RecordsViewModel(get(), get()) }
+    viewModel { com.vitoroliveira.gymtracker.presentation.social.SocialViewModel(get()) }
     viewModel { (workoutId: String) -> WorkoutDetailViewModel(workoutId, get(), get()) }
     viewModel { (exerciseId: String) -> ExerciseDetailViewModel(exerciseId, get()) }
 }

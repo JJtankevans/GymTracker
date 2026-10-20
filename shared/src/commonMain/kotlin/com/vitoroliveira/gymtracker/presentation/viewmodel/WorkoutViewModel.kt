@@ -317,6 +317,23 @@ class WorkoutViewModel(
         }
     }
 
+    /** Apaga o treino aberto (ex.: circuito encerrado sem nenhuma série). Chama [onDone] quando terminar. */
+    fun discardActiveWorkout(onDone: () -> Unit) {
+        val workoutId = _uiState.value.activeWorkout?.id ?: run { onDone(); return }
+        viewModelScope.launch {
+            try {
+                workoutRepository.deleteWorkout(workoutId)
+                timerManager.cancel()
+                tickerJob?.cancel()
+                _uiState.value = _uiState.value.copy(activeWorkout = null)
+                onDone()
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                _uiState.value = _uiState.value.copy(errorMessage = e.toUserMessage("Erro ao descartar treino"))
+            }
+        }
+    }
+
     private fun buildSummary(state: WorkoutUiState): WorkoutSummary {
         val sets = state.completedSets
         val names = state.exercises.associate { it.id to it.name }

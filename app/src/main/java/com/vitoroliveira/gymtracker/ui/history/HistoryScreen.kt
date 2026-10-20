@@ -43,7 +43,8 @@ fun HistoryScreen(
         uiState = uiState,
         onWorkoutClick = onWorkoutClick,
         onBack = onBack,
-        onDismissError = viewModel::clearError
+        onDismissError = viewModel::clearError,
+        onDeleteWorkout = viewModel::deleteWorkout
     )
 }
 
@@ -53,9 +54,11 @@ fun HistoryScreenContent(
     uiState: HistoryUiState,
     onWorkoutClick: (String) -> Unit = {},
     onBack: () -> Unit = {},
-    onDismissError: () -> Unit = {}
+    onDismissError: () -> Unit = {},
+    onDeleteWorkout: (String) -> Unit = {}
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
+    var pendingDelete by remember { mutableStateOf<WorkoutHistoryItem?>(null) }
 
     LaunchedEffect(uiState.errorMessage) {
         uiState.errorMessage?.let {
@@ -86,18 +89,45 @@ fun HistoryScreenContent(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    item {
+                        Text(
+                            "Segure um treino para apagar.",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                     items(uiState.workouts, key = { it.workoutId }) { workout ->
-                        WorkoutHistoryCard(item = workout, onClick = { onWorkoutClick(workout.workoutId) })
+                        WorkoutHistoryCard(
+                            item = workout,
+                            onClick = { onWorkoutClick(workout.workoutId) },
+                            onLongClick = { pendingDelete = workout }
+                        )
                     }
                 }
             }
         }
     }
+
+    pendingDelete?.let { item ->
+        AlertDialog(
+            onDismissRequest = { pendingDelete = null },
+            title = { Text("Apagar treino?") },
+            text = {
+                Text("${item.muscleGroupName} · ${formatDate(item.startedAt)}. As séries desse treino também são apagadas e podem mudar seus recordes. Não dá para desfazer.")
+            },
+            confirmButton = {
+                TextButton({ onDeleteWorkout(item.workoutId); pendingDelete = null }) {
+                    Text("Apagar", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = { TextButton({ pendingDelete = null }) { Text("Cancelar") } }
+        )
+    }
 }
 
 @Composable
-private fun WorkoutHistoryCard(item: WorkoutHistoryItem, onClick: () -> Unit) {
-    ThemedCard(onClick = onClick, modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
+private fun WorkoutHistoryCard(item: WorkoutHistoryItem, onClick: () -> Unit, onLongClick: () -> Unit) {
+    ThemedCard(onClick = onClick, onLongClick = onLongClick, modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalAlignment = Alignment.CenterVertically

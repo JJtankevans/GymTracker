@@ -19,6 +19,7 @@ import org.koin.dsl.module
 /** Dependências que só existem no app Android (precisam de Context). */
 val uiModule = module {
     single { ThemePreferences(androidContext()) }
+    single { com.vitoroliveira.gymtracker.ui.exercise.CatalogPrefs(androidContext()) }
     single { MusicController(androidContext()) }
     single { SocialPrefs(androidContext()) }
     single { WorkoutTrackRecorder(get(), get(), get()) }

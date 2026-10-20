@@ -46,10 +46,16 @@ class FakeWorkoutRepository : WorkoutRepository {
     }
 
     override suspend fun finishWorkout(workoutId: String) { maybeFail(); finished = true }
-    override suspend fun deleteWorkout(workoutId: String) { activeWorkout = null }
+    var failDelete: Throwable? = null
+    val history = mutableListOf<Workout>()
+    override suspend fun deleteWorkout(workoutId: String) {
+        failDelete?.let { throw it }
+        activeWorkout = null
+        history.removeAll { it.id == workoutId }
+    }
     override suspend fun getActiveWorkout(): Workout? { maybeFail(); return activeWorkout }
     override suspend fun updateFinishedExercises(workoutId: String, finishedExerciseIds: List<String>) {}
-    override suspend fun getHistory(): List<Workout> = emptyList()
+    override suspend fun getHistory(): List<Workout> = history.toList()
 
     override suspend fun addSet(workoutSet: WorkoutSet): WorkoutSet {
         maybeFail()
@@ -57,7 +63,9 @@ class FakeWorkoutRepository : WorkoutRepository {
     }
 
     override suspend fun getSetsForWorkout(workoutId: String) = sets.toList()
-    override suspend fun getProgressionForExercise(exerciseId: String): List<ExerciseProgression> = emptyList()
+    var progression: Map<String, List<ExerciseProgression>> = emptyMap()
+    override suspend fun getProgressionForExercise(exerciseId: String): List<ExerciseProgression> =
+        progression[exerciseId].orEmpty()
 
     override suspend fun updateSet(setId: String, reps: Int, weightKg: Double): WorkoutSet {
         maybeFail()

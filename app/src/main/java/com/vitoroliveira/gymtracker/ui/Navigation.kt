@@ -33,6 +33,8 @@ sealed class Screen(val route: String) {
     object Themes : Screen("themes")
     object Evolution : Screen("evolution")
     object MuscleGroups : Screen("muscle_groups")
+    object Records : Screen("records")
+    object Social : Screen("social")
 
     // Preparado para o Passo 12 (Fase 4) — histórico de treinos.
     object History : Screen("history")
@@ -125,7 +127,9 @@ fun GymTrackerNavHost() {
                 },
                 onStartWorkoutClick = { showStartWorkoutSheet = true },
                 onNavigateToThemes = { navController.navigate(Screen.Themes.route) },
-                onNavigateToEvolution = { navController.navigate(Screen.Evolution.route) }
+                onNavigateToEvolution = { navController.navigate(Screen.Evolution.route) },
+                onNavigateToRecords = { navController.navigate(Screen.Records.route) },
+                onNavigateToSocial = { navController.navigate(Screen.Social.route) }
             )
 
             if (showStartWorkoutSheet) {
@@ -197,6 +201,14 @@ fun GymTrackerNavHost() {
                 onNavigateToEvolution = { navController.navigate(Screen.Evolution.route) },
                 onBack = { navController.popBackStack() }
             )
+        }
+
+        composable(Screen.Social.route) {
+            com.vitoroliveira.gymtracker.ui.social.SocialScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable(Screen.Records.route) {
+            com.vitoroliveira.gymtracker.ui.records.RecordsScreen(onBack = { navController.popBackStack() })
         }
 
         composable(Screen.Evolution.route) {

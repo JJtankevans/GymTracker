@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -130,7 +131,7 @@ private fun ThemeOption(spec: AppThemeSpec, selected: Boolean, onClick: () -> Un
             Box(
                 Modifier
                     .fillMaxWidth()
-                    .height(176.dp)
+                    .heightIn(min = 176.dp)
                     .drawBehind { drawThemeBackground(extras, bg, if (extras.animated) clock() else 0.3f) }
                     .padding(16.dp)
             ) {

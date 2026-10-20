@@ -172,6 +172,18 @@ class WorkoutViewModelTest {
         assertEquals(listOf("Supino"), r.newRecords)
     }
 
+    @Test fun descartarTreinoAtivoApagaEAvisa() {
+        val vm = vm()
+        vm.startWorkout(null)
+        var avisou = false
+        vm.discardActiveWorkout { avisou = true }
+
+        assertTrue(avisou)
+        assertNull(workouts.activeWorkout)
+        assertNull(vm.uiState.value.activeWorkout)
+        assertFalse(vm.uiState.value.isWorkoutFinished) // não vira "treino concluído"
+    }
+
     @Test fun errosViramMensagemAmigavel() {
         workouts.failWith = RuntimeException("Unable to resolve host \"x.supabase.co\"")
         val vm = vm()

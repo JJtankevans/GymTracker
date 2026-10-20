@@ -11,6 +11,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
@@ -38,6 +41,8 @@ fun HomeScreen(
     onStartWorkoutClick: () -> Unit,
     onNavigateToThemes: () -> Unit = {},
     onNavigateToEvolution: () -> Unit = {},
+    onNavigateToRecords: () -> Unit = {},
+    onNavigateToSocial: () -> Unit = {},
     viewModel: HomeViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -56,6 +61,8 @@ fun HomeScreen(
         onStartWorkoutClick = onStartWorkoutClick,
         onNavigateToThemes = onNavigateToThemes,
         onNavigateToEvolution = onNavigateToEvolution,
+        onNavigateToRecords = onNavigateToRecords,
+        onNavigateToSocial = onNavigateToSocial,
         onClearError = { viewModel.clearError() },
         topSlot = { com.vitoroliveira.gymtracker.ui.music.MiniPlayer() }
     )
@@ -72,6 +79,8 @@ fun HomeScreenContent(
     onClearError: () -> Unit,
     onNavigateToThemes: () -> Unit = {},
     onNavigateToEvolution: () -> Unit = {},
+    onNavigateToRecords: () -> Unit = {},
+    onNavigateToSocial: () -> Unit = {},
     topSlot: @Composable () -> Unit = {}
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -89,14 +98,32 @@ fun HomeScreenContent(
             ThemedTopAppBar(
                 title = { Text("GymTracker") },
                 actions = {
-                    IconButton(onClick = onNavigateToEvolution) {
-                        Icon(Icons.Default.ShowChart, contentDescription = "Evolução")
+                    IconButton(onClick = onNavigateToRecords) {
+                        Icon(Icons.Default.EmojiEvents, contentDescription = "Recordes")
                     }
-                    IconButton(onClick = onNavigateToThemes) {
-                        Icon(Icons.Default.Palette, contentDescription = "Aparência")
+                    IconButton(onClick = onNavigateToSocial) {
+                        Icon(Icons.Default.Groups, contentDescription = "Social")
                     }
                     IconButton(onClick = onNavigateToProfile) {
                         Icon(Icons.Default.Person, contentDescription = "Perfil")
+                    }
+                    var menuOpen by remember { mutableStateOf(false) }
+                    Box {
+                        IconButton(onClick = { menuOpen = true }) {
+                            Icon(Icons.Default.MoreVert, contentDescription = "Mais")
+                        }
+                        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                            DropdownMenuItem(
+                                text = { Text("Evolução") },
+                                leadingIcon = { Icon(Icons.Default.ShowChart, null) },
+                                onClick = { menuOpen = false; onNavigateToEvolution() }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Aparência") },
+                                leadingIcon = { Icon(Icons.Default.Palette, null) },
+                                onClick = { menuOpen = false; onNavigateToThemes() }
+                            )
+                        }
                     }
                 }
             )
@@ -147,7 +174,7 @@ fun WeeklyHistoryCard(uiState: HomeUiState) {
                     modifier = Modifier.weight(1f)
                 )
                 Text(
-                    "${uiState.totalWorkouts} treinos no total",
+                    if (uiState.totalWorkouts == 1) "1 treino no total" else "${uiState.totalWorkouts} treinos no total",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

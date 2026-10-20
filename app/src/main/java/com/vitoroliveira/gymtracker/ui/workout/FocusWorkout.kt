@@ -150,7 +150,7 @@ fun FocusWorkoutBody(
                 if (timer.totalSeconds > 0) {
                     val done = timer.isFinished
                     ProgressRing(timer.progress, Modifier.size(150.dp), stroke = 12.dp,
-                        color = if (done) cs.tertiary else cs.primary, track = cs.primary.copy(alpha = 0.16f)) {
+                        color = if (done) cs.tertiary else cs.primary, track = cs.primary.copy(alpha = 0.16f), live = true) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(if (done) "BORA!" else timer.formattedTime, fontSize = 34.sp, fontWeight = FontWeight.Black)
                             TextButton(onCancelTimer) { Text(if (done) "fechar" else "cancelar") }

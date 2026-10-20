@@ -59,6 +59,28 @@ Pendente / ideias:
 - Mais exercícios com padrão de força (remada, rosca, leg press) — precisam de fonte confiável.
 - 1RM usa média de reps por dia (a view só guarda carga máxima e reps totais); melhorar com a melhor série real.
 
+## Sexta rodada — catálogo, treinos prontos, temas e fontes
+- **Catálogo de exercícios** (`data/catalog/ExerciseCatalog.kt`, 54 itens): nome padrão, músculo, equipamento, séries/reps padrão. O "+" de Exercícios abre o seletor (`ui/exercise/ExerciseCatalogSheet.kt`): busca sem acento, filtro por músculo, seleção múltipla, ícone desenhado por equipamento (sem imagens). 1 selecionado abre o formulário pra ajustar; 2+ adiciona direto. Quem escolhe do catálogo grava sempre o mesmo nome, então dá pra comparar entre treinos e pessoas. Não mexe no banco.
+- **Treinos prontos** (`WorkoutTemplates.kt`, `CreateWorkoutFromTemplate`): Push, Pull, Pernas, Superior, Inferior, Full body e ABC. Em Grupos, "Treinos prontos" cria o grupo + exercícios. Nome repetido vira "Push 2".
+- **Temas**: 21 (novos: Nórdico, Obsidiana, Cobalto, Floresta, Arena, Ouro, Ártico) + decorações STRIPES/DOTS/HALO.
+- **Fontes embutidas** (`res/font`, Google Fonts, OFL): Inter, Space Grotesk, Playfair Display (com `lnum`, senão o 0 parece "o"), JetBrains Mono, Barlow Condensed. Famílias em `ThemeFonts.kt`.
+- **Correções**: anel de progresso (`ProgressRing`) não reinicia mais a cada tick (parava em 0); preview do seletor de temas não corta o botão; Synthwave/Confete/Aurora com mais contraste.
+- **Login** avisa quando o app foi gerado sem `SUPABASE_URL`/`SUPABASE_KEY` (antes só dizia "sem internet").
+- Ideias: foto/ilustração por exercício, favoritos e "exercícios recentes" no catálogo, treino pronto escolhendo dias da semana, mais exercícios (cardio, mobilidade).
+
+## Sétima rodada — recordes, favoritos e a camada social no app
+- **Recordes pessoais** (`presentation/records/`, `ui/records/RecordsScreen.kt`, ícone de troféu na Home): melhor carga por exercício, dia em que bateu, 1RM estimado, quanto subiu sobre o recorde anterior e selo NOVO (30 dias). Exercícios sem carga (peso do corpo) não entram. Usa a view `vw_exercise_progression`.
+- **Favoritos e recentes** no catálogo (`CatalogPrefs`, só no aparelho): estrela em cada card, filtros Favoritos/Recentes, favoritos aparecem primeiro.
+- **Social** (`presentation/social/`, `ui/social/`, ícone de grupo na Home; Evolução e Aparência foram pro menu ⋮): 
+  - **Feed** com reações (💪🔥👏🎧), **Grupos** (criar, público/convite, entrar por código, sair), **Desafios** (criar com 8 métricas e regras anti-trapaça, entrar/sair, placar via `challenge_standings`), **Pessoas** (buscar, seguir, aceitar/recusar pedidos, perfil com números e músicas mais tocadas) e **Privacidade** (bio, visibilidade, compartilhar treinos/músicas; tudo começa privado).
+  - Cada seção carrega sozinha: se uma tabela falhar, as outras seguem. Regras de visibilidade ficam no banco (RLS); o app só consome.
+  - `SocialContent` (visual) é separado do `SocialViewModel` por `SocialActions`, o que permite testar a tela sem rede.
+- **Testes**: +47 no `:shared` (catálogo, treinos prontos, recordes, social; a suíte do `:shared` tem 115) e `SocialGalleryTest` (capturas em `app/build/outputs/social-gallery`). Os diálogos não têm teste de captura (o cursor piscando trava o Robolectric).
+- **Não testado no aparelho ainda** (o celular estava desconectado): telas Social, Recordes com dados reais, favoritos. Os diálogos (criar grupo/desafio, privacidade) só compilam; nunca foram abertos.
+- Depois: **desafio em equipes** (formulário, escolha de equipe ao entrar, ranking por equipe), **barra de progresso até a meta**, **editar legenda/visibilidade** dos próprios posts e `ErrorState` com "Tentar de novo" (Recordes e Social). Revisão visual dos 21 temas com as fontes novas nas galerias (Obsidiana, Papel, Terminal, Floresta conferidos).
+- **Bug achado por teste**: ao falhar no meio de `ExerciseViewModel.createMany`, a recarga da lista apagava a mensagem de erro; `loadExercises(clearError = false)` resolve.
+- **Pendente**: notificações de desafio/pedido de seguir, upload de avatar, ligas semanais, notificação do descanso em segundo plano, testar tudo no aparelho.
+
 ## Supabase real (ygbrrypyydxnuskrobeu)
 - Sondagem só leitura com a chave publicável: tabelas base (profiles, muscle_groups, exercises, workouts, workout_sets e as 2 views) existem e respondem vazio para anônimo; social e body_weights ainda NÃO existem.
 - O conector do Supabase da sessão não enxerga esse projeto, então as migrations não foram aplicadas por mim. Rodar `docs/supabase/APLICAR_TUDO.sql` no SQL Editor (testado do zero num Postgres 16 local; transação única).

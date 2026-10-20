@@ -79,6 +79,19 @@ class HistoryViewModel(
         }
     }
 
+    /** Apaga o treino (e as séries dele) e tira da lista; se falhar, a lista fica como estava. */
+    fun deleteWorkout(workoutId: String) {
+        viewModelScope.launch {
+            try {
+                workoutRepository.deleteWorkout(workoutId)
+                _uiState.value = _uiState.value.copy(workouts = _uiState.value.workouts.filterNot { it.workoutId == workoutId })
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                _uiState.value = _uiState.value.copy(errorMessage = e.toUserMessage("Erro ao apagar o treino"))
+            }
+        }
+    }
+
     fun clearError() {
         _uiState.value = _uiState.value.copy(errorMessage = null)
     }

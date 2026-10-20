@@ -37,7 +37,46 @@ fun DrawScope.drawThemeBackground(extras: ThemeExtras, base: Color, t: Float) {
         Decor.CONFETTI -> drawConfetti(extras.decorColors, t)
         Decor.EMBERS -> drawEmbers(extras.decorColors, t)
         Decor.BLUEPRINT -> drawBlueprint()
+        Decor.STRIPES -> drawStripes(extras.decorColors.firstOrNull() ?: Color.Red)
+        Decor.DOTS -> drawDots(extras.decorColors.firstOrNull() ?: Color.White)
+        Decor.HALO -> drawHalo(extras.decorColors.firstOrNull() ?: Color.White)
     }
+}
+
+// ───────────────────────── Listras de corrida ─────────────────────────
+private fun DrawScope.drawStripes(color: Color) {
+    val w = size.width; val h = size.height
+    // três faixas a 45° cortando o canto inferior direito (longe da barra de cima e do texto)
+    listOf(0.26f to 14.dp, 0.33f to 5.dp, 0.38f to 2.dp).forEach { (f, thick) ->
+        val d = w * f
+        drawLine(color.copy(alpha = 0.55f), Offset(w, h - d), Offset(w - d, h), thick.toPx())
+    }
+}
+
+// ───────────────────────── Pontinhos ─────────────────────────
+private fun DrawScope.drawDots(color: Color) {
+    val gap = 22.dp.toPx()
+    val r = 1.1.dp.toPx()
+    var y = gap / 2
+    while (y < size.height) {
+        var x = gap / 2
+        while (x < size.width) {
+            drawCircle(color.copy(alpha = 0.10f), r, Offset(x, y))
+            x += gap
+        }
+        y += gap
+    }
+}
+
+// ───────────────────────── Halo ─────────────────────────
+private fun DrawScope.drawHalo(color: Color) {
+    val r = size.width * 1.1f
+    drawRect(
+        Brush.radialGradient(
+            listOf(color.copy(alpha = 0.22f), color.copy(alpha = 0.06f), Color.Transparent),
+            center = Offset(size.width / 2f, -size.height * 0.05f), radius = r
+        )
+    )
 }
 
 // ───────────────────────── Papel ─────────────────────────
@@ -162,7 +201,7 @@ private fun DrawScope.drawAurora(colors: List<Color>, t: Float) {
         )
     }
     // véu escuro leve pra manter o contraste do texto
-    drawRect(Color.Black.copy(alpha = 0.22f))
+    drawRect(Color.Black.copy(alpha = 0.34f))
 }
 
 // ───────────────────────── Synthwave ─────────────────────────
@@ -183,13 +222,13 @@ private fun DrawScope.drawSynthSun(colors: List<Color>, t: Float) {
     // sol
     val r = w * 0.27f
     val c = Offset(w / 2f, horizon - r * 0.55f)
-    drawCircle(Brush.verticalGradient(listOf(sunYellow.copy(alpha = 0.55f), pink.copy(alpha = 0.55f)), startY = c.y - r, endY = c.y + r), radius = r, center = c)
+    drawCircle(Brush.verticalGradient(listOf(sunYellow.copy(alpha = 0.30f), pink.copy(alpha = 0.30f)), startY = c.y - r, endY = c.y + r), radius = r, center = c)
     // listras cortando a metade de baixo do sol (cor do horizonte)
     val horizonColor = Color(0xFF3B0F6B)
     var y = c.y + r * 0.05f
     var th = r * 0.035f
     while (y < c.y + r) {
-        drawRect(horizonColor.copy(alpha = 0.7f), topLeft = Offset(c.x - r, y), size = Size(r * 2, th))
+        drawRect(horizonColor.copy(alpha = 0.45f), topLeft = Offset(c.x - r, y), size = Size(r * 2, th))
         y += th * 2.6f
         th *= 1.22f
     }
@@ -213,13 +252,13 @@ private fun DrawScope.drawSynthSun(colors: List<Color>, t: Float) {
 private fun DrawScope.drawConfetti(colors: List<Color>, t: Float) {
     val palette = colors.ifEmpty { listOf(Color.Red, Color.Blue) }
     val rnd = Random(99)
-    val count = 26
+    val count = 18
     val stroke = 3.dp.toPx()
     repeat(count) { i ->
         val x = rnd.nextFloat() * size.width + 6f * sin(TAU * (t * 2 + i * 0.1f))
         val y = rnd.nextFloat() * size.height + 6f * cos(TAU * (t * 2 + i * 0.1f))
         val s = 14.dp.toPx() + rnd.nextFloat() * 22.dp.toPx()
-        val col = palette[i % palette.size].copy(alpha = 0.55f)
+        val col = palette[i % palette.size].copy(alpha = 0.28f)
         val rot = rnd.nextFloat() * 360f + t * 360f * if (i % 2 == 0) 1 else -1
         when (i % 5) {
             0 -> drawCircle(col, radius = s / 2, center = Offset(x, y))

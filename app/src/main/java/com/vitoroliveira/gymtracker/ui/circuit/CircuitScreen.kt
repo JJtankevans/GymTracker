@@ -20,6 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vitoroliveira.gymtracker.data.model.Exercise
@@ -107,11 +108,17 @@ fun CircuitScreen(
 
     w.summary?.let { WorkoutSummaryDialog(summary = it, onDone = { circuitVm.stop(); onExit() }) }
 
+    val nothingDone = w.completedSets.isEmpty()
     if (confirmExit) AlertDialog(
         onDismissRequest = { confirmExit = false },
         title = { Text("Encerrar circuito?") },
-        text = { Text("As séries já concluídas ficam salvas no treino.") },
-        confirmButton = { TextButton({ confirmExit = false; circuitVm.stop(); workoutVm.finishWorkout() }) { Text("Encerrar e salvar") } },
+        text = { Text(if (nothingDone) "Nenhuma série foi concluída, então o treino será descartado." else "As séries já concluídas ficam salvas no treino.") },
+        confirmButton = {
+            TextButton({
+                confirmExit = false; circuitVm.stop()
+                if (nothingDone) workoutVm.discardActiveWorkout { onExit() } else workoutVm.finishWorkout()
+            }) { Text(if (nothingDone) "Descartar e sair" else "Encerrar e salvar") }
+        },
         dismissButton = { TextButton({ confirmExit = false }) { Text("Continuar") } }
     )
 }
@@ -275,13 +282,13 @@ fun CircuitRunContent(
         Text("Série ${step.setNumber} de ${step.setsTotal}  ·  ${step.reps} × ${formatKg(step.weightKg)} kg", style = MaterialTheme.typography.titleMedium)
 
         Spacer(Modifier.height(8.dp))
-        ProgressRing(progress, Modifier.size(230.dp), stroke = 16.dp, color = color, track = color.copy(alpha = 0.16f)) {
+        ProgressRing(progress, Modifier.size(230.dp), stroke = 16.dp, color = color, track = color.copy(alpha = 0.16f), live = true) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(if (resting) "DESCANSO" else "SÉRIE", style = MaterialTheme.typography.labelLarge, letterSpacing = 3.sp, color = color)
                 if (resting) {
                     val s = ((c.restLeftMs + 999) / 1000).toInt()
                     Text("%d:%02d".format(s / 60, s % 60), fontSize = 58.sp, fontWeight = FontWeight.Black)
-                    Text("próxima: " + (c.next?.let { "${it.exerciseName} ${it.setNumber}/${it.setsTotal}" } ?: "fim"), style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant)
+                    Text("próxima: " + (c.next?.let { "${it.exerciseName} ${it.setNumber}/${it.setsTotal}" } ?: "fim"), style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant, textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.widthIn(max = 150.dp))
                 } else {
                     Text("${c.setElapsedMs / 1000}", fontSize = 72.sp, fontWeight = FontWeight.Black)
                     Text("previsto ${c.predictedSetSec}s", style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant)
@@ -321,8 +328,8 @@ fun CircuitRunContent(
             }
             Spacer(Modifier.height(8.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onExtend, Modifier.weight(1f).height(48.dp)) { Text("+15s descanso") }
-                OutlinedButton(onDone, Modifier.weight(1f).height(48.dp)) { Icon(Icons.Default.SkipNext, null); Spacer(Modifier.width(4.dp)); Text("Pular descanso") }
+                OutlinedButton(onExtend, Modifier.weight(1f).height(48.dp)) { Text("+15s descanso", maxLines = 1) }
+                OutlinedButton(onDone, Modifier.weight(1f).height(48.dp)) { Icon(Icons.Default.SkipNext, null); Spacer(Modifier.width(4.dp)); Text("Pular", maxLines = 1) }
             }
         }
         Spacer(Modifier.height(8.dp))

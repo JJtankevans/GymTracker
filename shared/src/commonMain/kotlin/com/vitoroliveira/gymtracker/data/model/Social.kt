@@ -1,0 +1,163 @@
+package com.vitoroliveira.gymtracker.data.model
+
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObject
+
+// Modelos da camada social. Espelham as tabelas/funções de docs/supabase/002_social.sql.
+
+/** Linha de `public_profiles()`: só colunas seguras, respeitando a visibilidade. */
+@Serializable
+data class SocialProfile(
+    val id: String,
+    val username: String,
+    @SerialName("full_name") val fullName: String? = null,
+    @SerialName("avatar_url") val avatarUrl: String? = null,
+    val bio: String? = null,
+    val visibility: String = "private",
+    @SerialName("created_at") val createdAt: String? = null
+) {
+    val displayName: String get() = fullName?.takeIf { it.isNotBlank() } ?: username
+}
+
+/** Configurações de compartilhamento do próprio usuário (colunas novas de `profiles`). */
+@Serializable
+data class SocialSettings(
+    val bio: String? = null,
+    val visibility: String = "private",
+    @SerialName("share_workouts") val shareWorkouts: Boolean = false,
+    @SerialName("share_music") val shareMusic: Boolean = false
+)
+
+@Serializable
+data class Follow(
+    @SerialName("follower_id") val followerId: String,
+    @SerialName("followed_id") val followedId: String,
+    val status: String = "pending"
+)
+
+@Serializable
+data class SocialGroup(
+    val id: String,
+    @SerialName("owner_id") val ownerId: String,
+    val name: String,
+    val description: String? = null,
+    val privacy: String = "invite",
+    @SerialName("invite_code") val inviteCode: String? = null,
+    @SerialName("max_members") val maxMembers: Int? = null,
+    @SerialName("created_at") val createdAt: String? = null
+) {
+    val isPublic: Boolean get() = privacy == "public"
+}
+
+@Serializable
+data class NewGroup(
+    @SerialName("owner_id") val ownerId: String,
+    val name: String,
+    val description: String?,
+    val privacy: String,
+    @SerialName("max_members") val maxMembers: Int?
+)
+
+@Serializable
+data class GroupMember(
+    @SerialName("group_id") val groupId: String,
+    @SerialName("profile_id") val profileId: String,
+    val role: String = "member"
+)
+
+@Serializable
+data class Challenge(
+    val id: String,
+    @SerialName("creator_id") val creatorId: String,
+    @SerialName("group_id") val groupId: String? = null,
+    val title: String,
+    val description: String? = null,
+    val metric: String,
+    @SerialName("exercise_name") val exerciseName: String? = null,
+    val mode: String = "individual",
+    val teams: List<String> = emptyList(),
+    val visibility: String = "group",
+    @SerialName("invite_code") val inviteCode: String? = null,
+    @SerialName("starts_at") val startsAt: String,
+    @SerialName("ends_at") val endsAt: String,
+    val target: Double? = null,
+    @SerialName("min_minutes_per_workout") val minMinutesPerWorkout: Int = 0,
+    @SerialName("max_workouts_per_day") val maxWorkoutsPerDay: Int = 1,
+    @SerialName("max_participants") val maxParticipants: Int? = null
+)
+
+@Serializable
+data class NewChallenge(
+    @SerialName("creator_id") val creatorId: String,
+    @SerialName("group_id") val groupId: String?,
+    val title: String,
+    val description: String?,
+    val metric: String,
+    @SerialName("exercise_name") val exerciseName: String?,
+    val mode: String,
+    val teams: List<String>,
+    val visibility: String,
+    @SerialName("starts_at") val startsAt: String,
+    @SerialName("ends_at") val endsAt: String,
+    val target: Double?,
+    @SerialName("min_minutes_per_workout") val minMinutesPerWorkout: Int,
+    @SerialName("max_workouts_per_day") val maxWorkoutsPerDay: Int,
+    @SerialName("max_participants") val maxParticipants: Int?
+)
+
+@Serializable
+data class ChallengeParticipant(
+    @SerialName("challenge_id") val challengeId: String,
+    @SerialName("profile_id") val profileId: String,
+    val team: String? = null
+)
+
+/** Linha de `challenge_standings()`. */
+@Serializable
+data class Standing(
+    @SerialName("profile_id") val profileId: String,
+    val username: String,
+    @SerialName("avatar_url") val avatarUrl: String? = null,
+    val team: String? = null,
+    val score: Double = 0.0,
+    val rank: Long = 0
+)
+
+@Serializable
+data class FeedPost(
+    val id: String,
+    @SerialName("profile_id") val profileId: String,
+    @SerialName("workout_id") val workoutId: String,
+    val caption: String? = null,
+    val visibility: String = "followers",
+    val stats: JsonObject = JsonObject(emptyMap()),
+    @SerialName("created_at") val createdAt: String? = null
+)
+
+@Serializable
+data class PostReaction(
+    @SerialName("post_id") val postId: String,
+    @SerialName("profile_id") val profileId: String,
+    val kind: String
+)
+
+/** Resultado de `profile_stats()` (null quando você não pode ver o perfil). */
+@Serializable
+data class ProfileStats(
+    val workouts: Int = 0,
+    @SerialName("active_days") val activeDays: Int = 0,
+    val sets: Int = 0,
+    @SerialName("volume_kg") val volumeKg: Double = 0.0,
+    val since: String? = null
+)
+
+/** Linha de `profile_top_tracks()`: música mais tocada nos treinos de alguém. */
+@Serializable
+data class TopTrack(
+    val title: String,
+    val artist: String? = null,
+    val album: String? = null,
+    val plays: Long = 0,
+    @SerialName("last_played") val lastPlayed: String? = null
+)

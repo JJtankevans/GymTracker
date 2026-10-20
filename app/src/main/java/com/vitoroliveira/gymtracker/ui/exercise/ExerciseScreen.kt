@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.vitoroliveira.gymtracker.data.catalog.CatalogExercise
 import com.vitoroliveira.gymtracker.data.model.Exercise
 import com.vitoroliveira.gymtracker.data.model.MuscleGroup
 import com.vitoroliveira.gymtracker.presentation.viewmodel.ExerciseUiState
@@ -64,7 +65,8 @@ fun ExerciseScreen(
         },
         onUpdate = { exercise -> exerciseViewModel.updateExercise(exercise) },
         onDelete = { id -> exerciseViewModel.deleteExercise(id) },
-        onClearMessages = { exerciseViewModel.clearMessages() }
+        onClearMessages = { exerciseViewModel.clearMessages() },
+        onCreateMany = { items, groupId -> exerciseViewModel.createMany(items, groupId) }
     )
 }
 
@@ -80,9 +82,12 @@ fun ExerciseScreenContent(
     onCreate: (String, String?, Int, Int, String?) -> Unit,
     onUpdate: (Exercise) -> Unit,
     onDelete: (String) -> Unit,
-    onClearMessages: () -> Unit
+    onClearMessages: () -> Unit,
+    onCreateMany: (List<CatalogExercise>, String?) -> Unit = { _, _ -> }
 ) {
+    var showCatalog by remember { mutableStateOf(false) }
     var showCreateDialog by remember { mutableStateOf(false) }
+    var prefill by remember { mutableStateOf<CatalogExercise?>(null) }
     var exerciseToEdit by remember { mutableStateOf<Exercise?>(null) }
     var exerciseToDelete by remember { mutableStateOf<Exercise?>(null) }
 
@@ -114,7 +119,7 @@ fun ExerciseScreenContent(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showCreateDialog = true }) {
+            FloatingActionButton(onClick = { showCatalog = true }) {
                 Icon(Icons.Default.Add, contentDescription = "Adicionar exercício")
             }
         }
@@ -176,16 +181,31 @@ fun ExerciseScreenContent(
         }
     }
 
+    if (showCatalog) {
+        ExerciseCatalogSheet(
+            existingNames = uiState.allNames,
+            onPickOne = { prefill = it; showCatalog = false; showCreateDialog = true },
+            onPickMany = { onCreateMany(it, uiState.selectedMuscleGroupId); showCatalog = false },
+            onCustom = { prefill = null; showCatalog = false; showCreateDialog = true },
+            onDismiss = { showCatalog = false }
+        )
+    }
+
     if (showCreateDialog) {
         ExerciseDialog(
             title = "Novo Exercício",
             availableGroups = availableGroups,
+            initialName = prefill?.name ?: "",
             initialMuscleGroupId = uiState.selectedMuscleGroupId,
+            initialSets = prefill?.sets ?: 3,
+            initialReps = prefill?.reps ?: 12,
+            initialNotes = prefill?.hint ?: "",
             onConfirm = { name, groupId, sets, reps, notes ->
                 onCreate(name, groupId, sets, reps, notes)
                 showCreateDialog = false
+                prefill = null
             },
-            onDismiss = { showCreateDialog = false }
+            onDismiss = { showCreateDialog = false; prefill = null }
         )
     }
 
@@ -289,12 +309,24 @@ fun ExerciseItem(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(color)
-            )
+            val catalog = remember(exercise.name) {
+                com.vitoroliveira.gymtracker.data.catalog.ExerciseCatalog.all
+                    .firstOrNull { com.vitoroliveira.gymtracker.data.catalog.ExerciseCatalog.isSameName(it.name, exercise.name) }
+            }
+            if (catalog != null) {
+                val tint = catalog.muscle.tint()
+                Box(
+                    Modifier.size(44.dp).clip(MaterialTheme.shapes.small).background(tint.copy(alpha = 0.18f)),
+                    contentAlignment = Alignment.Center
+                ) { EquipmentIcon(catalog.equipment, tint, Modifier.size(30.dp)) }
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(color)
+                )
+            }
 
             Spacer(modifier = Modifier.width(16.dp))
 

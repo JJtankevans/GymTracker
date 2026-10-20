@@ -52,7 +52,8 @@ fun MuscleGroupScreen(
         onCreate = { name, color -> viewModel.createMuscleGroup(name, color) },
         onUpdate = { muscleGroup -> viewModel.updateMuscleGroup(muscleGroup) },
         onDelete = { id -> viewModel.deleteMuscleGroup(id) },
-        onClearMessages = { viewModel.clearMessages() }
+        onClearMessages = { viewModel.clearMessages() },
+        onCreateFromTemplate = { viewModel.createFromTemplate(it) }
     )
 }
 
@@ -65,8 +66,10 @@ fun MuscleGroupScreenContent(
     onCreate: (String, String) -> Unit,
     onUpdate: (MuscleGroup) -> Unit,
     onDelete: (String) -> Unit,
-    onClearMessages: () -> Unit
+    onClearMessages: () -> Unit,
+    onCreateFromTemplate: (com.vitoroliveira.gymtracker.data.catalog.WorkoutTemplate) -> Unit = {}
 ) {
+    var showTemplates by remember { mutableStateOf(false) }
     var showCreateDialog by remember { mutableStateOf(false) }
     var groupToEdit by remember { mutableStateOf<MuscleGroup?>(null) }
     var groupToDelete by remember { mutableStateOf<MuscleGroup?>(null) }
@@ -131,6 +134,8 @@ fun MuscleGroupScreenContent(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(onClick = { showTemplates = true }) { Text("Começar com um treino pronto") }
                 }
             }
         } else {
@@ -142,6 +147,11 @@ fun MuscleGroupScreenContent(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = PaddingValues(vertical = 16.dp)
             ) {
+                item(key = "templates") {
+                    OutlinedButton(onClick = { showTemplates = true }, modifier = Modifier.fillMaxWidth()) {
+                        Text("Treinos prontos (Push, Pull, Pernas…)")
+                    }
+                }
                 items(uiState.muscleGroups, key = { it.id ?: it.name }) { group ->
                     MuscleGroupItem(
                         muscleGroup = group,
@@ -156,6 +166,13 @@ fun MuscleGroupScreenContent(
                 }
             }
         }
+    }
+
+    if (showTemplates) {
+        TemplateSheet(
+            onPick = { onCreateFromTemplate(it); showTemplates = false },
+            onDismiss = { showTemplates = false }
+        )
     }
 
     // Dialog de criação

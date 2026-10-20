@@ -1,6 +1,8 @@
 package com.vitoroliveira.gymtracker.ui.theme
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -14,6 +16,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -35,7 +38,9 @@ fun Modifier.themedBackground(): Modifier {
         val t = clock()
         // Insano: o fundo anda 3x mais rápido (múltiplo inteiro, então o loop continua contínuo)
         drawThemeBackground(extras, bg, if (intensity == Intensity.WILD) (t * 3f) % 1f else t)
-        val animatedDecor = extras.decor != Decor.NONE && extras.decor != Decor.PAPER && extras.decor != Decor.BLUEPRINT
+        val animatedDecor = extras.decor !in listOf(
+            Decor.NONE, Decor.PAPER, Decor.BLUEPRINT, Decor.STRIPES, Decor.DOTS, Decor.HALO
+        )
         // Calmo: um véu da cor do fundo deixa a decoração discreta
         if (intensity == Intensity.CALM && extras.decor != Decor.NONE) drawRect(bg.copy(alpha = 0.5f))
         if (intensity == Intensity.WILD && animatedDecor) drawWildOverlay(extras.decorColors.firstOrNull() ?: accent, t)
@@ -110,6 +115,7 @@ fun ThemedTopAppBar(
  * Card que respeita o estilo do tema: borda, sombra dura, brilho neon.
  * Use no lugar de `Card`.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ThemedCard(
     modifier: Modifier = Modifier,
@@ -118,6 +124,7 @@ fun ThemedCard(
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
     border: BorderStroke? = null,
     onClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val x = LocalThemeExtras.current
@@ -127,7 +134,14 @@ fun ThemedCard(
     if (x.hardShadowOffset.value > 0f) m = m.hardShadow(shape, x.hardShadowOffset, x.hardShadowColor)
     x.glowColor?.let { m = m.neonGlow(shape, it) }
 
-    if (onClick != null) {
+    if (onClick != null && onLongClick != null) {
+        Surface(
+            modifier = m.clip(shape).combinedClickable(onClick = onClick, onLongClick = onLongClick),
+            shape = shape, color = containerColor, contentColor = contentColor, border = themeBorder
+        ) {
+            Column(content = content)
+        }
+    } else if (onClick != null) {
         Surface(onClick = onClick, modifier = m, shape = shape, color = containerColor, contentColor = contentColor, border = themeBorder) {
             Column(content = content)
         }

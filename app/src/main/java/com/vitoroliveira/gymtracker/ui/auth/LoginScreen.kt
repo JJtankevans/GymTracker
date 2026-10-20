@@ -77,6 +77,15 @@ fun LoginScreenContent(
                 style = MaterialTheme.typography.headlineLarge
             )
 
+            if (com.vitoroliveira.gymtracker.BuildConfig.SUPABASE_URL.isBlank()) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Este app foi gerado sem o endereço do Supabase (SUPABASE_URL / SUPABASE_KEY no local.properties). Entrar e criar conta não vão funcionar até gerar o app de novo com esses valores.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+
             Spacer(modifier = Modifier.height(48.dp))
 
             OutlinedTextField(

@@ -32,7 +32,10 @@ enum class Decor {
     SYNTH_SUN,  // sol retrô + grade
     CONFETTI,   // formas geométricas espalhadas
     EMBERS,     // brasas subindo
-    BLUEPRINT   // papel milimetrado técnico
+    BLUEPRINT,  // papel milimetrado técnico
+    STRIPES,    // listras diagonais de corrida no canto
+    DOTS,       // grade de pontinhos discreta
+    HALO        // luz suave vinda do topo
 }
 
 /**

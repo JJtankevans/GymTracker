@@ -2,6 +2,7 @@ package com.vitoroliveira.gymtracker.ui.home
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -73,7 +74,7 @@ private fun HomeUiState.remainingText(): String {
         weeklyGoal <= 0 -> "Defina uma meta no perfil."
         left <= 0 -> "Meta batida. Descanse bem."
         left == 1 -> "Falta 1 treino para a meta."
-        else -> "Faltam $left treinos para a meta."
+        else -> if (left == 1) "Falta 1 treino para a meta." else "Faltam $left treinos para a meta."
     }
 }
 
@@ -104,10 +105,16 @@ internal fun ProgressRing(
     stroke: androidx.compose.ui.unit.Dp = 14.dp,
     color: Color = MaterialTheme.colorScheme.primary,
     track: Color = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
+    live: Boolean = false,
     content: @Composable BoxScope.() -> Unit = {}
 ) {
-    val anim = remember(progress) { Animatable(0f) }
-    LaunchedEffect(progress) { anim.animateTo(progress, tween(1000, easing = FastOutSlowInEasing)) }
+    // Um único Animatable: se fosse recriado a cada valor novo (timers atualizam várias vezes
+    // por segundo), o anel voltava pra 0 toda hora e nunca enchia.
+    val anim = remember { Animatable(0f) }
+    LaunchedEffect(progress) {
+        if (live) anim.animateTo(progress, tween(250, easing = LinearEasing))
+        else anim.animateTo(progress, tween(1000, easing = FastOutSlowInEasing))
+    }
     Box(modifier, contentAlignment = Alignment.Center) {
         Canvas(Modifier.fillMaxSize()) {
             val w = stroke.toPx()
@@ -303,12 +310,12 @@ private fun OrbitHome(state: HomeUiState, a: HomeActions, modifier: Modifier) {
         ProgressRing(state.progress(), Modifier.size(260.dp), stroke = 20.dp, color = cs.primary, track = cs.primary.copy(alpha = 0.14f)) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("${state.weeklyCount}", style = MaterialTheme.typography.displayLarge.copy(fontSize = 84.sp), fontWeight = FontWeight.Black)
-                Text("de ${state.weeklyGoal} treinos", style = MaterialTheme.typography.titleSmall, color = cs.onSurfaceVariant)
+                Text("de ${state.weeklyGoal} ${if (state.weeklyGoal == 1) "treino" else "treinos"}", style = MaterialTheme.typography.titleSmall, color = cs.onSurfaceVariant)
             }
         }
         Text(state.remainingText(), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Pill(Icons.Default.LocalFireDepartment, "${state.streakDays} dias", cs.tertiary)
+            Pill(Icons.Default.LocalFireDepartment, if (state.streakDays == 1) "1 dia" else "${state.streakDays} dias", cs.tertiary)
             Pill(Icons.Default.CheckCircle, state.lastWorkoutDate ?: "sem treinos", cs.primary)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(28.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -361,7 +368,7 @@ private fun EditorialHome(state: HomeUiState, a: HomeActions, modifier: Modifier
         HorizontalDivider(thickness = 3.dp, color = cs.onBackground)
         Text("EDIÇÃO DA SEMANA", style = MaterialTheme.typography.labelMedium, letterSpacing = 3.sp, color = cs.primary)
         Text(
-            "${state.weeklyCount} de ${state.weeklyGoal} treinos",
+            "${state.weeklyCount} de ${state.weeklyGoal} ${if (state.weeklyGoal == 1) "treino" else "treinos"}",
             style = MaterialTheme.typography.displaySmall.copy(fontSize = 44.sp, lineHeight = 48.sp),
             fontWeight = FontWeight.Black
         )
@@ -370,7 +377,7 @@ private fun EditorialHome(state: HomeUiState, a: HomeActions, modifier: Modifier
         Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
             Column(Modifier.weight(1f).padding(end = 12.dp)) {
                 Text("SEQUÊNCIA", style = MaterialTheme.typography.labelSmall, letterSpacing = 2.sp, color = cs.onSurfaceVariant)
-                Text("${state.streakDays} dias", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                Text(if (state.streakDays == 1) "1 dia" else "${state.streakDays} dias", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
             }
             VerticalDivider(color = cs.onBackground)
             Column(Modifier.weight(1f).padding(start = 12.dp)) {

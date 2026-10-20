@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -56,4 +58,17 @@ fun EmptyState(
             Button(onClick = onAction) { Text(actionLabel) }
         }
     }
+}
+
+/** Falha ao carregar: explica o que houve e oferece tentar de novo (em vez de parecer "vazio"). */
+@Composable
+fun ErrorState(message: String, onRetry: () -> Unit, modifier: Modifier = Modifier) {
+    EmptyState(
+        icon = Icons.Default.CloudOff,
+        title = "Não deu pra carregar",
+        message = message,
+        modifier = modifier,
+        actionLabel = "Tentar de novo",
+        onAction = onRetry
+    )
 }

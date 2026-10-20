@@ -4,7 +4,9 @@ import com.vitoroliveira.gymtracker.presentation.toUserMessage
 import kotlin.coroutines.cancellation.CancellationException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.vitoroliveira.gymtracker.data.catalog.WorkoutTemplate
 import com.vitoroliveira.gymtracker.data.model.MuscleGroup
+import com.vitoroliveira.gymtracker.domain.usecase.CreateWorkoutFromTemplate
 import com.vitoroliveira.gymtracker.domain.repository.MuscleGroupRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +21,8 @@ data class MuscleGroupUiState(
 )
 
 class MuscleGroupViewModel(
-    private val repository: MuscleGroupRepository
+    private val repository: MuscleGroupRepository,
+    private val createFromTemplate: CreateWorkoutFromTemplate? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MuscleGroupUiState())
@@ -70,6 +73,29 @@ class MuscleGroupViewModel(
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     errorMessage = e.toUserMessage("Erro ao criar grupo muscular")
+                )
+            }
+        }
+    }
+
+    /** Cria o treino pronto (grupo + exercícios do catálogo) de uma vez. */
+    fun createFromTemplate(template: WorkoutTemplate) {
+        val creator = createFromTemplate ?: return
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            try {
+                val names = _uiState.value.muscleGroups.map { it.name }
+                val count = creator(template, names)
+                loadMuscleGroups()
+                _uiState.value = _uiState.value.copy(
+                    successMessage = "Treino '${template.name}' criado com $count exercícios" +
+                        if (count < template.exerciseNames.size) " (${template.exerciseNames.size - count} já existiam em outro grupo)" else ""
+                )
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = e.toUserMessage("Erro ao criar o treino pronto")
                 )
             }
         }

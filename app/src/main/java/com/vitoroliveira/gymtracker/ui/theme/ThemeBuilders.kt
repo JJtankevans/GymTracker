@@ -84,6 +84,18 @@ internal fun makeScheme(
     )
 }
 
+/**
+ * Família do sistema Android por nome (ex.: "sans-serif-condensed", "sans-serif-light").
+ * Dá variedade de tipografia sem embutir arquivos de fonte.
+ */
+@OptIn(androidx.compose.ui.text.ExperimentalTextApi::class)
+internal fun deviceFamily(name: String): FontFamily = FontFamily(
+    listOf(
+        FontWeight.Light, FontWeight.Normal, FontWeight.Medium, FontWeight.SemiBold,
+        FontWeight.Bold, FontWeight.ExtraBold, FontWeight.Black
+    ).map { androidx.compose.ui.text.font.Font(androidx.compose.ui.text.font.DeviceFontFamilyName(name), it) }
+)
+
 /** Escala de tipografia completa trocando só famílias/pesos/tracking. */
 internal fun makeTypography(
     heading: FontFamily,
@@ -91,13 +103,16 @@ internal fun makeTypography(
     headingWeight: FontWeight = FontWeight.Bold,
     headingTracking: TextUnit? = null,
     bodyWeight: FontWeight? = null,
-    labelWeight: FontWeight = FontWeight.Medium
+    labelWeight: FontWeight = FontWeight.Medium,
+    /** Ex.: "lnum" força números alinhados em fontes serifadas (senão o 0 parece um "o"). */
+    headingFeatures: String? = null
 ): Typography {
     val b = Typography()
     fun TextStyle.h() = copy(
         fontFamily = heading,
         fontWeight = headingWeight,
-        letterSpacing = headingTracking ?: letterSpacing
+        letterSpacing = headingTracking ?: letterSpacing,
+        fontFeatureSettings = headingFeatures ?: fontFeatureSettings
     )
     fun TextStyle.t() = copy(
         fontFamily = body,
