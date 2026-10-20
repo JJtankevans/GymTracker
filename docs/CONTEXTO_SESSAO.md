@@ -1,139 +1,70 @@
-# GymTracker — contexto para retomar (20/10/2026)
+# GymTracker — contexto para retomar (atualizado em 20/10/2026, fim do dia)
 
-Arquivo feito para começar uma conversa nova sem perder o fio. Leia isto primeiro; o histórico longo está em `docs/PROXIMOS_PASSOS.md`.
+Leia isto primeiro. O histórico longo de decisões está em `docs/PROXIMOS_PASSOS.md`; referências de design em `docs/REFERENCIAS_DESIGN.md`.
 
 ## O app em 5 linhas
-Android (Jetpack Compose) + módulo KMP `:shared` (regras, ViewModels, repositórios) + `:wear` (relógio, não sincroniza ainda). Backend: Supabase (projeto `ygbrrypyydxnuskrobeu`, região do usuário). Login por e-mail/senha. Dono: Thiago (`thiagobrito74@gmail.com`).
+Android (Jetpack Compose) + módulo KMP `:shared` (regras, ViewModels, repositórios) + `:wear` (relógio, ainda não sincroniza). Backend: Supabase (projeto `ygbrrypyydxnuskrobeu`). Login por e-mail/senha. Dono: Thiago (`thiagobrito74@gmail.com`). Repo: `github.com/JJtankevans/GymTracker`, branch `master`.
 
-## Estado atual (tudo compila e os testes passam)
-**Funciona e foi visto no celular (Xiaomi, Android conectado por adb):** login e cadastro, Home, treino ativo (modo Foco), anel do descanso corrigido, seletor de temas, catálogo de exercícios (criar 1 exercício e salvar no Supabase), lista de Grupos e a folha "Treinos prontos", fontes embutidas em Carbon/Arena/Ouro/Nórdico/Magma.
+## Estado atual (compila, testes do `:shared` passam)
+**Testado no celular (Xiaomi, adb) e funcionando:** login/cadastro, Home, treino ativo, seletor de temas (21 temas, 5 famílias de fonte), catálogo de exercícios (56) com seleção múltipla e favoritos, treinos prontos (Push/Pull/Pernas...), Recordes com dado real, Circuito (anel, descanso, botões), exclusão de treino no Histórico (toque longo), ilustrações por exercício (41 de 56), Social com duas contas: perfil público, seguir, feed, reações (ícones desenhados), grupo por código, desafio e placar, editar post, privacidade, pedido de seguir em perfil "Só seguidores".
 
-**Feito, mas só validado por testes unitários e capturas Robolectric (NUNCA aberto no celular):**
-- Tela **Recordes** (troféu na Home) com dados reais; só vimos o estado vazio no aparelho.
-- **Favoritos e Recentes** no catálogo (estrela, filtros).
-- Seleção **múltipla** no catálogo e **criar treino pronto** de verdade (Push/Pull/Pernas...).
-- **Social inteiro** (ícone de grupo na Home): Feed + reações, Grupos (criar, código, entrar/sair), Desafios (criar, entrar, placar, equipes, meta), Pessoas (seguir, pedidos, perfil com músicas), Privacidade, editar post.
-- Diálogos (criar grupo/desafio, privacidade, editar post): **só compilam**, nunca foram abertos.
-- Tela de erro "Tentar de novo" (Recordes e Social).
-- Modo Circuito: usa o mesmo anel corrigido, mas não foi aberto depois da correção.
+**Só validado por teste unitário (nunca visto no aparelho):** "Descartar e sair" ao encerrar o Circuito sem série (`WorkoutViewModel.discardActiveWorkout`).
+
+**Ainda NÃO testado no celular:**
+- Aceitar o pedido de seguir (logar na v.oliveira, Pessoas > pedidos) e depois ver, na thiagobr, perfil/posts/números da Deus.
+- Desafio em equipes, privacidade de música, sair de grupo/desafio, tela de erro "Tentar de novo" (Recordes e Social).
+- Apagar um treino que tem séries (depende de `workout_sets` ter ON DELETE CASCADE no banco; o esquema base não está em `docs/`).
 
 ## Números
-- 21 temas (7 novos: Nórdico, Obsidiana, Cobalto, Floresta, Arena, Ouro, Ártico) com 5 famílias de fonte embutidas (`res/font`, `ThemeFonts.kt`).
-- Catálogo: 56 exercícios (`data/catalog/ExerciseCatalog.kt`), 9 treinos prontos (`WorkoutTemplates.kt`).
-- Testes: 115+ no `:shared` (rodar: `./gradlew :shared:testDebugUnitTest`), galerias de captura no app (`./gradlew :app:testDebugUnitTest -Proborazzi.test.record=true`, imagens em `app/build/outputs/{theme,screen,social,circuit}-gallery`).
+- Catálogo: 56 exercícios (`shared/.../data/catalog/ExerciseCatalog.kt`), 9 treinos prontos (`WorkoutTemplates.kt`).
+- Imagens: 41 de 56 em `app/src/main/res/drawable-nodpi/ex_<nome>.png` (formato e lista de chaves em `docs/IMAGENS_EXERCICIOS.md`; folhas originais em `docs/folhas/`). Sem imagem (caem no ícone do equipamento): abdominal na polia, agachamento no Smith, cadeira abdutora, desenvolvimento na máquina, elevação pélvica, glúteo na polia, hack squat, panturrilha sentado, panturrilha no leg press, rosca martelo, rosca na polia, supino fechado, supino na máquina, remada na máquina, tríceps testa. As duas folhas têm estilos diferentes (1 realista/sombreada, 2 plana).
+- Testes: `./gradlew.bat :shared:testDebugUnitTest`; galerias de captura do app: `./gradlew.bat :app:testDebugUnitTest -Proborazzi.test.record=true`.
 
 ## Supabase
-- Todas as tabelas e funções existem (checado com a chave publicável): base + social + peso corporal. `APLICAR_TUDO.sql` já foi rodado pelo Thiago; **não rodar de novo**.
-- O conector Supabase da sessão **não enxerga** esse projeto; só dá pra sondar por REST com a chave publicável. Então não dá pra conferir políticas (RLS) por aqui. Visitante sem login lê lista vazia (bom) e `public_profiles()` nega (bom).
-- `local.properties` (fora do git) precisa de `SUPABASE_URL` e `SUPABASE_KEY` (a chave publicável `sb_publishable_...`). Sem isso o app builda com URL vazia e o login diz "sem internet". Agora o login avisa isso.
-- Dados de teste na conta real do Thiago (não apagados): grupo "teste", exercícios "aaaaa" e "Supino Reto com Barra", treino ativo de 1h30+ com 2 séries "12 × 0", peso corporal 130 kg registrado. Nada de social foi criado.
+- Tabelas e funções existem (base + social + peso corporal). `APLICAR_TUDO.sql` já rodado; **não rodar de novo**. Migração **005** (`docs/supabase/005_perfis_so_seguidores_descobriveis.sql`) também já rodada pelo Thiago: perfis "Só seguidores" aparecem na busca para poder pedir para seguir; bio/números/posts continuam escondidos até aceitar.
+- O conector Supabase da sessão não enxerga esse projeto; só dá para sondar por REST com a chave publicável. Não dá para conferir RLS por aqui (ver Próximos passos).
+- `local.properties` (fora do git) precisa de `SUPABASE_URL` e `SUPABASE_KEY` (chave `sb_publishable_...`).
+- **Bug de RLS já corrigido no cliente:** `insert(...) { select() }` (INSERT ... RETURNING) falhava com "Você não tem permissão" em grupos e desafios, porque a política de leitura só enxerga a linha depois do trigger que põe o dono como membro. O app agora gera o `id` (Uuid), insere e depois busca (`SocialRepositoryImpl.createGroup/createChallenge`). Vale para qualquer tabela nova com política parecida.
+
+## Contas de teste (no celular real, banco real)
+- `thiagobr` (usuário @AqueleQueTrazALuz, aparece como "Você") e `v.oliveira042997` (@Deus). **Eu (Claude) não digito senha no app** (regra de segurança, vale mesmo para contas de teste em projeto Supabase real); o Thiago troca a conta no celular (Perfil > Sair da conta). As senhas NÃO ficam neste arquivo.
+- Estado atual do Social: a Deus está em "Só seguidores", com "compartilhar treinos/músicas" ligados, dona do grupo privado "Time Teste" (código `e3aab77a`) e do "Desafio Teste" (treinos feitos, 30 dias, mín. 1 min, aberto). A thiagobr tem um **pedido de seguir pendente** para a Deus, está no grupo e no desafio (1º no placar com 1 treino).
+- Dados de teste ficaram nas duas contas: posts, treinos curtos, grupo, desafio. No Histórico da conta Thiago há "Push 1min" (recorde 10 kg, útil para testes) e "Sem grupo 3h18min" (2 séries 12×0); um treino ativo vazio no grupo "teste" pode reaparecer como "Treino em andamento" (escolher "Iniciar Novo" descarta).
 
 ## Como trabalhar neste PC
-- Windows, sem Python (usar sed/awk). Gradle: `./gradlew.bat :app:assembleDebug`. APK: `app/build/outputs/apk/debug/app-debug.apk`.
-- adb: `%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe`, pacote `com.vitoroliveira.gymtracker`. Instalar: `adb install -r <apk>`.
-- Trocar tema sem UI: `adb shell run-as <pacote> sed -i 's/name="theme_id">[a-z]*</name="theme_id">NOVO</' shared_prefs/gymtracker_prefs.xml` e reabrir. **Devolver `magma`** (tema do Thiago) no fim. A intensidade dele está em "Insano".
-- Toques por adb: tela 1080x2400; as capturas de tela aparecem reduzidas (fator 1,2).
-- O git rastreia pastas `build/` (status vem sujo de arquivos gerados). **Nada foi commitado.**
+- Windows, sem Python (usar sed/awk/PowerShell). Gradle: `./gradlew.bat :app:assembleDebug`. APK: `app/build/outputs/apk/debug/app-debug.apk`.
+- adb: `%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe`, pacote `com.vitoroliveira.gymtracker`, `adb install -r <apk>`. Se aparecer "offline"/"no devices": `adb kill-server`, reconectar o cabo, reativar a depuração USB.
+- Toques por adb: tela 1080x2400; as capturas vêm reduzidas (fator 1,2: coordenada da imagem × 1,2 = toque real). Cuidado: toques na faixa de cima podem puxar a aba de notificações, que mostra WhatsApp pessoal do Thiago; não interagir. Pop-ups da operadora (TIM / "Launch Browser?") já apareceram; recusar com Cancel.
+- Trocar tema sem UI: `adb shell run-as <pacote> sed -i 's/name="theme_id">[a-z]*</name="theme_id">NOVO</' shared_prefs/gymtracker_prefs.xml`. O tema do Thiago é `magma`, intensidade "Insano".
+- `build/` e `.kotlin/` estão no `.gitignore` (antes `shared/build` era rastreado).
 
 ## Armadilhas já encontradas
 - `import X as Y` esconde o nome original no arquivo → usar `typealias`.
 - Robolectric trava (`AppNotIdleException`) com `AlertDialog`; `ModalBottomSheet` funciona.
-- Em ViewModel: iniciar `loadX()` depois de setar erro apaga o erro (a recarga é assíncrona). Usar `loadExercises(clearError = false)`.
-- Playfair precisa de `lnum` (números alinhados), senão o 0 parece "o".
-- Fonte variável: um arquivo, pesos por eixo (`ThemeFonts.variable`).
+- ViewModel: iniciar `loadX()` depois de setar erro apaga o erro (recarga assíncrona). Usar `loadExercises(clearError = false)`.
+- Nome de exercício é único por usuário e 1 exercício pertence a 1 grupo → treino pronto pula exercícios que já existem e desfaz o grupo se falhar (`CreateWorkoutFromTemplate`).
+- Catálogo marca "já adicionado" olhando todos os exercícios do usuário (`ExerciseUiState.allNames`), não só os do grupo.
+- Layout: três `FilterChip` em `Row` quebram letra por letra; usar `FlowRow`. Números em `Row(SpaceBetween)` colam; usar `weight(1f)`.
+- Playfair precisa de `lnum`; fonte variável = um arquivo com pesos por eixo (`ThemeFonts.variable`).
+- Git Bash `sed` não lida com acentos (`y///`); para normalizar acentos use PowerShell. PowerShell lê scripts com acento mal sem BOM: usar `[char]0xED` etc.
+- Com treino ativo aberto, "Iniciar" na Home pula o sheet e vai direto ao treino (scripts por coordenada quebram).
 
 ## Próximos passos (ordem sugerida)
-1. **Testar no celular** o que nunca foi aberto (lista acima). Prioridade: criar treino pronto, catálogo com várias seleções + favoritos, Recordes com séries de carga real, abrir cada diálogo do Social.
-2. **Social com duas contas** (criar a 2ª conta no app): seguir (perfil público x privado), aceitar pedido, feed (ativar "compartilhar treinos", finalizar um treino e ver o post), reações, grupo por código, desafio individual e em equipes (conferir o placar no banco), editar post.
-3. Conferir **RLS** no painel do Supabase (Authentication/Policies) e o alerta "Security Definer View".
-4. Modo Circuito: abrir com um grupo e conferir o anel e o descanso (precisa descartar ou finalizar o treino ativo de teste).
-5. Pendentes de produto: notificações (pedido de seguir, desafio), foto de perfil, ligas semanais, aviso do descanso com o app em segundo plano, sincronizar relógio, sincronizar dados corporais com a nuvem, temas com "versão insana" própria, foto/ilustração por exercício no catálogo, mais exercícios (cardio, mobilidade).
-6. Limpeza: dados de teste da conta, commit (separar código de `build/`), migrar `kotlinx.datetime.Instant` deprecado no HistoryViewModel.
+1. Terminar o Social: aceitar o pedido (logar na v.oliveira), conferir perfil na thiagobr; equipes, música, sair do grupo/desafio, "Tentar de novo".
+2. Imagens dos exercícios: o Thiago gera as 15 que faltam e, de preferência, regerar tudo no mesmo estilo; eu corto/encaixo (o script de corte era temporário e não foi versionado: flood fill do fundo, tapa bolsões, agrupa peças por vizinhança, centraliza em 384×384).
+3. Conferir RLS no painel do Supabase (Authentication/Policies) e o alerta "Security Definer View". Considerar um Supabase local (Docker, `127.0.0.1`) para eu poder logar sozinho em testes automáticos.
+4. Produto pendente: notificações (pedido de seguir, desafio), foto de perfil, ligas semanais, aviso do descanso com o app em segundo plano, sincronizar relógio, sincronizar dados corporais com a nuvem, "versão insana" própria por tema, mais exercícios (cardio, mobilidade), detalhe de treino no Histórico, trocar o "joinha" por um ícone de palmas.
+5. Limpeza: dados de teste das contas; migrar `kotlinx.datetime.Instant` deprecado no `HistoryViewModel`.
+6. Segurança: as senhas das contas de teste apareceram em conversa; trocar antes de ter usuários reais.
 
 ## Mapa rápido do código
-- Catálogo/treinos prontos: `shared/.../data/catalog/`, UI `app/.../ui/exercise/ExerciseCatalogSheet.kt`, `ui/muscleGroup/TemplateSheet.kt`.
+- Catálogo/treinos prontos: `shared/.../data/catalog/`, UI `app/.../ui/exercise/ExerciseCatalogSheet.kt` (inclui `ExerciseArt`), `ui/muscleGroup/TemplateSheet.kt`.
 - Recordes: `shared/.../presentation/records/`, `app/.../ui/records/RecordsScreen.kt`.
 - Social: modelos `data/model/Social.kt`, repositório `data/repository/SocialRepositoryImpl.kt`, regras `presentation/social/SocialRules.kt`, `SocialViewModel.kt`, telas `app/.../ui/social/SocialScreen.kt` e `SocialDialogs.kt`.
-- Temas: `ui/theme/Themes.kt` (lista), `ThemeDecor.kt` (fundos), `ThemeFonts.kt`, `ThemeBuilders.kt`.
-- Navegação: `ui/Navigation.kt`; barra da Home: `ui/home/HomeScreen.kt` (Recordes, Social, Perfil, menu ⋮ com Evolução e Aparência).
-- SQL: `docs/supabase/` (`APLICAR_TUDO.sql` já aplicado).
+- Histórico: `presentation/viewmodel/HistoryViewModel.kt`, `ui/history/HistoryScreen.kt` (toque longo apaga; `ThemedCard(onLongClick)`).
+- Circuito: `ui/circuit/CircuitScreen.kt`. Treino ativo: `WorkoutViewModel`.
+- Temas: `ui/theme/Themes.kt`, `ThemeDecor.kt`, `ThemeFonts.kt`, `ThemeBuilders.kt`. Navegação: `ui/Navigation.kt`; barra da Home: `ui/home/HomeScreen.kt`.
+- SQL: `docs/supabase/` (`APLICAR_TUDO.sql` e `005_...` aplicados).
 
 ## Preferências do Thiago
-Quer autonomia ("yolo, sem perguntas"), temas variados e profissionais (contidos e impactantes), referências de design levadas a sério (`docs/REFERENCIAS_DESIGN.md`), e relatório honesto do que não foi testado no aparelho. Baixar arquivos (ex.: fontes) ele autorizou uma vez; pedir de novo para outros. Não apagar dados dele.
-
-## Atualização (sessão no celular, 20/10/2026)
-- Celular testado via adb (build + instalação ok, login ok, Home ok).
-- **Treino pronto** testado no aparelho: achou bug (nome de exercício é único por usuário → "Já existe um item com esse nome" e deixava grupo vazio). Corrigido: `CreateWorkoutFromTemplate` pula exercícios que já existem e apaga o grupo se der erro no meio. Validado no celular (Push criado com 5 de 6 exercícios). Mensagem avisa quantos já existiam.
-- Limitação de modelo: 1 exercício = 1 grupo, então exercícios repetidos entre treinos prontos (ex.: Supino Reto com Halteres em Push e Superior) só ficam no primeiro grupo criado.
-- Ainda NÃO testado no celular: catálogo com seleção múltipla/favoritos, Recordes com dados, Social (todos os diálogos), Circuito.
-- Imagens por exercício: Thiago mandou referências (silhuetas roxas com músculo em vermelho, 2 sheets). O card de exercício hoje usa ícone genérico de halter/polia. Plano: ele gera as imagens a partir de uma lista de 54 nomes e o app carrega por nome de arquivo.
-
-## Atualização 2 (testes no celular, 20/10/2026)
-Validado no aparelho: Grupos + Treinos prontos (corrigido), catálogo com seleção múltipla e favoritos (favorito persiste), Social (Feed/Grupos/Desafios/Pessoas abrem; diálogos Novo grupo, Novo desafio e Privacidade abrem; nada foi criado no social), Circuito (configuração, anel da série, anel do descanso, encerrar e salvar), Recordes (só o estado vazio).
-Corrigido nesta rodada:
-- Catálogo marcava "já adicionado" só o que estava no grupo atual; agora considera todos os exercícios (nome é único por usuário) via `ExerciseUiState.allNames`.
-- Privacidade/Editar post: chips quebravam "Privado" letra por letra → `FlowRow`.
-- Plurais: "1 dia", "1 treino no total", "Falta 1 treino", "faltam 1 dia".
-- Circuito: botões do descanso ("Pular", "+15s descanso") com `maxLines = 1` — NÃO reconferido no aparelho depois do ajuste (o texto "Pular descanso" estava cortado).
-Efeito colateral: o treino de teste antigo (198 min, 2 séries 12×0) foi finalizado ao encerrar o Circuito; agora há 1 treino no histórico e streak de 1 dia.
-Ainda não testado no celular: Recordes com dados (precisa de um treino com carga >0 salvo), Social com duas contas (seguir, feed, reações, grupo por código, desafios), Editar post, tela de erro "Tentar de novo".
-
-## Atualização 3 (Recordes e Circuito no celular, 20/10/2026)
-Validado no aparelho: **Recordes com dado real** (Supino Inclinado com Halteres 10 kg × 10, 1RM Epley 13,33 kg, badge NOVO), **botão "Pular" do descanso** (cabe), **texto "próxima:" dentro do anel do descanso** (agora com largura máxima 150dp e reticências), pular descanso conta a série (1/16), resumo do treino (100 kg de volume = 10×10).
-Corrigido: encerrar o Circuito sem nenhuma série gravava um treino vazio ("Treino concluído!" com tudo 0) que contava na meta/sequência. Agora o diálogo diz "Descartar e sair" e apaga o treino (`WorkoutViewModel.discardActiveWorkout`, teste unitário `descartarTreinoAtivoApagaEAvisa`). NÃO validado no aparelho (só unitário).
-Sujeira de teste na conta do Thiago: no Histórico há 1 treino vazio de 0 min (Push) e o "Sem grupo" de 3h18; a Home conta 3 treinos. O Histórico não tem detalhe nem exclusão de treino (item de produto a considerar). Há também 1 treino ativo vazio no grupo "teste" aberto (o app oferece continuar/iniciar novo).
-Armadilha: com treino ativo aberto, "Iniciar" na Home pula o sheet e vai direto ao treino ativo (coordenadas de script quebram).
-
-## Atualização 4 (exclusão de treino no Histórico, 20/10/2026)
-- Histórico: **toque longo** num treino abre "Apagar treino?" (confirmação; avisa que as séries somem e os recordes podem mudar). Código: `HistoryViewModel.deleteWorkout`, `ThemedCard(onLongClick)`, `HistoryScreen`. Testes: `HistoryViewModelTest` (2). Validado no celular com o treino vazio de 0 min (apagou e a lista atualizou).
-- Não validado: apagar um treino COM séries (depende de `workout_sets` ter ON DELETE CASCADE no Supabase; o esquema base não está em `docs/`). Se falhar, aparece "Erro ao apagar o treino" e a lista não muda.
-- Sobraram no Histórico: "Push 1min" (o do recorde de 10 kg, útil para testes) e "Sem grupo 3h18min" (o antigo de teste, 2 séries 12×0). Há também 1 treino ativo vazio no grupo "teste".
-- Durante os testes o celular exibiu pop-ups do SIM da operadora (TIM: oferta de plano / "Launch Browser?") por cima do app; foram recusados com Cancel.
-
-## Atualização 5 (imagens por exercício, 20/10/2026)
-- O catálogo tem **56** exercícios (a contagem "54" acima estava desatualizada).
-- `shared/.../ExerciseCatalog.kt`: `CatalogExercise.imageKey` (`ex_<nome sem acento>`), `slug()`; teste `chavesDeImagemValidasEUnicas`.
-- `ExerciseArt` (ExerciseCatalogSheet.kt) usa o drawable `ex_<nome>` se existir e senão o ícone do equipamento; usado no catálogo, na lista de exercícios e em Recordes. Validado no celular com um PNG de teste (já removido).
-- `docs/IMAGENS_EXERCICIOS.md`: formato (PNG quadrado, fundo transparente, `res/drawable-nodpi/`) e tabela com as 56 chaves. O Thiago vai gerar as imagens (referências: silhueta roxa com o músculo em vermelho).
-- `shared/build` deixou de ser rastreado pelo git; `.gitignore` ignora `build/` e `.kotlin/`.
-
-## Atualização 6 (primeiras ilustrações, 20/10/2026)
-- Folha 1 do Thiago (`docs/folhas/folha1.jpeg`, 30 desenhos 5×6) cortada com fundo transparente em 384×384 e colocada em `app/src/main/res/drawable-nodpi/` com a chave do exercício: **24 de 56** exercícios já têm imagem. Validado no catálogo no celular.
-- Associação feita pela pose do desenho. Ficaram de fora 6 desenhos ambíguos (r2c3 elevação inclinada, r2c5 barra no peito, r4c5 remada no banco inclinado, r5c2 extensão lombar, r5c4 sumô, r1c4 flexão diamante): `docs/folhas/folha1.jpeg` guarda a folha para revisão.
-- Folha 2 do Thiago (WhatsApp 12.35.54 em Downloads) ainda NÃO usada; a pedido dele ficou para depois.
-- Script de corte (flood fill do fundo + bolsões + agrupamento de peças): estava no scratchpad da sessão e não foi versionado; se precisar de novo, refazer ou pedir.
-
-## Atualização 7 (folha 2, 20/10/2026)
-- Folha 2 (`docs/folhas/folha2.jpeg`, estilo mais simples, 30 desenhos) cortada e associada pela pose: +17 exercícios. Agora **41 de 56** têm imagem (supinos, crucifixo, agachamento livre, leg press, extensora, mesa flexora, terra, terra romeno, puxada, remada baixa, remada curvada, desenvolvimento com barra, rosca direta, prancha).
-- Correção: o desenho sentado da folha 1 (r6c2) era a **cadeira flexora**, não a mesa flexora; renomeado. A mesa flexora (deitada) vem da folha 2.
-- Duas folhas têm estilos diferentes (a 1 é mais realista/sombreada, a 2 é mais plana). Vão aparecer misturados no catálogo até gerar tudo no mesmo estilo.
-- NÃO conferido no celular: o aparelho ficou sem rede (dados móveis caíram) e o app abre vazio sem internet. Conferir o catálogo (Grupos > um grupo > +) quando a rede voltar.
-- Sem imagem ainda: abdominal na polia, agachamento no Smith, cadeira abdutora, desenvolvimento na máquina, elevação pélvica, glúteo na polia, hack squat, panturrilha sentado e no leg press, rosca martelo, rosca na polia, supino fechado, supino na máquina, tríceps testa, remada na máquina (confira `docs/IMAGENS_EXERCICIOS.md` contra a pasta).
-
-## Atualização 8 (Social com a conta v.oliveira042997, 20/10/2026)
-- O Thiago logou a 2ª conta no celular (eu não digito senha: regra de segurança, vale para contas de teste em projeto Supabase real). Conta "Deus" (v.oliveira042997) agora: perfil **público**, compartilhar treinos e músicas **ligados**, 1 treino concluído (Ombro/Peito/Tríceps, 12×8 = 96 kg), grupo **"Time Teste"** (privado, dono, código de convite `e3aab77a`), desafio **"Desafio Teste"** (treinos feitos, 30 dias, mín. 1 min, aberto, "Participando").
-- **Bug achado e corrigido:** criar grupo falhava com "Você não tem permissão" (RLS). Causa: `insert(...) { select() }` = INSERT ... RETURNING, e a política de leitura (`groups_select`/`can_view_challenge`) só enxerga a linha depois do trigger que põe o dono como membro/participante. Correção no cliente (sem mexer no banco): o app gera o `id` (Uuid), insere sem RETURNING e depois busca a linha (`SocialRepositoryImpl.createGroup/createChallenge`, `NewGroup/NewChallenge.id`). Validado no celular para grupo e desafio.
-- O post do treino apareceu no feed sozinho (trigger do banco ao finalizar). Corrigido "1 séries" → "1 série" (`formatFeedStats`, teste novo).
-- Falta (precisa trocar para a conta thiagobr): seguir a Deus, ver o treino dela no feed, reagir, entrar no grupo pelo código `e3aab77a`, entrar no desafio e conferir o placar, perfil privado + pedido de seguir/aceitar, editar post.
-- Dados de teste ficaram nas duas contas (grupo, desafio, post, treinos curtos).
-
-## Atualização 9 (Social com as duas contas, 20/10/2026)
-Contas de teste: thiagobr (thiago, @AqueleQueTrazALuz, "Você" no app) e v.oliveira042997 (@Deus). O Thiago troca a conta no celular (eu não digito senha).
-Validado no aparelho com as duas contas: perfil público aparece em Pessoas; seguir (perfil público = "Seguindo" na hora); perfil com números (13 treinos, 13 dias, 365 séries, 115.210 kg); post da outra conta no feed; reação (liga/desliga); grupo privado entrando por código (`e3aab77a`; o grupo não aparece na lista de quem não é membro); desafio aberto (aparece "Entrar", entrou, placar com os dois); treino finalizado gera post sozinho; editar post (legenda salva, "Post atualizado").
-Corrigido: números do perfil de outra pessoa estavam colados ("365115.210") → colunas com weight (SocialDialogs.kt `Stat`).
-Ainda não testado: perfil privado/"só seguidores" + pedido de seguir + aceitar; placar com treinos DENTRO do período do desafio (fazer um treino de ≥1 min agora, com as duas contas inscritas); desafio em equipes; privacidade de música; sair do grupo/desafio; tela "Tentar de novo".
-
-## Atualização 10 (reações com ícones e placar, 20/10/2026)
-- Reações do feed: emojis trocados por ícones desenhados na cor do tema (`ReactionPill` em SocialScreen.kt): 💪→FitnessCenter, 🔥→LocalFireDepartment, 👏→ThumbUp, 🎧→Headphones. O banco continua guardando `flex/fire/clap/headphones` (nada mudou lá). `ReactionKind.emoji` ficou no shared sem uso na UI.
-- Placar do desafio validado com treino DENTRO do período (thiagobr 1º com 1 treino, Deus 2º com 0). Corrigido "1 treinos" → "1 treino" (`ChallengeMetric.format`, singular de treinos/dias/séries, testes novos) e nome longo colado na contagem.
-- Ainda falta: perfil privado/"só seguidores" + pedido de seguir + aceitar (exige trocar para a v.oliveira no celular; o Thiago topou), desafio em equipes, privacidade de música, sair do grupo/desafio, tela "Tentar de novo".
-- Aviso: toques por adb na parte de cima da tela podem abrir notificações do celular (WhatsApp pessoal do Thiago). Não interagir com elas.
-
-## Atualização 11 (perfil "Só seguidores" não era encontrável, 20/10/2026)
-- Teste com as duas contas: a Deus colocou o perfil em "Só seguidores"; a thiagobr deixou de seguir e a Deus SUMIU de Pessoas e da busca ("Ninguém por aqui") → não dá para pedir para seguir. O trigger `trg_follow_status` já cria o pedido 'pending' e o app já lista/aceita pedidos; faltava só descobrir o perfil.
-- Correção escrita (NÃO aplicada no Supabase): `docs/supabase/005_perfis_so_seguidores_descobriveis.sql` — `public_profiles()` passa a devolver também perfis 'followers' (bio escondida até seguir). "Privado" continua invisível. O Thiago precisa rodar no SQL Editor; depois retestar: thiagobr pede para seguir a Deus → Deus (logada) aceita em Pessoas → thiagobr vê o perfil/posts.
-- Estado agora: thiagobr NÃO segue mais a Deus; Deus está em "Só seguidores".
-
-## Atualização 12 (pedido de seguir, 20/10/2026)
-- O Thiago rodou o SQL 005 no Supabase. Validado no celular (thiagobr): a Deus ("Só seguidores") aparece de novo em Pessoas com "Seguir"; ao tocar vira "Pedido enviado"; o perfil dela mostra "@Deus · Só seguidores", "Cancelar pedido" e "Esta pessoa não compartilha os números" (bio/números/posts escondidos até aceitar).
-- Falta: logar na v.oliveira e aceitar o pedido (Pessoas > pedidos), depois voltar à thiagobr e ver o perfil/posts/números dela.
+Quer autonomia ("yolo, sem perguntas"), temas variados e profissionais (contidos e impactantes), referências de design levadas a sério, e relatório honesto do que não foi testado no aparelho. Gosta de ícones/desenhos em vez de emojis. Baixar arquivos externos ele autorizou uma vez; pedir de novo para outros. Não apagar dados dele. Mensagens em português do Brasil, diretas.
