@@ -1,5 +1,6 @@
 package com.vitoroliveira.gymtracker.ui.auth
 
+import com.vitoroliveira.gymtracker.ui.theme.ThemedScaffold
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -59,7 +60,7 @@ fun LoginScreenContent(
         }
     }
 
-    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
+    ThemedScaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()

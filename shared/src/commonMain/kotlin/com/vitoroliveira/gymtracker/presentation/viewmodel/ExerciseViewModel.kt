@@ -2,6 +2,8 @@
 
 package com.vitoroliveira.gymtracker.presentation.viewmodel
 
+import com.vitoroliveira.gymtracker.presentation.toUserMessage
+import kotlin.coroutines.cancellation.CancellationException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vitoroliveira.gymtracker.data.model.Exercise
@@ -49,9 +51,10 @@ class ExerciseViewModel(
                     exercises = exercises
                 )
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = e.message ?: "Erro ao carregar exercícios"
+                    errorMessage = e.toUserMessage("Erro ao carregar exercícios")
                 )
             }
         }
@@ -102,9 +105,10 @@ class ExerciseViewModel(
                     successMessage = "Exercício '$name' criado com sucesso"
                 )
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = e.message ?: "Erro ao criar exercício"
+                    errorMessage = e.toUserMessage("Erro ao criar exercício")
                 )
             }
         }
@@ -120,9 +124,10 @@ class ExerciseViewModel(
                     successMessage = "Exercício atualizado com sucesso"
                 )
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = e.message ?: "Erro ao atualizar exercício"
+                    errorMessage = e.toUserMessage("Erro ao atualizar exercício")
                 )
             }
         }
@@ -138,9 +143,10 @@ class ExerciseViewModel(
                     successMessage = "Exercício removido com sucesso"
                 )
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = e.message ?: "Erro ao remover exercício"
+                    errorMessage = e.toUserMessage("Erro ao remover exercício")
                 )
             }
         }

@@ -10,11 +10,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.vitoroliveira.gymtracker.ui.auth.LoginScreen
 import com.vitoroliveira.gymtracker.ui.auth.SignUpScreen
+import com.vitoroliveira.gymtracker.ui.auth.SplashScreen
 import com.vitoroliveira.gymtracker.ui.exercise.ExerciseDetailScreen
 import com.vitoroliveira.gymtracker.ui.exercise.ExerciseScreen
 import com.vitoroliveira.gymtracker.ui.home.HomeScreen
 import com.vitoroliveira.gymtracker.ui.muscleGroup.MuscleGroupScreen
 import com.vitoroliveira.gymtracker.ui.profile.ProfileScreen
+import com.vitoroliveira.gymtracker.ui.theme.ThemePickerScreen
 import com.vitoroliveira.gymtracker.ui.workout.ActiveWorkoutScreen
 import com.vitoroliveira.gymtracker.ui.workout.StartWorkoutSheet
 import com.vitoroliveira.gymtracker.ui.history.HistoryScreen
@@ -23,10 +25,12 @@ import java.net.URLDecoder
 import java.net.URLEncoder
 
 sealed class Screen(val route: String) {
+    object Splash : Screen("splash")
     object Login : Screen("login")
     object SignUp : Screen("signup")
     object Home : Screen("home")
     object Profile : Screen("profile")
+    object Themes : Screen("themes")
     object MuscleGroups : Screen("muscle_groups")
 
     // Preparado para o Passo 12 (Fase 4) — histórico de treinos.
@@ -49,6 +53,11 @@ sealed class Screen(val route: String) {
             "exercise_detail/$exerciseId/${URLEncoder.encode(exerciseName, "UTF-8")}"
     }
 
+    object Circuit : Screen("circuit/{muscleGroupId}/{muscleGroupName}") {
+        fun createRoute(muscleGroupId: String?, muscleGroupName: String?) =
+            "circuit/${muscleGroupId ?: "null"}/${muscleGroupName ?: "Treino Livre"}"
+    }
+
     object ActiveWorkout : Screen("active_workout/{muscleGroupId}/{muscleGroupName}") {
         fun createRoute(muscleGroupId: String?, muscleGroupName: String?) =
             "active_workout/${muscleGroupId ?: "null"}/${muscleGroupName ?: "Treino Livre"}"
@@ -61,8 +70,23 @@ fun GymTrackerNavHost() {
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Login.route
+        startDestination = Screen.Splash.route
     ) {
+        composable(Screen.Splash.route) {
+            SplashScreen(
+                onSignedIn = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                },
+                onSignedOut = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
         composable(Screen.Login.route) {
             LoginScreen(
                 onNavigateToSignUp = { navController.navigate(Screen.SignUp.route) },
@@ -98,7 +122,8 @@ fun GymTrackerNavHost() {
                 onNavigateToProfile = {
                     navController.navigate(Screen.Profile.route)
                 },
-                onStartWorkoutClick = { showStartWorkoutSheet = true }
+                onStartWorkoutClick = { showStartWorkoutSheet = true },
+                onNavigateToThemes = { navController.navigate(Screen.Themes.route) }
             )
 
             if (showStartWorkoutSheet) {
@@ -108,6 +133,10 @@ fun GymTrackerNavHost() {
                         navController.navigate(
                             Screen.ActiveWorkout.createRoute(muscleGroupId, muscleGroupName)
                         )
+                    },
+                    onStartCircuit = { muscleGroupId, muscleGroupName ->
+                        showStartWorkoutSheet = false
+                        navController.navigate(Screen.Circuit.createRoute(muscleGroupId, muscleGroupName))
                     },
                     onDismiss = { showStartWorkoutSheet = false }
                 )
@@ -162,7 +191,23 @@ fun GymTrackerNavHost() {
                         popUpTo(0) { inclusive = true }
                     }
                 },
+                onNavigateToThemes = { navController.navigate(Screen.Themes.route) },
                 onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.Themes.route) {
+            ThemePickerScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable(Screen.Circuit.route) { backStackEntry ->
+            val gid = backStackEntry.arguments?.getString("muscleGroupId")?.takeIf { it != "null" }
+            val gname = backStackEntry.arguments?.getString("muscleGroupName")?.takeIf { it != "null" }
+            com.vitoroliveira.gymtracker.ui.circuit.CircuitScreen(
+                muscleGroupId = gid, muscleGroupName = gname,
+                onExit = {
+                    navController.navigate(Screen.Home.route) { popUpTo(Screen.Circuit.route) { inclusive = true } }
+                }
             )
         }
 

@@ -1,5 +1,7 @@
 package com.vitoroliveira.gymtracker.ui.auth
 
+import com.vitoroliveira.gymtracker.ui.theme.ThemedScaffold
+import com.vitoroliveira.gymtracker.ui.theme.ThemedTopAppBar
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -63,10 +65,10 @@ fun SignUpScreenContent(
         }
     }
 
-    Scaffold(
+    ThemedScaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(
+            ThemedTopAppBar(
                 title = { Text("Criar Conta") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateToLogin) {

@@ -2,6 +2,8 @@
 
 package com.vitoroliveira.gymtracker.presentation.viewmodel
 
+import com.vitoroliveira.gymtracker.presentation.toUserMessage
+import kotlin.coroutines.cancellation.CancellationException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vitoroliveira.gymtracker.data.model.Profile
@@ -42,9 +44,10 @@ class ProfileViewModel(
                     profile = profile
                 )
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = e.message ?: "Erro ao carregar perfil"
+                    errorMessage = e.toUserMessage("Erro ao carregar perfil")
                 )
             }
         }
@@ -78,9 +81,10 @@ class ProfileViewModel(
                     successMessage = "Meta semanal atualizada"
                 )
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = e.message ?: "Erro ao atualizar meta semanal"
+                    errorMessage = e.toUserMessage("Erro ao atualizar meta semanal")
                 )
             }
         }

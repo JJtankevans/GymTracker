@@ -2,6 +2,13 @@
 
 package com.vitoroliveira.gymtracker.ui.exercise
 
+import androidx.compose.material.icons.filled.Star
+import com.vitoroliveira.gymtracker.ui.components.EmptyState
+import com.vitoroliveira.gymtracker.ui.theme.ThemedCard
+import com.vitoroliveira.gymtracker.ui.components.LineChart
+import com.vitoroliveira.gymtracker.ui.utils.formatKg
+import com.vitoroliveira.gymtracker.ui.theme.ThemedScaffold
+import com.vitoroliveira.gymtracker.ui.theme.ThemedTopAppBar
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -14,16 +21,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
-import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
-import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
-import com.patrykandpatrick.vico.compose.m3.common.rememberM3VicoTheme
-import com.patrykandpatrick.vico.compose.common.ProvideVicoTheme
-import com.patrykandpatrick.vico.compose.cartesian.axis.HorizontalAxis
-import com.patrykandpatrick.vico.compose.cartesian.axis.VerticalAxis
-import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProducer
-import com.patrykandpatrick.vico.compose.cartesian.data.CartesianValueFormatter
-import com.patrykandpatrick.vico.compose.cartesian.data.lineSeries
 import com.vitoroliveira.gymtracker.data.model.ExerciseProgression
 import com.vitoroliveira.gymtracker.presentation.viewmodel.ExerciseDetailUiState
 import com.vitoroliveira.gymtracker.presentation.viewmodel.ExerciseDetailViewModel
@@ -66,9 +63,9 @@ fun ExerciseDetailScreenContent(
         }
     }
 
-    Scaffold(
+    ThemedScaffold(
         topBar = {
-            TopAppBar(
+            ThemedTopAppBar(
                 title = { Text(exerciseName) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -105,12 +102,12 @@ private fun StatsRow(uiState: ExerciseDetailUiState) {
     ) {
         StatCard(
             label = "Maior carga",
-            value = uiState.maxWeightKg?.let { "${it} kg" } ?: "—",
+            value = uiState.maxWeightKg?.let { "${formatKg(it)} kg" } ?: "—",
             modifier = Modifier.weight(1f)
         )
         StatCard(
             label = "Última carga",
-            value = uiState.lastWeightKg?.let { "${it} kg" } ?: "—",
+            value = uiState.lastWeightKg?.let { "${formatKg(it)} kg" } ?: "—",
             modifier = Modifier.weight(1f)
         )
         StatCard(
@@ -123,7 +120,7 @@ private fun StatsRow(uiState: ExerciseDetailUiState) {
 
 @Composable
 private fun StatCard(label: String, value: String, modifier: Modifier = Modifier) {
-    Card(modifier = modifier, shape = RoundedCornerShape(12.dp)) {
+    ThemedCard(modifier = modifier, shape = MaterialTheme.shapes.medium) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -142,28 +139,18 @@ private fun StatCard(label: String, value: String, modifier: Modifier = Modifier
 
 @Composable
 private fun ProgressionChart(progression: List<ExerciseProgression>) {
-    val modelProducer = remember { CartesianChartModelProducer() }
 
-    // Datas indexadas — usadas pelo formatter do eixo X (ver bottomAxisFormatter abaixo)
-    val dates = remember(progression) {
-        progression.map { runCatching { LocalDate.parse(it.sessionDate) }.getOrNull() }
-    }
-
-    LaunchedEffect(progression) {
-        modelProducer.runTransaction {
-            lineSeries { series(progression.map { it.maxWeightKg }) }
+    val labels = remember(progression) {
+        progression.map {
+            runCatching { LocalDate.parse(it.sessionDate) }.getOrNull()
+                ?.let { d -> "${d.dayOfMonth}/${d.monthNumber}" } ?: ""
         }
     }
+    val weights = remember(progression) { progression.map { it.maxWeightKg } }
 
-    val bottomAxisFormatter = remember(dates) {
-        CartesianValueFormatter { _, x, _ ->
-            dates.getOrNull(x.toInt())?.let { "${it.dayOfMonth}/${it.monthNumber}" } ?: ""
-        }
-    }
-
-    Card(
+    ThemedCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp)
+        shape = MaterialTheme.shapes.medium
     ) {
         Column(Modifier.padding(16.dp)) {
             Text(
@@ -173,35 +160,23 @@ private fun ProgressionChart(progression: List<ExerciseProgression>) {
             )
             Spacer(Modifier.height(12.dp))
 
-            ProvideVicoTheme(rememberM3VicoTheme()) {
-                CartesianChartHost(
-                    chart = rememberCartesianChart(
-                        rememberLineCartesianLayer(),
-                        startAxis = VerticalAxis.rememberStart(),
-                        bottomAxis = HorizontalAxis.rememberBottom(valueFormatter = bottomAxisFormatter)
-                    ),
-                    modelProducer = modelProducer,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(220.dp)
-                )
-            }
+            LineChart(
+                values = weights,
+                xLabels = labels,
+                modifier = Modifier.fillMaxWidth().height(220.dp)
+            )
         }
     }
 }
 
 @Composable
 private fun EmptyProgressionState(modifier: Modifier = Modifier) {
-    Column(modifier = modifier.padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("Sem histórico ainda", style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
-        Spacer(Modifier.height(8.dp))
-        Text(
-            "Registre séries desse exercício em um treino para ver a progressão de carga aqui.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
-        )
-    }
+    EmptyState(
+        icon = Icons.Default.Star,
+        title = "Sem histórico ainda",
+        message = "Registre séries desse exercício em um treino para ver a progressão de carga aqui.",
+        modifier = modifier
+    )
 }
 
 @Preview(showBackground = true, showSystemUi = true)

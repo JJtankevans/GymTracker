@@ -2,9 +2,13 @@
 
 package com.vitoroliveira.gymtracker.presentation.viewmodel
 
+import com.vitoroliveira.gymtracker.presentation.toUserMessage
+import kotlin.coroutines.cancellation.CancellationException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vitoroliveira.gymtracker.data.model.Workout
+import com.vitoroliveira.gymtracker.presentation.DashboardCalculator
+import com.vitoroliveira.gymtracker.presentation.WeekBucket
 import com.vitoroliveira.gymtracker.domain.repository.MuscleGroupRepository
 import com.vitoroliveira.gymtracker.domain.repository.ProfileRepository
 import com.vitoroliveira.gymtracker.domain.repository.WorkoutRepository
@@ -13,13 +17,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlin.time.Clock
-import kotlinx.datetime.DateTimeUnit
 import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.isoDayNumber
-import kotlinx.datetime.minus
-import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
 import kotlinx.datetime.toLocalDateTime
 
@@ -28,6 +28,9 @@ data class HomeUiState(
     val weeklyCount: Int = 0,
     val weeklyGoal: Int = 3,
     val streakDays: Int = 0,
+    /** Últimas 8 semanas (mais antiga primeiro) para o gráfico de frequência. */
+    val weeklyHistory: List<WeekBucket> = emptyList(),
+    val totalWorkouts: Int = 0,
     /** Já formatada como "dd/MM" para exibição direta na tela. */
     val lastWorkoutDate: String? = null,
     val lastWorkoutMuscleGroupName: String? = null,
@@ -62,10 +65,11 @@ class HomeViewModel(
                 val history = workoutRepository.getHistory()
                 val muscleGroups = muscleGroupRepository.getAll()
 
-                val weeklyCount = calculateWeeklyCount(history)
-                val streakDays = calculateStreak(
-                    history.mapNotNull { parseLocalDate(it.startedAt) }
-                )
+                val workoutDates = history.mapNotNull { parseLocalDate(it.startedAt) }
+                val today = Clock.System.todayIn(timeZone)
+                val weeklyCount = DashboardCalculator.weeklyCount(workoutDates, today)
+                val streakDays = DashboardCalculator.streak(workoutDates, today)
+                val weeklyHistory = DashboardCalculator.weeklyBuckets(workoutDates, today, weeks = 8)
 
                 val lastWorkout = history.firstOrNull()
                 val lastWorkoutGroupName = lastWorkout?.muscleGroupId?.let { groupId ->
@@ -77,15 +81,18 @@ class HomeViewModel(
                     weeklyCount = weeklyCount,
                     weeklyGoal = profile.weeklyGoal,
                     streakDays = streakDays,
+                    weeklyHistory = weeklyHistory,
+                    totalWorkouts = history.size,
                     lastWorkoutDate = lastWorkout?.let { formatDate(it.startedAt) },
                     lastWorkoutMuscleGroupName = lastWorkout?.let {
                         lastWorkoutGroupName ?: "Treino livre"
                     }
                 )
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = e.message ?: "Erro ao carregar o dashboard"
+                    errorMessage = e.toUserMessage("Erro ao carregar o dashboard")
                 )
             }
         }
@@ -103,51 +110,6 @@ class HomeViewModel(
         val day = date.dayOfMonth.toString().padStart(2, '0')
         val month = date.monthNumber.toString().padStart(2, '0')
         return "$day/$month"
-    }
-
-    /**
-     * Conta treinos cuja data cai na semana atual (segunda a domingo),
-     * mesmo critério do DATE_TRUNC('week', ...) usado na view
-     * `vw_weekly_frequency` do Supabase.
-     */
-    private fun calculateWeeklyCount(workouts: List<Workout>): Int {
-        val today = Clock.System.todayIn(timeZone)
-        val daysFromMonday = today.dayOfWeek.isoDayNumber - 1
-        val weekStart = today.minus(daysFromMonday, DateTimeUnit.DAY)
-        val weekEnd = weekStart.plus(6, DateTimeUnit.DAY)
-
-        return workouts.count { workout ->
-            val date = parseLocalDate(workout.startedAt) ?: return@count false
-            date in weekStart..weekEnd
-        }
-    }
-
-    /**
-     * Conta dias consecutivos com pelo menos um treino, terminando hoje
-     * ou ontem (se o usuário ainda não treinou hoje, a streak continua
-     * valendo até o fim do dia). Quebra assim que encontra um "buraco".
-     */
-    private fun calculateStreak(workoutDates: List<LocalDate>): Int {
-        if (workoutDates.isEmpty()) return 0
-
-        val distinctDates = workoutDates.distinct().sortedDescending()
-        val today = Clock.System.todayIn(timeZone)
-        val mostRecent = distinctDates.first()
-
-        // Se o treino mais recente foi antes de ontem, a streak já quebrou
-        if (mostRecent < today.minus(1, DateTimeUnit.DAY)) return 0
-
-        var streak = 1
-        var expected = mostRecent.minus(1, DateTimeUnit.DAY)
-        for (date in distinctDates.drop(1)) {
-            if (date == expected) {
-                streak++
-                expected = expected.minus(1, DateTimeUnit.DAY)
-            } else if (date < expected) {
-                break
-            }
-        }
-        return streak
     }
 
     fun clearError() {

@@ -1,5 +1,7 @@
 package com.vitoroliveira.gymtracker.presentation.viewmodel
 
+import com.vitoroliveira.gymtracker.presentation.toUserMessage
+import kotlin.coroutines.cancellation.CancellationException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vitoroliveira.gymtracker.data.model.MuscleGroup
@@ -37,9 +39,10 @@ class MuscleGroupViewModel(
                     muscleGroups = groups
                 )
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = e.message ?: "Erro ao carregar grupos musculares"
+                    errorMessage = e.toUserMessage("Erro ao carregar grupos musculares")
                 )
             }
         }
@@ -63,9 +66,10 @@ class MuscleGroupViewModel(
                     successMessage = "Grupo '$name' criado com sucesso"
                 )
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = e.message ?: "Erro ao criar grupo muscular"
+                    errorMessage = e.toUserMessage("Erro ao criar grupo muscular")
                 )
             }
         }
@@ -81,9 +85,10 @@ class MuscleGroupViewModel(
                     successMessage = "Grupo atualizado com sucesso"
                 )
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = e.message ?: "Erro ao atualizar grupo muscular"
+                    errorMessage = e.toUserMessage("Erro ao atualizar grupo muscular")
                 )
             }
         }
@@ -99,9 +104,10 @@ class MuscleGroupViewModel(
                     successMessage = "Grupo removido com sucesso"
                 )
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = e.message ?: "Erro ao remover grupo muscular"
+                    errorMessage = e.toUserMessage("Erro ao remover grupo muscular")
                 )
             }
         }

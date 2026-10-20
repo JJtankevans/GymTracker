@@ -2,6 +2,7 @@
 
 package com.vitoroliveira.gymtracker.domain.repository
 
+import com.vitoroliveira.gymtracker.data.model.ExerciseBaseline
 import com.vitoroliveira.gymtracker.data.model.ExerciseProgression
 import com.vitoroliveira.gymtracker.data.model.Workout
 import com.vitoroliveira.gymtracker.data.model.WorkoutSet
@@ -16,4 +17,9 @@ interface WorkoutRepository {
     suspend fun addSet(workoutSet: WorkoutSet): WorkoutSet
     suspend fun getSetsForWorkout(workoutId: String): List<WorkoutSet>
     suspend fun getProgressionForExercise(exerciseId: String): List<ExerciseProgression>
+    suspend fun updateSet(setId: String, reps: Int, weightKg: Double): WorkoutSet
+    suspend fun deleteSet(setId: String)
+
+    /** Última vez e recorde do exercício, ignorando o treino [excludeWorkoutId]. */
+    suspend fun getExerciseBaseline(exerciseId: String, excludeWorkoutId: String): ExerciseBaseline
 }

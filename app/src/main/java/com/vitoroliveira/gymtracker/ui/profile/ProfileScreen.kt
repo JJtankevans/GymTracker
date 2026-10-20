@@ -1,11 +1,14 @@
 package com.vitoroliveira.gymtracker.ui.profile
 
+import com.vitoroliveira.gymtracker.ui.theme.ThemedScaffold
+import com.vitoroliveira.gymtracker.ui.theme.ThemedTopAppBar
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -23,6 +26,7 @@ import org.koin.compose.viewmodel.koinViewModel
 fun ProfileScreen(
     onLogout: () -> Unit,
     onBack: () -> Unit = {},
+    onNavigateToThemes: () -> Unit = {},
     viewModel: ProfileViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -35,6 +39,7 @@ fun ProfileScreen(
     ProfileScreenContent(
         uiState = uiState,
         onBack = onBack,
+        onNavigateToThemes = onNavigateToThemes,
         onUpdateWeeklyGoal = { viewModel.updateWeeklyGoal(it) },
         onSignOut = { viewModel.signOut() },
         onClearMessages = { viewModel.clearMessages() }
@@ -46,6 +51,7 @@ fun ProfileScreen(
 fun ProfileScreenContent(
     uiState: ProfileUiState,
     onBack: () -> Unit = {},
+    onNavigateToThemes: () -> Unit = {},
     onUpdateWeeklyGoal: (Int) -> Unit,
     onSignOut: () -> Unit,
     onClearMessages: () -> Unit
@@ -70,10 +76,10 @@ fun ProfileScreenContent(
         }
     }
 
-    Scaffold(
+    ThemedScaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(
+            ThemedTopAppBar(
                 title = { Text("Perfil") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -186,6 +192,17 @@ fun ProfileScreenContent(
                 HorizontalDivider()
 
                 Spacer(modifier = Modifier.height(32.dp))
+
+                OutlinedButton(
+                    onClick = onNavigateToThemes,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.Palette, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Aparência e temas")
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedButton(
                     onClick = { showLogoutDialog = true },

@@ -2,6 +2,8 @@
 
 package com.vitoroliveira.gymtracker.presentation.viewmodel
 
+import com.vitoroliveira.gymtracker.presentation.toUserMessage
+import kotlin.coroutines.cancellation.CancellationException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vitoroliveira.gymtracker.domain.repository.AuthRepository
@@ -36,9 +38,10 @@ class AuthViewModel(
                 authRepository.signIn(email, password)
                 _uiState.value = _uiState.value.copy(isLoading = false, isLoggedIn = true)
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = e.message ?: "Erro ao fazer login"
+                    errorMessage = e.toUserMessage("Erro ao fazer login")
                 )
             }
         }
@@ -51,9 +54,10 @@ class AuthViewModel(
                 authRepository.signUp(email, password, username)
                 _uiState.value = _uiState.value.copy(isLoading = false, isLoggedIn = true)
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = e.message ?: "Erro ao criar conta"
+                    errorMessage = e.toUserMessage("Erro ao criar conta")
                 )
             }
         }

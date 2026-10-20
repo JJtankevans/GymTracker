@@ -1,11 +1,18 @@
 package com.vitoroliveira.gymtracker.ui.home
 
+import com.vitoroliveira.gymtracker.ui.theme.ThemedCard
+import com.vitoroliveira.gymtracker.ui.components.BarChart
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import com.vitoroliveira.gymtracker.ui.theme.ThemedScaffold
+import com.vitoroliveira.gymtracker.ui.theme.ThemedTopAppBar
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Star
@@ -28,6 +35,7 @@ fun HomeScreen(
     onNavigateToHistory: () -> Unit,
     onNavigateToProfile: () -> Unit,
     onStartWorkoutClick: () -> Unit,
+    onNavigateToThemes: () -> Unit = {},
     viewModel: HomeViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -44,7 +52,9 @@ fun HomeScreen(
         onNavigateToHistory = onNavigateToHistory,
         onNavigateToProfile = onNavigateToProfile,
         onStartWorkoutClick = onStartWorkoutClick,
-        onClearError = { viewModel.clearError() }
+        onNavigateToThemes = onNavigateToThemes,
+        onClearError = { viewModel.clearError() },
+        topSlot = { com.vitoroliveira.gymtracker.ui.music.MiniPlayer() }
     )
 }
 
@@ -56,7 +66,9 @@ fun HomeScreenContent(
     onNavigateToHistory: () -> Unit,
     onNavigateToProfile: () -> Unit,
     onStartWorkoutClick: () -> Unit,
-    onClearError: () -> Unit
+    onClearError: () -> Unit,
+    onNavigateToThemes: () -> Unit = {},
+    topSlot: @Composable () -> Unit = {}
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -67,12 +79,15 @@ fun HomeScreenContent(
         }
     }
 
-    Scaffold(
+    ThemedScaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(
+            ThemedTopAppBar(
                 title = { Text("GymTracker") },
                 actions = {
+                    IconButton(onClick = onNavigateToThemes) {
+                        Icon(Icons.Default.Palette, contentDescription = "Aparência")
+                    }
                     IconButton(onClick = onNavigateToProfile) {
                         Icon(Icons.Default.Person, contentDescription = "Perfil")
                     }
@@ -80,7 +95,7 @@ fun HomeScreenContent(
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
+            if (!com.vitoroliveira.gymtracker.ui.theme.LocalThemeExtras.current.homeLayout.hasOwnStart()) ExtendedFloatingActionButton(
                 onClick = onStartWorkoutClick,
                 icon = { Icon(Icons.Default.PlayArrow, contentDescription = null) },
                 text = { Text("Iniciar Treino") }
@@ -95,46 +110,54 @@ fun HomeScreenContent(
                 CircularProgressIndicator()
             }
         } else {
-            Column(
+            val layout = com.vitoroliveira.gymtracker.ui.theme.LocalThemeExtras.current.homeLayout
+            Column(Modifier.fillMaxSize().padding(padding)) {
+            Box(Modifier.padding(start = 16.dp, end = 16.dp, top = 4.dp)) { topSlot() }
+            HomeBody(
+                layout = layout,
+                state = uiState,
+                actions = HomeActions(onNavigateToMuscleGroups, onNavigateToHistory, onStartWorkoutClick),
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                WeeklyGoalCard(
-                    weeklyCount = uiState.weeklyCount,
-                    weeklyGoal = uiState.weeklyGoal
-                )
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp)
+            )
+            }
+        }
+    }
+}
 
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    StreakCard(
-                        streakDays = uiState.streakDays,
-                        modifier = Modifier.weight(1f)
-                    )
-                    LastWorkoutCard(
-                        date = uiState.lastWorkoutDate,
-                        muscleGroupName = uiState.lastWorkoutMuscleGroupName,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
+@Composable
+fun WeeklyHistoryCard(uiState: HomeUiState) {
+    ThemedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "Atalhos",
+                    "Frequência",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.weight(1f)
                 )
-
-                QuickAccessRow(
-                    onNavigateToMuscleGroups = onNavigateToMuscleGroups,
-                    onNavigateToHistory = onNavigateToHistory
+                Text(
+                    "${uiState.totalWorkouts} treinos no total",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "Últimas 8 semanas · linha tracejada = meta",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(8.dp))
+            BarChart(
+                values = uiState.weeklyHistory.map { it.count },
+                xLabels = uiState.weeklyHistory.map { "${it.weekStart.dayOfMonth}/${it.weekStart.monthNumber}" },
+                goal = uiState.weeklyGoal,
+                modifier = Modifier.fillMaxWidth().height(150.dp)
+            )
         }
     }
 }
@@ -144,12 +167,9 @@ fun WeeklyGoalCard(weeklyCount: Int, weeklyGoal: Int) {
     val progress = if (weeklyGoal <= 0) 0f
     else (weeklyCount.toFloat() / weeklyGoal.toFloat()).coerceIn(0f, 1f)
 
-    Card(
+    ThemedCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        )
+        containerColor = MaterialTheme.colorScheme.primaryContainer
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
             Text(
@@ -181,9 +201,8 @@ fun WeeklyGoalCard(weeklyCount: Int, weeklyGoal: Int) {
 
 @Composable
 fun StreakCard(streakDays: Int, modifier: Modifier = Modifier) {
-    Card(
+    ThemedCard(
         modifier = modifier,
-        shape = RoundedCornerShape(16.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -211,9 +230,8 @@ fun StreakCard(streakDays: Int, modifier: Modifier = Modifier) {
 
 @Composable
 fun LastWorkoutCard(date: String?, muscleGroupName: String?, modifier: Modifier = Modifier) {
-    Card(
+    ThemedCard(
         modifier = modifier,
-        shape = RoundedCornerShape(16.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(16.dp),

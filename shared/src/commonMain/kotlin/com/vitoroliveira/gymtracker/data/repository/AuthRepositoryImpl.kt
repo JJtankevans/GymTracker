@@ -34,6 +34,11 @@ class AuthRepositoryImpl(
         supabase.auth.signOut()
     }
 
+    override suspend fun awaitSession(): Boolean {
+        supabase.auth.awaitInitialization()
+        return isLoggedIn()
+    }
+
     override fun isLoggedIn(): Boolean {
         return supabase.auth.currentSessionOrNull() != null
     }

@@ -2,6 +2,9 @@
 
 package com.vitoroliveira.gymtracker.ui.exercise
 
+import com.vitoroliveira.gymtracker.ui.theme.ThemedCard
+import com.vitoroliveira.gymtracker.ui.theme.ThemedScaffold
+import com.vitoroliveira.gymtracker.ui.theme.ThemedTopAppBar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -98,10 +101,10 @@ fun ExerciseScreenContent(
         }
     }
 
-    Scaffold(
+    ThemedScaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(
+            ThemedTopAppBar(
                 title = { Text(screenTitle) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -275,10 +278,10 @@ fun ExerciseItem(
         Color(android.graphics.Color.parseColor(groupColorHex ?: "#6200EE"))
     }.getOrDefault(MaterialTheme.colorScheme.primary)
 
-    Card(
+    ThemedCard(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp)
+        shape = MaterialTheme.shapes.medium
     ) {
         Row(
             modifier = Modifier

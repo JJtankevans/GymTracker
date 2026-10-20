@@ -1,5 +1,6 @@
 package com.vitoroliveira.gymtracker.ui.workout
 
+import com.vitoroliveira.gymtracker.ui.theme.ThemedCard
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -28,6 +29,7 @@ import org.koin.compose.viewmodel.koinViewModel
 fun StartWorkoutSheet(
     onStartWorkout: (muscleGroupId: String?, muscleGroupName: String?) -> Unit,
     onDismiss: () -> Unit,
+    onStartCircuit: (muscleGroupId: String?, muscleGroupName: String?) -> Unit = { _, _ -> },
     viewModel: MuscleGroupViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -36,6 +38,7 @@ fun StartWorkoutSheet(
         StartWorkoutSheetContent(
             uiState = uiState,
             onStartWorkout = onStartWorkout,
+            onStartCircuit = onStartCircuit,
             onDismiss = onDismiss
         )
     }
@@ -45,8 +48,11 @@ fun StartWorkoutSheet(
 fun StartWorkoutSheetContent(
     uiState: MuscleGroupUiState,
     onStartWorkout: (muscleGroupId: String?, muscleGroupName: String?) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onStartCircuit: (muscleGroupId: String?, muscleGroupName: String?) -> Unit = { _, _ -> }
 ) {
+    var circuit by remember { mutableStateOf(false) }
+    val start: (String?, String?) -> Unit = { id, name -> if (circuit) onStartCircuit(id, name) else onStartWorkout(id, name) }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -67,7 +73,18 @@ fun StartWorkoutSheetContent(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(12.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("Modo circuito (beta)", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Text(
+                    "O app conta as séries e o descanso sozinho e aprende seu ritmo.",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Switch(checked = circuit, onCheckedChange = { circuit = it })
+        }
+        Spacer(modifier = Modifier.height(16.dp))
 
         if (uiState.isLoading) {
             Box(
@@ -79,7 +96,7 @@ fun StartWorkoutSheetContent(
         } else {
             // Opção sem grupo muscular
             OutlinedButton(
-                onClick = { onStartWorkout(null, null) },
+                onClick = { start(null, null) },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(Icons.Default.PlayArrow, contentDescription = null)
@@ -105,7 +122,7 @@ fun StartWorkoutSheetContent(
                     items(uiState.muscleGroups, key = { it.id ?: it.name }) { group ->
                         MuscleGroupSelectItem(
                             muscleGroup = group,
-                            onClick = { onStartWorkout(group.id, group.name) }
+                            onClick = { start(group.id, group.name) }
                         )
                     }
                 }
@@ -123,10 +140,10 @@ fun MuscleGroupSelectItem(
         Color(android.graphics.Color.parseColor(muscleGroup.colorHex))
     }.getOrDefault(MaterialTheme.colorScheme.primary)
 
-    Card(
+    ThemedCard(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp)
+        shape = MaterialTheme.shapes.medium
     ) {
         Row(
             modifier = Modifier

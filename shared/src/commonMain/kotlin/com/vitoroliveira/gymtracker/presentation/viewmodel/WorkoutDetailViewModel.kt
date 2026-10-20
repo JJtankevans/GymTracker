@@ -2,6 +2,8 @@
 
 package com.vitoroliveira.gymtracker.presentation.viewmodel
 
+import com.vitoroliveira.gymtracker.presentation.toUserMessage
+import kotlin.coroutines.cancellation.CancellationException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vitoroliveira.gymtracker.data.model.WorkoutSet
@@ -59,9 +61,10 @@ class WorkoutDetailViewModel(
 
                 _uiState.value = _uiState.value.copy(isLoading = false, exerciseGroups = groups)
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = e.message ?: "Erro ao carregar detalhes do treino"
+                    errorMessage = e.toUserMessage("Erro ao carregar detalhes do treino")
                 )
             }
         }

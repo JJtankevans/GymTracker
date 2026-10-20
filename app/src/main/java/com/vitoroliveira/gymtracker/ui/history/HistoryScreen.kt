@@ -1,5 +1,10 @@
 package com.vitoroliveira.gymtracker.ui.history
 
+import androidx.compose.material.icons.filled.DateRange
+import com.vitoroliveira.gymtracker.ui.components.EmptyState
+import com.vitoroliveira.gymtracker.ui.theme.ThemedCard
+import com.vitoroliveira.gymtracker.ui.theme.ThemedScaffold
+import com.vitoroliveira.gymtracker.ui.theme.ThemedTopAppBar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -59,9 +64,9 @@ fun HistoryScreenContent(
         }
     }
 
-    Scaffold(
+    ThemedScaffold(
         topBar = {
-            TopAppBar(
+            ThemedTopAppBar(
                 title = { Text("Histórico") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -92,7 +97,7 @@ fun HistoryScreenContent(
 
 @Composable
 private fun WorkoutHistoryCard(item: WorkoutHistoryItem, onClick: () -> Unit) {
-    Card(onClick = onClick, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
+    ThemedCard(onClick = onClick, modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -122,16 +127,12 @@ private fun WorkoutHistoryCard(item: WorkoutHistoryItem, onClick: () -> Unit) {
 
 @Composable
 private fun EmptyHistoryState(modifier: Modifier = Modifier) {
-    Column(modifier = modifier.padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("Nenhum treino finalizado ainda", style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
-        Spacer(Modifier.height(8.dp))
-        Text(
-            "Seus treinos concluídos vão aparecer aqui.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
-        )
-    }
+    EmptyState(
+        icon = Icons.Default.DateRange,
+        title = "Nenhum treino finalizado ainda",
+        message = "Seus treinos concluídos vão aparecer aqui.",
+        modifier = modifier
+    )
 }
 
 private fun parseColor(hex: String): Color = try {

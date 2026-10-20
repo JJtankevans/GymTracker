@@ -1,5 +1,8 @@
 package com.vitoroliveira.gymtracker.ui.workout
 
+import com.vitoroliveira.gymtracker.ui.theme.ThemedCard
+import com.vitoroliveira.gymtracker.ui.theme.ThemedScaffold
+import com.vitoroliveira.gymtracker.ui.theme.ThemedTopAppBar
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -53,9 +56,9 @@ fun WorkoutDetailScreenContent(
         }
     }
 
-    Scaffold(
+    ThemedScaffold(
         topBar = {
-            TopAppBar(
+            ThemedTopAppBar(
                 title = { Text("Detalhe do Treino") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -86,7 +89,7 @@ fun WorkoutDetailScreenContent(
 
 @Composable
 private fun ExerciseSetGroupCard(group: ExerciseSetGroup) {
-    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
+    ThemedCard(modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
         Column(Modifier.padding(16.dp)) {
             Text(
                 group.exerciseName,

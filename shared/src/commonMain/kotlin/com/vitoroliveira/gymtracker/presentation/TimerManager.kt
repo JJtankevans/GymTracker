@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlin.time.TimeSource
 
 data class TimerState(
     val totalSeconds: Int = 0,
@@ -26,61 +27,85 @@ data class TimerState(
         }
 }
 
-class TimerManager(private val scope: CoroutineScope) {
+private val processStart = TimeSource.Monotonic.markNow()
+private fun monotonicMillis(): Long = processStart.elapsedNow().inWholeMilliseconds
+
+/**
+ * Cronômetro regressivo do descanso entre séries.
+ *
+ * Calcula o tempo restante a partir de um **prazo (deadline)** em relógio
+ * monotônico, e não contando ticks: assim não acumula atraso e continua
+ * certo se a coroutine atrasar (tela apagada, app em segundo plano).
+ *
+ * [nowMillis] é injetável para os testes controlarem o tempo.
+ */
+class TimerManager(
+    private val scope: CoroutineScope,
+    private val nowMillis: () -> Long = ::monotonicMillis
+) {
 
     private val _timerState = MutableStateFlow(TimerState())
     val timerState: StateFlow<TimerState> = _timerState.asStateFlow()
 
     private var timerJob: Job? = null
+    private var deadline = 0L
+    private var pausedLeftMs = 0L
 
     fun start(seconds: Int) {
         timerJob?.cancel()
+        if (seconds <= 0) {
+            _timerState.value = TimerState()
+            return
+        }
         _timerState.value = TimerState(
             totalSeconds = seconds,
             remainingSeconds = seconds,
-            isRunning = true,
-            isFinished = false
+            isRunning = true
         )
+        deadline = nowMillis() + seconds * 1000L
         runCountdown()
     }
 
-    /**
-     * Roda a contagem regressiva a partir do estado atual de
-     * [_timerState], sem alterar totalSeconds/remainingSeconds.
-     * Usado tanto por [start] quanto por [resume], para que o
-     * `progress` (remaining/total) continue correto após pausar.
-     */
     private fun runCountdown() {
         timerJob = scope.launch {
-            while (_timerState.value.remainingSeconds > 0) {
-                delay(1000L)
-                val remaining = _timerState.value.remainingSeconds - 1
-                _timerState.value = _timerState.value.copy(
-                    remainingSeconds = remaining,
-                    isFinished = remaining == 0,
-                    isRunning = remaining > 0
-                )
+            while (true) {
+                val leftMs = deadline - nowMillis()
+                // arredonda pra cima: com 0,2s sobrando ainda mostra 1s
+                val left = if (leftMs <= 0) 0 else ((leftMs + 999) / 1000).toInt()
+                if (left != _timerState.value.remainingSeconds) {
+                    _timerState.value = _timerState.value.copy(
+                        remainingSeconds = left,
+                        isRunning = left > 0,
+                        isFinished = left == 0
+                    )
+                }
+                if (left == 0) break
+                delay((leftMs % 1000).let { if (it == 0L) 1000L else it }.coerceAtLeast(20L))
             }
         }
     }
 
     fun pause() {
+        val s = _timerState.value
+        if (!s.isRunning) return
         timerJob?.cancel()
-        _timerState.value = _timerState.value.copy(isRunning = false)
+        pausedLeftMs = (deadline - nowMillis()).coerceAtLeast(0L)
+        // mostra o tempo exato do momento da pausa, não o do último tick
+        val left = ((pausedLeftMs + 999) / 1000).toInt()
+        _timerState.value = s.copy(remainingSeconds = left, isRunning = false, isFinished = left == 0)
     }
 
     fun resume() {
-        if (_timerState.value.remainingSeconds > 0 && !_timerState.value.isRunning) {
+        val s = _timerState.value
+        if (s.remainingSeconds > 0 && !s.isRunning && !s.isFinished) {
             timerJob?.cancel()
-            _timerState.value = _timerState.value.copy(isRunning = true)
+            deadline = nowMillis() + pausedLeftMs
+            _timerState.value = s.copy(isRunning = true)
             runCountdown()
         }
     }
 
-    fun reset() {
-        timerJob?.cancel()
-        _timerState.value = TimerState()
-    }
+    fun reset() = cancel()
 
     fun cancel() {
         timerJob?.cancel()

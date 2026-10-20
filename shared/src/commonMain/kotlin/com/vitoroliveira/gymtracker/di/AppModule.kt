@@ -19,6 +19,7 @@ import com.vitoroliveira.gymtracker.presentation.viewmodel.HistoryViewModel
 import com.vitoroliveira.gymtracker.presentation.viewmodel.HomeViewModel
 import com.vitoroliveira.gymtracker.presentation.viewmodel.MuscleGroupViewModel
 import com.vitoroliveira.gymtracker.presentation.viewmodel.ProfileViewModel
+import com.vitoroliveira.gymtracker.presentation.viewmodel.SessionViewModel
 import com.vitoroliveira.gymtracker.presentation.viewmodel.WorkoutDetailViewModel
 import com.vitoroliveira.gymtracker.presentation.viewmodel.WorkoutViewModel
 import io.github.jan.supabase.SupabaseClient
@@ -35,8 +36,10 @@ fun appModule(supabaseClient: SupabaseClient) = module {
     single<ExerciseRepository> { ExerciseRepositoryImpl(get()) }
     single<WorkoutRepository> { WorkoutRepositoryImpl(get()) }
     single<ProfileRepository> { ProfileRepositoryImpl(get()) }
+    single<com.vitoroliveira.gymtracker.domain.repository.TrackRepository> { com.vitoroliveira.gymtracker.data.repository.TrackRepositoryImpl(get()) }
 
     // ViewModels
+    viewModel { SessionViewModel(get()) }
     viewModel { AuthViewModel(get()) }
     viewModel { MuscleGroupViewModel(get()) }
     viewModel { ExerciseViewModel(get()) }

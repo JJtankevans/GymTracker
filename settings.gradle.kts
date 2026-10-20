@@ -22,3 +22,4 @@ rootProject.name = "GymTracker"
 // Módulos do projeto
 include(":app")     // UI Android
 include(":shared")  // Lógica KMP compartilhada
+include(":wear")    // App de relógio (Wear OS)

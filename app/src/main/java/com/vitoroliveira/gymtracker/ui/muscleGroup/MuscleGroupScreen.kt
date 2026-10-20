@@ -1,5 +1,8 @@
 package com.vitoroliveira.gymtracker.ui.muscleGroup
 
+import com.vitoroliveira.gymtracker.ui.theme.ThemedCard
+import com.vitoroliveira.gymtracker.ui.theme.ThemedScaffold
+import com.vitoroliveira.gymtracker.ui.theme.ThemedTopAppBar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -84,10 +87,10 @@ fun MuscleGroupScreenContent(
         }
     }
 
-    Scaffold(
+    ThemedScaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(
+            ThemedTopAppBar(
                 title = { Text("Grupos Musculares") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -219,10 +222,10 @@ fun MuscleGroupItem(
         Color(android.graphics.Color.parseColor(muscleGroup.colorHex))
     }.getOrDefault(MaterialTheme.colorScheme.primary)
 
-    Card(
+    ThemedCard(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp)
+        shape = MaterialTheme.shapes.medium
     ) {
         Row(
             modifier = Modifier

@@ -3,16 +3,37 @@ package com.vitoroliveira.gymtracker.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vitoroliveira.gymtracker.data.model.Exercise
+import com.vitoroliveira.gymtracker.data.model.ExerciseBaseline
 import com.vitoroliveira.gymtracker.data.model.Workout
 import com.vitoroliveira.gymtracker.data.model.WorkoutSet
 import com.vitoroliveira.gymtracker.domain.repository.ExerciseRepository
 import com.vitoroliveira.gymtracker.domain.repository.WorkoutRepository
 import com.vitoroliveira.gymtracker.presentation.TimerManager
 import com.vitoroliveira.gymtracker.presentation.TimerState
+import com.vitoroliveira.gymtracker.presentation.toUserMessage
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Clock
+import kotlin.time.Instant
+
+/** Resumo mostrado ao terminar o treino. */
+data class WorkoutSummary(
+    val durationMinutes: Long,
+    val totalSets: Int,
+    val totalReps: Int,
+    val totalVolumeKg: Double,
+    val exercisesWorked: Int,
+    /** Nomes dos exercícios em que bateu recorde de carga. */
+    val newRecords: List<String>
+)
 
 data class WorkoutUiState(
     val isLoading: Boolean = false,
@@ -22,21 +43,31 @@ data class WorkoutUiState(
     val timerState: TimerState = TimerState(),
     val errorMessage: String? = null,
     val isWorkoutFinished: Boolean = false,
-    val activeWorkoutToRecover: Workout? = null
+    val activeWorkoutToRecover: Workout? = null,
+    /** Última vez / recorde por exercício (id → baseline). */
+    val baselines: Map<String, ExerciseBaseline> = emptyMap(),
+    /** Exercícios em que o usuário já bateu recorde neste treino. */
+    val newRecordExerciseIds: Set<String> = emptySet(),
+    val summary: WorkoutSummary? = null
 )
 
 class WorkoutViewModel(
     private val workoutRepository: WorkoutRepository,
-    private val exerciseRepository: ExerciseRepository
+    private val exerciseRepository: ExerciseRepository,
+    private val clock: Clock = Clock.System
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(WorkoutUiState())
     val uiState: StateFlow<WorkoutUiState> = _uiState.asStateFlow()
 
+    /** Tempo decorrido do treino, em segundos. Separado do uiState pra não recompor a tela toda a cada segundo. */
+    private val _elapsedSeconds = MutableStateFlow(0L)
+    val elapsedSeconds: StateFlow<Long> = _elapsedSeconds.asStateFlow()
+
     private val timerManager = TimerManager(viewModelScope)
+    private var tickerJob: Job? = null
 
     init {
-        // Observa o timer e atualiza o estado
         viewModelScope.launch {
             timerManager.timerState.collect { timerState ->
                 _uiState.value = _uiState.value.copy(timerState = timerState)
@@ -44,11 +75,16 @@ class WorkoutViewModel(
         }
     }
 
+    // ───────────────────────── Início / retomada ─────────────────────────
+
     fun startWorkout(muscleGroupId: String?) {
+        val s = _uiState.value
+        // Idempotente: girar a tela ou recompor não deve iniciar (nem oferecer retomar) de novo.
+        if (s.activeWorkout != null || s.isLoading || s.activeWorkoutToRecover != null) return
+
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
             try {
-                // Verifica se já existe um treino ativo antes de criar um novo
                 val active = workoutRepository.getActiveWorkout()
                 if (active != null) {
                     _uiState.value = _uiState.value.copy(
@@ -57,23 +93,12 @@ class WorkoutViewModel(
                     )
                     return@launch
                 }
-
-                val workout = workoutRepository.startWorkout(muscleGroupId)
-                val exercises = if (muscleGroupId != null) {
-                    exerciseRepository.getByMuscleGroup(muscleGroupId)
-                } else {
-                    exerciseRepository.getAll()
-                }
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    activeWorkout = workout,
-                    exercises = exercises,
-                    completedSets = emptyList()
-                )
+                openWorkout(workoutRepository.startWorkout(muscleGroupId), muscleGroupId, emptyList())
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = e.message ?: "Erro ao iniciar treino"
+                    errorMessage = e.toUserMessage("Erro ao iniciar treino")
                 )
             }
         }
@@ -83,22 +108,13 @@ class WorkoutViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, activeWorkoutToRecover = null)
             try {
-                val exercises = if (workout.muscleGroupId != null) {
-                    exerciseRepository.getByMuscleGroup(workout.muscleGroupId)
-                } else {
-                    exerciseRepository.getAll()
-                }
                 val sets = workoutRepository.getSetsForWorkout(workout.id!!)
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    activeWorkout = workout,
-                    exercises = exercises,
-                    completedSets = sets
-                )
+                openWorkout(workout, workout.muscleGroupId, sets)
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = e.message ?: "Erro ao retomar treino"
+                    errorMessage = e.toUserMessage("Erro ao retomar treino")
                 )
             }
         }
@@ -109,57 +125,96 @@ class WorkoutViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, activeWorkoutToRecover = null)
             try {
-                // Deleta o antigo para que não apareça no histórico
                 oldWorkoutId?.let { workoutRepository.deleteWorkout(it) }
-
-                // Inicia o novo
-                val workout = workoutRepository.startWorkout(muscleGroupId)
-                val exercises = if (muscleGroupId != null) {
-                    exerciseRepository.getByMuscleGroup(muscleGroupId)
-                } else {
-                    exerciseRepository.getAll()
-                }
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    activeWorkout = workout,
-                    exercises = exercises,
-                    completedSets = emptyList()
-                )
+                openWorkout(workoutRepository.startWorkout(muscleGroupId), muscleGroupId, emptyList())
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = e.message ?: "Erro ao iniciar novo treino"
+                    errorMessage = e.toUserMessage("Erro ao iniciar novo treino")
                 )
             }
         }
     }
 
+    private suspend fun openWorkout(workout: Workout, muscleGroupId: String?, sets: List<WorkoutSet>) {
+        val exercises = if (muscleGroupId != null) {
+            exerciseRepository.getByMuscleGroup(muscleGroupId)
+        } else {
+            exerciseRepository.getAll()
+        }
+        _uiState.value = _uiState.value.copy(
+            isLoading = false,
+            activeWorkout = workout,
+            exercises = exercises,
+            completedSets = sets,
+            baselines = emptyMap(),
+            newRecordExerciseIds = emptySet(),
+            summary = null,
+            isWorkoutFinished = false
+        )
+        startTicker(workout.startedAt)
+        // Histórico é um "extra": carrega depois, sem travar a tela.
+        val workoutId = workout.id ?: return
+        viewModelScope.launch {
+            val baselines = loadBaselines(workoutId, exercises)
+            _uiState.value = _uiState.value.copy(baselines = baselines)
+        }
+    }
+
+    private suspend fun loadBaselines(
+        workoutId: String,
+        exercises: List<Exercise>
+    ): Map<String, ExerciseBaseline> = coroutineScope {
+        exercises.mapNotNull { ex ->
+            val id = ex.id ?: return@mapNotNull null
+            async {
+                try {
+                    id to workoutRepository.getExerciseBaseline(id, workoutId)
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                    null // sem histórico não é erro: só não pré-preenche
+                }
+            }
+        }.awaitAll().filterNotNull().toMap()
+    }
+
+    private fun startTicker(startedAtRaw: String?) {
+        tickerJob?.cancel()
+        val startedAt = startedAtRaw?.let { runCatching { Instant.parse(it) }.getOrNull() } ?: run {
+            _elapsedSeconds.value = 0
+            return
+        }
+        tickerJob = viewModelScope.launch {
+            while (true) {
+                _elapsedSeconds.value = (clock.now() - startedAt).inWholeSeconds.coerceAtLeast(0)
+                delay(1000)
+            }
+        }
+    }
+
+    // ───────────────────────── Séries ─────────────────────────
+
     fun addSet(exerciseId: String, reps: Int, weightKg: Double) {
         val workoutId = _uiState.value.activeWorkout?.id ?: return
 
-        // 1. Validação de peso
-        if (weightKg <= 0.0 || weightKg.isNaN()) {
-            _uiState.value = _uiState.value.copy(errorMessage = "O peso deve ser maior que zero")
+        validateSet(reps, weightKg)?.let {
+            _uiState.value = _uiState.value.copy(errorMessage = it)
             return
         }
 
-        // 2. Localiza o exercício para verificar o limite
         val exercise = _uiState.value.exercises.find { it.id == exerciseId }
         if (exercise == null) {
             _uiState.value = _uiState.value.copy(errorMessage = "Exercício não encontrado")
             return
         }
 
-        // Calcula o número da próxima série para esse exercício
-        val currentSetsCount = _uiState.value.completedSets.count { it.exerciseId == exerciseId }
-        val setNumber = currentSetsCount + 1
+        val existing = _uiState.value.completedSets.filter { it.exerciseId == exerciseId }
+        // maior número + 1 (e não "quantidade + 1"): continua certo depois de apagar uma série do meio
+        val setNumber = (existing.maxOfOrNull { it.setNumber } ?: 0) + 1
 
-        // 3. Validação de limite de séries (default + 2)
-        val maxSetsAllowed = exercise.defaultSets + 2
-        if (setNumber > maxSetsAllowed) {
-            _uiState.value = _uiState.value.copy(
-                errorMessage = "Limite de séries atingido para este exercício"
-            )
+        if (existing.size + 1 > exercise.defaultSets + 2) {
+            _uiState.value = _uiState.value.copy(errorMessage = "Limite de séries atingido para este exercício")
             return
         }
 
@@ -174,78 +229,137 @@ class WorkoutViewModel(
         viewModelScope.launch {
             try {
                 val saved = workoutRepository.addSet(newSet)
-                _uiState.value = _uiState.value.copy(
-                    completedSets = _uiState.value.completedSets + saved,
-                    errorMessage = null
+                val state = _uiState.value
+                val record = state.baselines[exerciseId]?.recordWeightKg
+                // Só é "recorde" se já havia histórico (senão toda primeira vez seria recorde).
+                val isRecord = record != null && record > 0.0 && weightKg > record
+                _uiState.value = state.copy(
+                    completedSets = state.completedSets + saved,
+                    errorMessage = null,
+                    newRecordExerciseIds = if (isRecord) state.newRecordExerciseIds + exerciseId else state.newRecordExerciseIds,
+                    baselines = if (isRecord) state.baselines + (exerciseId to state.baselines.getValue(exerciseId).copy(recordWeightKg = weightKg)) else state.baselines
                 )
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    errorMessage = e.message ?: "Erro ao registrar série"
-                )
+                if (e is CancellationException) throw e
+                _uiState.value = _uiState.value.copy(errorMessage = e.toUserMessage("Erro ao registrar série"))
             }
         }
     }
 
+    fun updateSet(setId: String, reps: Int, weightKg: Double) {
+        validateSet(reps, weightKg)?.let {
+            _uiState.value = _uiState.value.copy(errorMessage = it)
+            return
+        }
+        viewModelScope.launch {
+            try {
+                val saved = workoutRepository.updateSet(setId, reps, weightKg)
+                _uiState.value = _uiState.value.copy(
+                    completedSets = _uiState.value.completedSets.map { if (it.id == setId) saved else it },
+                    errorMessage = null
+                )
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                _uiState.value = _uiState.value.copy(errorMessage = e.toUserMessage("Erro ao editar série"))
+            }
+        }
+    }
+
+    fun deleteSet(setId: String) {
+        viewModelScope.launch {
+            try {
+                workoutRepository.deleteSet(setId)
+                _uiState.value = _uiState.value.copy(
+                    completedSets = _uiState.value.completedSets.filterNot { it.id == setId },
+                    errorMessage = null
+                )
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                _uiState.value = _uiState.value.copy(errorMessage = e.toUserMessage("Erro ao apagar série"))
+            }
+        }
+    }
+
+    /** Peso 0 é válido (exercício com o peso do corpo, ex.: barra fixa). */
+    private fun validateSet(reps: Int, weightKg: Double): String? = when {
+        reps <= 0 -> "Informe pelo menos 1 repetição"
+        reps > 999 -> "Repetições demais. Confira o valor"
+        weightKg.isNaN() || weightKg < 0.0 -> "O peso não pode ser negativo"
+        weightKg > 2000.0 -> "Peso muito alto. Confira o valor"
+        else -> null
+    }
+
+    // ───────────────────────── Finalização ─────────────────────────
+
     fun finishWorkout() {
-        val workoutId = _uiState.value.activeWorkout?.id ?: return
+        val state = _uiState.value
+        val workoutId = state.activeWorkout?.id ?: return
 
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             try {
                 workoutRepository.finishWorkout(workoutId)
                 timerManager.cancel()
-                _uiState.value = _uiState.value.copy(
+                tickerJob?.cancel()
+                val finalState = _uiState.value
+                _uiState.value = finalState.copy(
                     isLoading = false,
-                    isWorkoutFinished = true
+                    isWorkoutFinished = true,
+                    summary = buildSummary(finalState)
                 )
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = e.message ?: "Erro ao finalizar treino"
+                    errorMessage = e.toUserMessage("Erro ao finalizar treino")
                 )
             }
         }
     }
 
+    private fun buildSummary(state: WorkoutUiState): WorkoutSummary {
+        val sets = state.completedSets
+        val names = state.exercises.associate { it.id to it.name }
+        return WorkoutSummary(
+            durationMinutes = _elapsedSeconds.value / 60,
+            totalSets = sets.size,
+            totalReps = sets.sumOf { it.reps },
+            totalVolumeKg = sets.sumOf { it.reps * it.weightKg },
+            exercisesWorked = sets.map { it.exerciseId }.distinct().size,
+            newRecords = state.newRecordExerciseIds.mapNotNull { names[it] }
+        )
+    }
+
     fun toggleExerciseFinished(exerciseId: String) {
         val workout = _uiState.value.activeWorkout ?: return
         val currentFinished = workout.finishedExerciseIds.toMutableList()
-        
+
         if (currentFinished.contains(exerciseId)) {
             currentFinished.remove(exerciseId)
         } else {
             currentFinished.add(exerciseId)
         }
 
-        val updatedWorkout = workout.copy(finishedExerciseIds = currentFinished)
-        _uiState.value = _uiState.value.copy(activeWorkout = updatedWorkout)
+        _uiState.value = _uiState.value.copy(activeWorkout = workout.copy(finishedExerciseIds = currentFinished))
 
         viewModelScope.launch {
             try {
                 workoutRepository.updateFinishedExercises(workout.id!!, currentFinished)
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 _uiState.value = _uiState.value.copy(
-                    errorMessage = e.message ?: "Erro ao atualizar status do exercício"
+                    errorMessage = e.toUserMessage("Erro ao atualizar status do exercício")
                 )
             }
         }
     }
 
-    fun startTimer(seconds: Int) {
-        timerManager.start(seconds)
-    }
+    // ───────────────────────── Timer ─────────────────────────
 
-    fun pauseTimer() {
-        timerManager.pause()
-    }
-
-    fun resumeTimer() {
-        timerManager.resume()
-    }
-
-    fun cancelTimer() {
-        timerManager.cancel()
-    }
+    fun startTimer(seconds: Int) = timerManager.start(seconds)
+    fun pauseTimer() = timerManager.pause()
+    fun resumeTimer() = timerManager.resume()
+    fun cancelTimer() = timerManager.cancel()
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(errorMessage = null)
@@ -254,5 +368,6 @@ class WorkoutViewModel(
     override fun onCleared() {
         super.onCleared()
         timerManager.cancel()
+        tickerJob?.cancel()
     }
 }
