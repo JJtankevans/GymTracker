@@ -32,9 +32,11 @@ enum class ChallengeMetric(val key: String, val label: String, val unit: String,
     EXERCISE_MAX("exercise_max_weight", "Maior carga em um exercício", "kg", needsExercise = true),
     EXERCISE_VOLUME("exercise_volume", "Volume em um exercício", "kg", needsExercise = true);
 
-    fun format(score: Double): String = "${formatInt(score)} $unit"
+    fun format(score: Double): String = "${formatInt(score)} ${if (score == 1.0) SINGULAR[unit] ?: unit else unit}"
 
     companion object {
+        private val SINGULAR = mapOf("treinos" to "treino", "dias" to "dia", "séries" to "série")
+
         fun fromKey(key: String): ChallengeMetric? = entries.firstOrNull { it.key == key }
     }
 }
@@ -124,7 +126,7 @@ fun GroupForm.toNew(ownerId: String): NewGroup {
 enum class ReactionKind(val key: String, val emoji: String, val label: String) {
     FLEX("flex", "💪", "Força"),
     FIRE("fire", "🔥", "Fogo"),
-    CLAP("clap", "👏", "Palmas"),
+    CLAP("clap", "👏", "Aplauso"),
     HEADPHONES("headphones", "🎧", "Boa playlist")
 }
 

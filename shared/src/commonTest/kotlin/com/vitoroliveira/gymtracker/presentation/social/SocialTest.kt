@@ -125,6 +125,9 @@ class SocialTest {
     @Test fun metricaFormataComUnidade() {
         assertEquals("5.200 kg", ChallengeMetric.VOLUME.format(5200.0))
         assertEquals("3 treinos", ChallengeMetric.WORKOUTS.format(3.0))
+        assertEquals("1 treino", ChallengeMetric.WORKOUTS.format(1.0))
+        assertEquals("1 dia", ChallengeMetric.ACTIVE_DAYS.format(1.0))
+        assertEquals("1 kg", ChallengeMetric.VOLUME.format(1.0))
         assertTrue(ChallengeMetric.EXERCISE_MAX.needsExercise)
         assertEquals(ChallengeMetric.MINUTES, ChallengeMetric.fromKey("training_minutes"))
         assertNull(ChallengeMetric.fromKey("inexistente"))

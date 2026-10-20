@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -343,7 +344,8 @@ fun ChallengeSheet(
                                 s.username + (s.team?.takeIf { it.isNotBlank() }?.let { " · $it" } ?: "") + if (s.profileId == me) " (você)" else "",
                                 Modifier.weight(1f), fontWeight = if (s.profileId == me) FontWeight.Bold else FontWeight.Normal
                             )
-                            Text(item.metric?.format(s.score) ?: s.score.toLong().toString(), fontWeight = FontWeight.Bold)
+                            Spacer(Modifier.width(12.dp))
+                            Text(item.metric?.format(s.score) ?: s.score.toLong().toString(), fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
                         }
                     }
                 }

@@ -15,6 +15,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Surface
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.material.icons.filled.Headphones
+import androidx.compose.material.icons.filled.ThumbUp
+import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Refresh
@@ -236,16 +245,41 @@ private fun FeedCard(item: FeedItem, onEdit: (String?, String) -> Unit, onReact:
                 Text(it, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.primary)
             }
             item.post.caption?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ReactionKind.entries.forEach { k ->
-                    FilterChip(
-                        selected = k in item.reactions.mine, onClick = { onReact(k) },
-                        label = { Text("${k.emoji} ${item.reactions.count(k).takeIf { it > 0 } ?: ""}".trim()) }
-                    )
+                    ReactionPill(k, item.reactions.count(k), k in item.reactions.mine) { onReact(k) }
                 }
             }
         }
     }
+}
+
+/** Botão de reação: ícone desenhado na cor do tema (cheio quando é seu) + contagem. */
+@Composable
+private fun ReactionPill(kind: ReactionKind, count: Int, mine: Boolean, onClick: () -> Unit) {
+    val cs = MaterialTheme.colorScheme
+    val tint = if (mine) cs.primary else cs.onSurfaceVariant
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(50),
+        color = if (mine) cs.primary.copy(alpha = 0.16f) else Color.Transparent,
+        border = BorderStroke(1.dp, if (mine) cs.primary else cs.outlineVariant)
+    ) {
+        Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(kind.icon(), kind.label, Modifier.size(20.dp), tint = tint)
+            if (count > 0) {
+                Spacer(Modifier.width(6.dp))
+                Text("$count", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = tint)
+            }
+        }
+    }
+}
+
+private fun ReactionKind.icon(): ImageVector = when (this) {
+    ReactionKind.FLEX -> Icons.Default.FitnessCenter
+    ReactionKind.FIRE -> Icons.Default.LocalFireDepartment
+    ReactionKind.CLAP -> Icons.Default.ThumbUp
+    ReactionKind.HEADPHONES -> Icons.Default.Headphones
 }
 
 // ───────────────────────── Grupos ─────────────────────────
