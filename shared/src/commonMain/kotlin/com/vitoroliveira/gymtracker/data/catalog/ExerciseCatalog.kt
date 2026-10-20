@@ -27,7 +27,22 @@ data class CatalogExercise(
     val reps: Int,
     /** Vai pro campo de observações ao criar (ex.: reps contadas em segundos). */
     val hint: String? = null
-)
+) {
+    /** Nome do arquivo de imagem (sem extensão): `ex_` + nome sem acento, minúsculo, com `_`. Ex.: `ex_supino_reto_com_barra`. */
+    val imageKey: String get() = "ex_" + slug(name)
+}
+
+/** "Leg Press 45°" → "leg_press_45". */
+fun slug(text: String): String {
+    val from = "áàâãäéèêëíìîïóòôõöúùûüçñ"
+    val to   = "aaaaaeeeeiiiiooooouuuucn"
+    val sb = StringBuilder()
+    for (ch in text.lowercase()) {
+        val c = from.indexOf(ch).let { if (it >= 0) to[it] else ch }
+        if (c in 'a'..'z' || c in '0'..'9') sb.append(c) else if (sb.isNotEmpty() && sb.last() != '_') sb.append('_')
+    }
+    return sb.toString().trimEnd('_')
+}
 
 object ExerciseCatalog {
 

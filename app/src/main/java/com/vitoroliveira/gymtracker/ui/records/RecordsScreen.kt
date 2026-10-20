@@ -39,7 +39,7 @@ import com.vitoroliveira.gymtracker.data.catalog.ExerciseCatalog
 import com.vitoroliveira.gymtracker.presentation.records.RecordRow
 import com.vitoroliveira.gymtracker.presentation.records.RecordsUiState
 import com.vitoroliveira.gymtracker.presentation.records.RecordsViewModel
-import com.vitoroliveira.gymtracker.ui.exercise.EquipmentIcon
+import com.vitoroliveira.gymtracker.ui.exercise.ExerciseArt
 import com.vitoroliveira.gymtracker.ui.exercise.tint
 import com.vitoroliveira.gymtracker.ui.theme.ThemedCard
 import com.vitoroliveira.gymtracker.ui.theme.ThemedScaffold
@@ -138,7 +138,7 @@ private fun RecordCard(r: RecordRow, state: RecordsUiState) {
                 Box(
                     Modifier.size(46.dp).clip(MaterialTheme.shapes.small).background(tint.copy(alpha = 0.18f)),
                     contentAlignment = Alignment.Center
-                ) { EquipmentIcon(catalog.equipment, tint, Modifier.size(32.dp)) }
+                ) { ExerciseArt(catalog, tint, 32.dp, Modifier.fillMaxSize().padding(2.dp)) }
             } else {
                 Box(
                     Modifier.size(46.dp).clip(MaterialTheme.shapes.small).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)),

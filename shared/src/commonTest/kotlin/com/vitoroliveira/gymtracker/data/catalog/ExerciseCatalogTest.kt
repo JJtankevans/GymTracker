@@ -7,6 +7,14 @@ import kotlin.test.assertTrue
 class ExerciseCatalogTest {
     @Test fun temPeloMenos50() = assertTrue(ExerciseCatalog.all.size >= 50, "${ExerciseCatalog.all.size}")
 
+    @Test fun chavesDeImagemValidasEUnicas() {
+        val keys = ExerciseCatalog.all.map { it.imageKey }
+        assertEquals(keys.size, keys.toSet().size, "chave repetida")
+        assertTrue(keys.all { Regex("ex_[a-z0-9]+(_[a-z0-9]+)*").matches(it) }, keys.toString())
+        assertEquals("ex_leg_press_45", CatalogExercise("Leg Press 45°", CatalogMuscle.QUADRICEPS, Equipment.MAQUINA, 3, 10).imageKey)
+        assertEquals("elevacao_pelvica", slug("Elevação Pélvica"))
+    }
+
     @Test fun nomesUnicos() {
         val names = ExerciseCatalog.all.map { it.name }
         assertEquals(names.size, names.toSet().size)

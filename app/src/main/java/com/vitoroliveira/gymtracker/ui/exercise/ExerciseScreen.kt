@@ -318,7 +318,7 @@ fun ExerciseItem(
                 Box(
                     Modifier.size(44.dp).clip(MaterialTheme.shapes.small).background(tint.copy(alpha = 0.18f)),
                     contentAlignment = Alignment.Center
-                ) { EquipmentIcon(catalog.equipment, tint, Modifier.size(30.dp)) }
+                ) { com.vitoroliveira.gymtracker.ui.exercise.ExerciseArt(catalog, tint, 30.dp, Modifier.fillMaxSize().padding(2.dp)) }
             } else {
                 Box(
                     modifier = Modifier

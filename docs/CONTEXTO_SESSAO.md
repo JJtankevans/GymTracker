@@ -19,7 +19,7 @@ Android (Jetpack Compose) + módulo KMP `:shared` (regras, ViewModels, repositó
 
 ## Números
 - 21 temas (7 novos: Nórdico, Obsidiana, Cobalto, Floresta, Arena, Ouro, Ártico) com 5 famílias de fonte embutidas (`res/font`, `ThemeFonts.kt`).
-- Catálogo: 54 exercícios (`data/catalog/ExerciseCatalog.kt`), 9 treinos prontos (`WorkoutTemplates.kt`).
+- Catálogo: 56 exercícios (`data/catalog/ExerciseCatalog.kt`), 9 treinos prontos (`WorkoutTemplates.kt`).
 - Testes: 115+ no `:shared` (rodar: `./gradlew :shared:testDebugUnitTest`), galerias de captura no app (`./gradlew :app:testDebugUnitTest -Proborazzi.test.record=true`, imagens em `app/build/outputs/{theme,screen,social,circuit}-gallery`).
 
 ## Supabase
@@ -89,3 +89,10 @@ Armadilha: com treino ativo aberto, "Iniciar" na Home pula o sheet e vai direto 
 - Não validado: apagar um treino COM séries (depende de `workout_sets` ter ON DELETE CASCADE no Supabase; o esquema base não está em `docs/`). Se falhar, aparece "Erro ao apagar o treino" e a lista não muda.
 - Sobraram no Histórico: "Push 1min" (o do recorde de 10 kg, útil para testes) e "Sem grupo 3h18min" (o antigo de teste, 2 séries 12×0). Há também 1 treino ativo vazio no grupo "teste".
 - Durante os testes o celular exibiu pop-ups do SIM da operadora (TIM: oferta de plano / "Launch Browser?") por cima do app; foram recusados com Cancel.
+
+## Atualização 5 (imagens por exercício, 20/10/2026)
+- O catálogo tem **56** exercícios (a contagem "54" acima estava desatualizada).
+- `shared/.../ExerciseCatalog.kt`: `CatalogExercise.imageKey` (`ex_<nome sem acento>`), `slug()`; teste `chavesDeImagemValidasEUnicas`.
+- `ExerciseArt` (ExerciseCatalogSheet.kt) usa o drawable `ex_<nome>` se existir e senão o ícone do equipamento; usado no catálogo, na lista de exercícios e em Recordes. Validado no celular com um PNG de teste (já removido).
+- `docs/IMAGENS_EXERCICIOS.md`: formato (PNG quadrado, fundo transparente, `res/drawable-nodpi/`) e tabela com as 56 chaves. O Thiago vai gerar as imagens (referências: silhueta roxa com o músculo em vermelho).
+- `shared/build` deixou de ser rastreado pelo git; `.gitignore` ignora `build/` e `.kotlin/`.

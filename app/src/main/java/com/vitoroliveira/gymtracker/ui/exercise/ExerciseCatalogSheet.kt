@@ -4,6 +4,11 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.material3.Button
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.draw.alpha
 import androidx.compose.foundation.clickable
@@ -210,7 +215,7 @@ private fun CatalogCard(
                 Modifier.fillMaxWidth().aspectRatio(1.9f).background(tint.copy(alpha = 0.16f)),
                 contentAlignment = Alignment.Center
             ) {
-                EquipmentIcon(ex.equipment, tint, Modifier.size(54.dp))
+                ExerciseArt(ex, tint, 54.dp, Modifier.fillMaxSize().padding(6.dp))
                 Box(
                     Modifier.align(Alignment.TopStart).size(40.dp).clip(CircleShape).clickable(onClick = onFavorite),
                     contentAlignment = Alignment.Center
@@ -242,6 +247,21 @@ private fun CatalogCard(
                 )
             }
         }
+    }
+}
+
+/**
+ * Ilustração do exercício: usa o drawable `ex_<nome>` (ver docs/IMAGENS_EXERCICIOS.md) se existir;
+ * senão cai no ícone desenhado do equipamento.
+ */
+@Composable
+fun ExerciseArt(ex: CatalogExercise, tint: Color, iconSize: Dp, imageModifier: Modifier = Modifier.fillMaxSize()) {
+    val context = LocalContext.current
+    val resId = remember(ex.imageKey) { context.resources.getIdentifier(ex.imageKey, "drawable", context.packageName) }
+    if (resId != 0) {
+        Image(painterResource(resId), contentDescription = ex.name, modifier = imageModifier, contentScale = ContentScale.Fit)
+    } else {
+        EquipmentIcon(ex.equipment, tint, Modifier.size(iconSize))
     }
 }
 
