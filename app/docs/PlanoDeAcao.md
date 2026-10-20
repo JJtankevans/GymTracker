@@ -5,7 +5,7 @@
 
 ## Sumário
 
-1. [Visão Geral do Projeto](#1-visão-geral-do-projeto)
+1. [Visão Geral do Projeto](#1-visão-geral-do-projeto).
 2. [Stack Tecnológica](#2-stack-tecnológica)
 3. [Modelagem do Banco de Dados (Supabase)](#3-modelagem-do-banco-de-dados-supabase)
 4. [Arquitetura do Projeto](#4-arquitetura-do-projeto)
