@@ -33,7 +33,7 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun HistoryScreen(
-    onWorkoutClick: (String) -> Unit = {},
+    onWorkoutClick: (workoutId: String, groupName: String) -> Unit = { _, _ -> },
     onBack: () -> Unit = {},
     viewModel: HistoryViewModel = koinViewModel()
 ) {
@@ -52,7 +52,7 @@ fun HistoryScreen(
 @Composable
 fun HistoryScreenContent(
     uiState: HistoryUiState,
-    onWorkoutClick: (String) -> Unit = {},
+    onWorkoutClick: (workoutId: String, groupName: String) -> Unit = { _, _ -> },
     onBack: () -> Unit = {},
     onDismissError: () -> Unit = {},
     onDeleteWorkout: (String) -> Unit = {}
@@ -99,7 +99,7 @@ fun HistoryScreenContent(
                     items(uiState.workouts, key = { it.workoutId }) { workout ->
                         WorkoutHistoryCard(
                             item = workout,
-                            onClick = { onWorkoutClick(workout.workoutId) },
+                            onClick = { onWorkoutClick(workout.workoutId, workout.muscleGroupName) },
                             onLongClick = { pendingDelete = workout }
                         )
                     }

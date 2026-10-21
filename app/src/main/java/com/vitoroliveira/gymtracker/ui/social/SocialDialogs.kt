@@ -50,6 +50,10 @@ import com.vitoroliveira.gymtracker.data.model.SocialSettings
 import com.vitoroliveira.gymtracker.data.model.Standing
 import com.vitoroliveira.gymtracker.presentation.social.ChallengeForm
 import com.vitoroliveira.gymtracker.presentation.social.ChallengeItem
+import com.vitoroliveira.gymtracker.presentation.social.ChallengeMessages
+import com.vitoroliveira.gymtracker.presentation.social.challengeMood
+import com.vitoroliveira.gymtracker.ui.components.todayEpochDay
+import com.vitoroliveira.gymtracker.ui.profile.UserAvatar
 import com.vitoroliveira.gymtracker.presentation.social.ChallengeMetric
 import com.vitoroliveira.gymtracker.presentation.social.ChallengeStatus
 import com.vitoroliveira.gymtracker.presentation.social.GroupForm
@@ -169,6 +173,8 @@ fun ChallengeDialog(myGroups: List<SocialGroup>, onConfirm: (ChallengeForm) -> U
     var maxPerDay by remember { mutableStateOf("1") }
     var target by remember { mutableStateOf("") }
     var teamsText by remember { mutableStateOf("") }
+    var failText by remember { mutableStateOf("") }
+    var streakText by remember { mutableStateOf("") }
     var metricOpen by remember { mutableStateOf(false) }
     var groupOpen by remember { mutableStateOf(false) }
     var exOpen by remember { mutableStateOf(false) }
@@ -232,6 +238,17 @@ fun ChallengeDialog(myGroups: List<SocialGroup>, onConfirm: (ChallengeForm) -> U
                     teamsText, { teamsText = it.take(120) }, label = { Text("Equipes (opcional)") },
                     placeholder = { Text("Ex.: Azuis, Vermelhos") }, singleLine = true, modifier = Modifier.fillMaxWidth()
                 )
+                Text("Títulos no perfil (opcional)", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    NumberField("Falhas permitidas", failText, { failText = it }, Modifier.weight(1f))
+                    NumberField("Dias seguidos", streakText, { streakText = it }, Modifier.weight(1f))
+                }
+                Text(
+                    "Falha = treino abaixo do mínimo de minutos; passou das falhas permitidas, o perfil ganha um título de falha. " +
+                        "Dias seguidos com treino válido dão os títulos Alpha, Chad (2x), Giga Chad (3x) e Mr. Olimpia (4x). " +
+                        (streakText.toIntOrNull()?.takeIf { it > 0 }?.let { "Com $it: " + com.vitoroliveira.gymtracker.presentation.social.ProfileTitles.ladder(it) + "." } ?: ""),
+                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 Text(
                     "As regras de mínimo de minutos e máximo de treinos por dia dificultam trapaça. O placar vem dos treinos reais.",
                     style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -247,7 +264,9 @@ fun ChallengeDialog(myGroups: List<SocialGroup>, onConfirm: (ChallengeForm) -> U
                         minMinutesPerWorkout = minMinutes.toIntOrNull() ?: 0,
                         maxWorkoutsPerDay = maxPerDay.toIntOrNull() ?: 1,
                         target = target.toDoubleOrNull(),
-                        teams = teamsText.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+                        teams = teamsText.split(",").map { it.trim() }.filter { it.isNotEmpty() },
+                        failThreshold = failText.toIntOrNull(),
+                        streakGoal = streakText.toIntOrNull()
                     )
                 )
             }) { Text("Criar") }
@@ -297,6 +316,21 @@ fun ChallengeSheet(
                     (c.target?.let { " · meta ${it.toLong()}" } ?: "") + (item.groupName?.let { " · grupo $it" } ?: ""),
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            // mensagem do dia (muda uma vez por dia e fica fixa durante o dia)
+            val mood = if (item.joined) challengeMood(item.status, c.target, standings, me) else null
+            if (mood != null) {
+                val message = remember(c.id, me, mood, todayEpochDay()) { ChallengeMessages.pick(mood, "${c.id}|$me|${todayEpochDay()}".hashCode()) }
+                ChallengeMessageCard(message, Modifier.padding(vertical = 4.dp))
+            }
+            if (c.failThreshold != null || c.streakGoal != null) {
+                Text(
+                    listOfNotNull(
+                        c.failThreshold?.let { "Mais de $it treino(s) abaixo do mínimo = título de falha no perfil." },
+                        c.streakGoal?.let { "Dias seguidos: " + com.vitoroliveira.gymtracker.presentation.social.ProfileTitles.ladder(it) + "." }
+                    ).joinToString(" "),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
             if (progress != null && mine != null) {
                 Text(
                     "Sua meta: ${item.metric?.format(mine.score) ?: mine.score.toLong()} de ${item.metric?.format(c.target ?: 0.0) ?: c.target?.toLong()}",
@@ -340,6 +374,8 @@ fun ChallengeSheet(
                     ThemedCard(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.small) {
                         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                             Text("${s.rank}º", Modifier.size(width = 40.dp, height = 24.dp), fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.primary)
+                            UserAvatar(url = s.avatarUrl, size = 36.dp, fallbackName = s.username)
+                            Spacer(Modifier.width(10.dp))
                             Text(
                                 s.username + (s.team?.takeIf { it.isNotBlank() }?.let { " · $it" } ?: "") + if (s.profileId == me) " (você)" else "",
                                 Modifier.weight(1f), fontWeight = if (s.profileId == me) FontWeight.Bold else FontWeight.Normal
@@ -360,7 +396,8 @@ fun ChallengeSheet(
 @Composable
 fun ProfileSheet(
     view: com.vitoroliveira.gymtracker.presentation.social.ProfileView,
-    onFollow: () -> Unit, onUnfollow: () -> Unit, onDismiss: () -> Unit
+    onFollow: () -> Unit, onUnfollow: () -> Unit, onDismiss: () -> Unit,
+    title: com.vitoroliveira.gymtracker.data.model.ProfileTitle? = null
 ) {
     val p = view.person.profile
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
@@ -373,6 +410,7 @@ fun ProfileSheet(
                 "@${p.username} · ${visibilityLabel(p.visibility)}" + if (view.person.followsMe) " · segue você" else "",
                 style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            title?.let { TitleChip(it) }
             p.bio?.takeIf { it.isNotBlank() }?.let { Text(it) }
 
             when (view.person.relation) {

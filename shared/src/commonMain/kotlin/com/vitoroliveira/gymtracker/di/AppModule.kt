@@ -47,7 +47,7 @@ fun appModule(supabaseClient: SupabaseClient) = module {
     factory { com.vitoroliveira.gymtracker.domain.usecase.CreateWorkoutFromTemplate(get(), get()) }
     viewModel { MuscleGroupViewModel(get(), get()) }
     viewModel { ExerciseViewModel(get()) }
-    viewModel { ProfileViewModel(get(), get()) }
+    viewModel { ProfileViewModel(get(), get(), get()) }
     viewModel { WorkoutViewModel(get(), get()) }
     viewModel { HomeViewModel(get(), get(), get()) }
     viewModel { HistoryViewModel(get(), get()) }

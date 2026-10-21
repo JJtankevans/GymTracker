@@ -10,6 +10,7 @@ import com.vitoroliveira.gymtracker.data.model.Workout
 import com.vitoroliveira.gymtracker.presentation.DashboardCalculator
 import com.vitoroliveira.gymtracker.presentation.WeekBucket
 import com.vitoroliveira.gymtracker.domain.repository.MuscleGroupRepository
+import com.vitoroliveira.gymtracker.domain.resolveGroupName
 import com.vitoroliveira.gymtracker.domain.repository.ProfileRepository
 import com.vitoroliveira.gymtracker.domain.repository.WorkoutRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -72,9 +73,7 @@ class HomeViewModel(
                 val weeklyHistory = DashboardCalculator.weeklyBuckets(workoutDates, today, weeks = 8)
 
                 val lastWorkout = history.firstOrNull()
-                val lastWorkoutGroupName = lastWorkout?.muscleGroupId?.let { groupId ->
-                    muscleGroups.find { it.id == groupId }?.name
-                }
+                val lastWorkoutGroupName = lastWorkout?.resolveGroupName(muscleGroups.associateBy { it.id })
 
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,

@@ -316,6 +316,8 @@ ORDER BY profile_id, week_start;
 - `workouts.finished_exercise_ids` e `security_invoker` nas views: `docs/supabase/001_lacunas_do_schema.sql`.
 - Tabelas sociais (perfil público, seguir, grupos, desafios, feed, reações, músicas): `docs/supabase/002_social.sql`, `004`, `005` e `docs/SOCIAL_DESIGN.md`.
 - Peso corporal e dados do perfil: `docs/supabase/003_dados_corporais.sql`.
+- Nome do grupo no histórico: `workouts.muscle_group_name` + gatilho `trg_keep_group_name` (BEFORE DELETE em `muscle_groups`) em `docs/supabase/009_nome_do_grupo_no_historico.sql`.
+- Títulos de desafio: `challenges.fail_threshold` e `challenges.streak_goal` (opcionais) e função `profile_titles(uuid[])` em `docs/supabase/010_titulos_do_desafio.sql`.
 - Recordes pessoais em uma chamada: função `records_summary()` (SECURITY INVOKER) em `docs/supabase/008_records_summary.sql`; substitui consultar `vw_exercise_progression` exercício por exercício na tela de Recordes.
 - Foto de perfil: bucket público `user_profile_images` no Supabase Storage (arquivos em `<id do usuário>/<milissegundos>.jpg`; a URL pública fica em `profiles.avatar_url`); limites e RLS em `docs/supabase/007_foto_de_perfil_storage.sql`.
 - Exercício em vários grupos (`group_exercises`): `docs/supabase/006_exercicio_em_varios_grupos.sql`; índices `idx_group_exercises_exercise` e `idx_group_exercises_profile`.

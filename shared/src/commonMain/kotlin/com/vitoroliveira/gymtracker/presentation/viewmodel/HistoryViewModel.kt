@@ -7,6 +7,7 @@ import kotlin.coroutines.cancellation.CancellationException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vitoroliveira.gymtracker.domain.repository.MuscleGroupRepository
+import com.vitoroliveira.gymtracker.domain.resolveGroupName
 import com.vitoroliveira.gymtracker.domain.repository.WorkoutRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -60,7 +61,7 @@ class HistoryViewModel(
 
                     WorkoutHistoryItem(
                         workoutId = workoutId,
-                        muscleGroupName = group?.name ?: "Sem grupo",
+                        muscleGroupName = workout.resolveGroupName(muscleGroups) ?: "Sem grupo",
                         muscleGroupColorHex = group?.colorHex ?: "#9E9E9E",
                         startedAt = startedAt,
                         finishedAt = finishedAt,

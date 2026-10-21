@@ -73,7 +73,11 @@ data class ChallengeForm(
     val target: Double? = null,
     val description: String? = null,
     /** 2 ou mais nomes = desafio em equipes; vazio = individual. */
-    val teams: List<String> = emptyList()
+    val teams: List<String> = emptyList(),
+    /** Mais que isso de treinos abaixo do mínimo de minutos = título de falha no perfil. Null = desligado. */
+    val failThreshold: Int? = null,
+    /** Dias seguidos para o título Alpha (Chad 2x, Giga Chad 3x, Mr. Olimpia 4x). Null = desligado. */
+    val streakGoal: Int? = null
 )
 
 /** Valida e monta o desafio. Lança [IllegalArgumentException] com a mensagem pro usuário. */
@@ -84,6 +88,10 @@ fun ChallengeForm.toNew(creatorId: String, now: Instant): NewChallenge {
     require(minMinutesPerWorkout in 0..300) { "Os minutos mínimos por treino ficam entre 0 e 300." }
     require(maxWorkoutsPerDay in 1..10) { "O máximo de treinos por dia fica entre 1 e 10." }
     require(target == null || target > 0) { "A meta precisa ser maior que zero." }
+    require(failThreshold == null || failThreshold in 1..100) { "As falhas permitidas ficam entre 1 e 100." }
+    require(failThreshold == null || minMinutesPerWorkout > 0) { "Para contar falhas defina um mínimo de minutos maior que zero: falha é treino abaixo do mínimo." }
+    require(streakGoal == null || streakGoal in 1..365) { "Os dias seguidos para o título ficam entre 1 e 365." }
+    require(streakGoal == null || streakGoal <= days) { "Os dias seguidos para o título não podem passar da duração do desafio." }
     val ex = exerciseName?.trim().orEmpty()
     require(!metric.needsExercise || ex.isNotEmpty()) { "Escolha o exercício dessa métrica." }
     val teamNames = teams.map { it.trim() }.filter { it.isNotEmpty() }.distinctBy { it.lowercase() }
@@ -104,7 +112,9 @@ fun ChallengeForm.toNew(creatorId: String, now: Instant): NewChallenge {
         target = target,
         minMinutesPerWorkout = minMinutesPerWorkout,
         maxWorkoutsPerDay = maxWorkoutsPerDay,
-        maxParticipants = null
+        maxParticipants = null,
+        failThreshold = failThreshold,
+        streakGoal = streakGoal
     )
 }
 

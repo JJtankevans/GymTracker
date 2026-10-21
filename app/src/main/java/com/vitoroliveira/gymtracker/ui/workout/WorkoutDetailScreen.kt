@@ -28,6 +28,7 @@ import org.koin.core.parameter.parametersOf
 @Composable
 fun WorkoutDetailScreen(
     workoutId: String,
+    groupName: String = "",
     onBack: () -> Unit = {},
     viewModel: WorkoutDetailViewModel = koinViewModel(parameters = { parametersOf(workoutId) })
 ) {
@@ -35,6 +36,7 @@ fun WorkoutDetailScreen(
 
     WorkoutDetailScreenContent(
         uiState = uiState,
+        groupName = groupName,
         onBack = onBack,
         onDismissError = viewModel::clearError
     )
@@ -44,6 +46,7 @@ fun WorkoutDetailScreen(
 @Composable
 fun WorkoutDetailScreenContent(
     uiState: WorkoutDetailUiState,
+    groupName: String = "",
     onBack: () -> Unit = {},
     onDismissError: () -> Unit = {}
 ) {
@@ -59,7 +62,7 @@ fun WorkoutDetailScreenContent(
     ThemedScaffold(
         topBar = {
             ThemedTopAppBar(
-                title = { Text("Detalhe do Treino") },
+                title = { Text(groupName.ifBlank { "Detalhe do Treino" }) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")

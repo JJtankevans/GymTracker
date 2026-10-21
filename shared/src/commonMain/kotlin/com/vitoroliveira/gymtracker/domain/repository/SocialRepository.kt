@@ -8,6 +8,7 @@ import com.vitoroliveira.gymtracker.data.model.GroupMember
 import com.vitoroliveira.gymtracker.data.model.NewChallenge
 import com.vitoroliveira.gymtracker.data.model.NewGroup
 import com.vitoroliveira.gymtracker.data.model.PostReaction
+import com.vitoroliveira.gymtracker.data.model.ProfileTitle
 import com.vitoroliveira.gymtracker.data.model.ProfileStats
 import com.vitoroliveira.gymtracker.data.model.TopTrack
 import com.vitoroliveira.gymtracker.data.model.SocialGroup
@@ -32,6 +33,8 @@ interface SocialRepository {
     suspend fun rejectFollower(userId: String)
     suspend fun profileStats(userId: String): ProfileStats?
     suspend fun topTracks(userId: String): List<TopTrack>
+    /** Títulos de desafio (honra/falha) dos perfis, quando quem consulta pode vê-los: no máximo um por perfil. */
+    suspend fun titles(profileIds: List<String>): List<ProfileTitle>
 
     // Feed
     suspend fun feed(limit: Int = 50): List<FeedPost>

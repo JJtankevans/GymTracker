@@ -19,6 +19,8 @@ A chave vem do nome (`CatalogExercise.imageKey`), e um teste garante que ela é 
 Faltam estas 15 (caem no ícone do equipamento): Supino na Máquina, Remada na Máquina, Desenvolvimento na Máquina, Rosca Martelo, Rosca na Polia, Tríceps Testa, Supino Fechado, Agachamento no Smith, Hack Squat, Elevação Pélvica, Cadeira Abdutora, Glúteo na Polia (Coice), Panturrilha Sentado, Panturrilha no Leg Press, Abdominal na Polia.
 As duas folhas originais (`docs/folhas/`) têm estilos diferentes (1 realista/sombreada, 2 plana); o ideal é regerar tudo no mesmo estilo. O script de corte usado nas folhas era temporário e não foi versionado (flood fill do fundo, tapa bolsões, agrupa peças por vizinhança, centraliza em 384×384).
 
+Para gerar as 15 que faltam: texto pronto para o gerador de imagens e passo a passo em `docs/PROMPTS_IMAGENS_EXERCICIOS.md`; o corte da folha é automático com `python3 tools/cortar_folha.py` (`--faltando` lista o que falta).
+
 Para descobrir quais exercícios criados pelos usuários ainda não estão no catálogo (e portanto não têm imagem), rodar `docs/supabase/consulta_exercicios_de_todos_os_usuarios.sql` no SQL Editor do Supabase: as linhas com `no_catalogo = true` são as candidatas.
 
 ## Lista
