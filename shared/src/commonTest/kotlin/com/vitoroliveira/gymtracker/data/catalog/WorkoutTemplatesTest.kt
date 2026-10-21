@@ -22,7 +22,7 @@ private class RecordingGroups : MuscleGroupRepository {
 private class RecordingExercises : ExerciseRepository {
     val inserted = mutableListOf<Exercise>()
     override suspend fun getAll() = inserted.toList()
-    override suspend fun getByMuscleGroup(muscleGroupId: String) = inserted.filter { it.muscleGroupId == muscleGroupId }
+    override suspend fun getByMuscleGroup(muscleGroupId: String) = inserted.filter { muscleGroupId in it.groupIds }
     override suspend fun insert(exercise: Exercise) = exercise.copy(id = "e${inserted.size + 1}").also { inserted += it }
     override suspend fun update(exercise: Exercise) {}
     override suspend fun delete(id: String) {}
@@ -50,7 +50,7 @@ class WorkoutTemplatesTest {
 
         assertEquals(template.exerciseNames.size, n)
         assertEquals(template.name, groups.inserted.single().name)
-        assertTrue(exercises.inserted.all { it.muscleGroupId == "g1" })
+        assertTrue(exercises.inserted.all { it.groupIds == listOf("g1") })
         assertEquals(template.exerciseNames, exercises.inserted.map { it.name })
     }
 

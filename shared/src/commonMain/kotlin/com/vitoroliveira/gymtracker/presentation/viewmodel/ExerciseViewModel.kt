@@ -9,6 +9,8 @@ import androidx.lifecycle.viewModelScope
 import com.vitoroliveira.gymtracker.data.catalog.CatalogExercise
 import com.vitoroliveira.gymtracker.data.model.Exercise
 import com.vitoroliveira.gymtracker.domain.repository.ExerciseRepository
+import com.vitoroliveira.gymtracker.domain.usecase.AddToGroupsResult
+import com.vitoroliveira.gymtracker.domain.usecase.addToGroups
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,8 +19,8 @@ import kotlinx.coroutines.launch
 data class ExerciseUiState(
     val isLoading: Boolean = false,
     val exercises: List<Exercise> = emptyList(),
-    /** Nomes de todos os exercícios do usuário, mesmo com filtro de grupo (o nome é único por usuário). */
-    val allNames: List<String> = emptyList(),
+    /** Nomes dos exercícios que já estão no grupo filtrado (ou de todos, sem filtro): o catálogo marca esses como "já adicionado". */
+    val namesInScope: List<String> = emptyList(),
     val selectedMuscleGroupId: String? = null,
     val errorMessage: String? = null,
     val successMessage: String? = null
@@ -48,11 +50,11 @@ class ExerciseViewModel(
             try {
                 val groupId = _uiState.value.selectedMuscleGroupId
                 val all = repository.getAll()
-                val exercises = if (groupId != null) all.filter { it.muscleGroupId == groupId } else all
+                val exercises = if (groupId != null) all.filter { groupId in it.groupIds } else all
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     exercises = exercises,
-                    allNames = all.map { it.name }
+                    namesInScope = exercises.map { it.name }
                 )
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
@@ -73,9 +75,10 @@ class ExerciseViewModel(
         loadExercises()
     }
 
+    /** Se já existe um exercício com esse nome ele é reaproveitado e só ganha os [groupIds] que faltam (mesmo histórico). */
     fun createExercise(
         name: String,
-        muscleGroupId: String?,
+        groupIds: List<String>,
         defaultSets: Int = 3,
         defaultReps: Int = 12,
         notes: String? = null
@@ -98,16 +101,17 @@ class ExerciseViewModel(
             try {
                 val newExercise = Exercise(
                     name = name,
-                    muscleGroupId = muscleGroupId,
                     defaultSets = defaultSets,
                     defaultReps = defaultReps,
                     notes = notes
                 )
-                repository.insert(newExercise)
+                val result = repository.addToGroups(newExercise, groupIds.toSet())
                 loadExercises()
-                _uiState.value = _uiState.value.copy(
-                    successMessage = "Exercício '$name' criado com sucesso"
-                )
+                _uiState.value = when (result) {
+                    is AddToGroupsResult.Created -> _uiState.value.copy(successMessage = "Exercício '$name' criado com sucesso")
+                    is AddToGroupsResult.Linked -> _uiState.value.copy(successMessage = "Exercício '$name' já existia e foi adicionado ao grupo")
+                    is AddToGroupsResult.Unchanged -> _uiState.value.copy(errorMessage = "'$name' já está na sua lista")
+                }
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 _uiState.value = _uiState.value.copy(
@@ -118,25 +122,29 @@ class ExerciseViewModel(
         }
     }
 
-    /** Adiciona vários exercícios do catálogo de uma vez (séries/reps padrão de cada um). */
+    /** Adiciona vários exercícios do catálogo de uma vez (séries/reps padrão de cada um); os que já existem só entram no grupo. */
     fun createMany(items: List<CatalogExercise>, muscleGroupId: String?) {
         if (items.isEmpty()) return
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
             try {
-                items.forEach { ex ->
-                    repository.insert(
-                        Exercise(
-                            name = ex.name, muscleGroupId = muscleGroupId,
-                            defaultSets = ex.sets, defaultReps = ex.reps, notes = ex.hint
-                        )
+                val known = repository.getAll().toMutableList()
+                val results = items.map { ex ->
+                    repository.addToGroups(
+                        Exercise(name = ex.name, defaultSets = ex.sets, defaultReps = ex.reps, notes = ex.hint),
+                        setOfNotNull(muscleGroupId),
+                        known
                     )
                 }
                 loadExercises()
-                _uiState.value = _uiState.value.copy(
-                    successMessage = if (items.size == 1) "Exercício '${items[0].name}' criado com sucesso"
-                    else "${items.size} exercícios adicionados"
-                )
+                val changed = results.filter { it !is AddToGroupsResult.Unchanged }
+                _uiState.value = when {
+                    changed.isEmpty() -> _uiState.value.copy(errorMessage = "Esses exercícios já estão na sua lista")
+                    changed.size > 1 -> _uiState.value.copy(successMessage = "${changed.size} exercícios adicionados")
+                    changed[0] is AddToGroupsResult.Created ->
+                        _uiState.value.copy(successMessage = "Exercício '${changed[0].exercise.name}' criado com sucesso")
+                    else -> _uiState.value.copy(successMessage = "Exercício '${changed[0].exercise.name}' adicionado ao grupo")
+                }
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 // alguns podem ter entrado antes do erro: recarrega sem apagar a mensagem

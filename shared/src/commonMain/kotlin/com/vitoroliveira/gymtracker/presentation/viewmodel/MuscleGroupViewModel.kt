@@ -88,8 +88,7 @@ class MuscleGroupViewModel(
                 val count = creator(template, names)
                 loadMuscleGroups()
                 _uiState.value = _uiState.value.copy(
-                    successMessage = "Treino '${template.name}' criado com $count exercícios" +
-                        if (count < template.exerciseNames.size) " (${template.exerciseNames.size - count} já existiam em outro grupo)" else ""
+                    successMessage = "Treino '${template.name}' criado com $count exercícios"
                 )
             } catch (e: Exception) {
                 if (e is CancellationException) throw e

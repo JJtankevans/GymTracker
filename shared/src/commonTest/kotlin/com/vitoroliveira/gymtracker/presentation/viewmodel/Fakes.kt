@@ -20,7 +20,7 @@ class FakeExerciseRepository(
 ) : ExerciseRepository {
     override suspend fun getAll() = exercises
     override suspend fun getByMuscleGroup(muscleGroupId: String) =
-        exercises.filter { it.muscleGroupId == muscleGroupId }
+        exercises.filter { muscleGroupId in it.groupIds }
     override suspend fun insert(exercise: Exercise) = exercise
     override suspend fun update(exercise: Exercise) {}
     override suspend fun delete(id: String) {}
