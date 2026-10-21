@@ -60,8 +60,8 @@ fun ExerciseScreen(
         onNavigateToDetail = onNavigateToDetail,
         onBack = onBack,
         onFilterChange = { groupId -> exerciseViewModel.filterByMuscleGroup(groupId) },
-        onCreate = { name, groupId, sets, reps, notes ->
-            exerciseViewModel.createExercise(name, groupId, sets, reps, notes)
+        onCreate = { name, groupIds, sets, reps, notes ->
+            exerciseViewModel.createExercise(name, groupIds, sets, reps, notes)
         },
         onUpdate = { exercise -> exerciseViewModel.updateExercise(exercise) },
         onDelete = { id -> exerciseViewModel.deleteExercise(id) },
@@ -79,7 +79,7 @@ fun ExerciseScreenContent(
     onNavigateToDetail: (String, String) -> Unit,
     onBack: () -> Unit = {},
     onFilterChange: (String?) -> Unit,
-    onCreate: (String, String?, Int, Int, String?) -> Unit,
+    onCreate: (String, List<String>, Int, Int, String?) -> Unit,
     onUpdate: (Exercise) -> Unit,
     onDelete: (String) -> Unit,
     onClearMessages: () -> Unit,
@@ -165,10 +165,11 @@ fun ExerciseScreenContent(
                     contentPadding = PaddingValues(vertical = 16.dp)
                 ) {
                     items(uiState.exercises, key = { it.id ?: it.name }) { exercise ->
+                        val exerciseGroups = availableGroups.filter { it.id in exercise.groupIds }
                         ExerciseItem(
                             exercise = exercise,
-                            groupName = availableGroups.find { it.id == exercise.muscleGroupId }?.name,
-                            groupColorHex = availableGroups.find { it.id == exercise.muscleGroupId }?.colorHex,
+                            groupName = exerciseGroups.joinToString(", ") { it.name }.ifBlank { null },
+                            groupColorHex = exerciseGroups.firstOrNull()?.colorHex,
                             onClick = {
                                 exercise.id?.let { id -> onNavigateToDetail(id, exercise.name) }
                             },
@@ -183,7 +184,7 @@ fun ExerciseScreenContent(
 
     if (showCatalog) {
         ExerciseCatalogSheet(
-            existingNames = uiState.allNames,
+            existingNames = uiState.namesInScope,
             onPickOne = { prefill = it; showCatalog = false; showCreateDialog = true },
             onPickMany = { onCreateMany(it, uiState.selectedMuscleGroupId); showCatalog = false },
             onCustom = { prefill = null; showCatalog = false; showCreateDialog = true },
@@ -196,12 +197,12 @@ fun ExerciseScreenContent(
             title = "Novo Exercício",
             availableGroups = availableGroups,
             initialName = prefill?.name ?: "",
-            initialMuscleGroupId = uiState.selectedMuscleGroupId,
+            initialGroupIds = listOfNotNull(uiState.selectedMuscleGroupId),
             initialSets = prefill?.sets ?: 3,
             initialReps = prefill?.reps ?: 12,
             initialNotes = prefill?.hint ?: "",
-            onConfirm = { name, groupId, sets, reps, notes ->
-                onCreate(name, groupId, sets, reps, notes)
+            onConfirm = { name, groupIds, sets, reps, notes ->
+                onCreate(name, groupIds, sets, reps, notes)
                 showCreateDialog = false
                 prefill = null
             },
@@ -214,14 +215,14 @@ fun ExerciseScreenContent(
             title = "Editar Exercício",
             availableGroups = availableGroups,
             initialName = exercise.name,
-            initialMuscleGroupId = exercise.muscleGroupId,
+            initialGroupIds = exercise.groupIds,
             initialSets = exercise.defaultSets,
             initialReps = exercise.defaultReps,
             initialNotes = exercise.notes ?: "",
-            onConfirm = { name, groupId, sets, reps, notes ->
+            onConfirm = { name, groupIds, sets, reps, notes ->
                 onUpdate(exercise.copy(
                     name = name,
-                    muscleGroupId = groupId,
+                    groupIds = groupIds,
                     defaultSets = sets,
                     defaultReps = reps,
                     notes = notes
@@ -362,25 +363,25 @@ fun ExerciseItem(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+/** O mesmo exercício pode estar em vários grupos: os grupos marcados em "Grupos" são os que o contêm. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ExerciseDialog(
     title: String,
     availableGroups: List<MuscleGroup>,
     initialName: String = "",
-    initialMuscleGroupId: String? = null,
+    initialGroupIds: List<String> = emptyList(),
     initialSets: Int = 3,
     initialReps: Int = 12,
     initialNotes: String = "",
-    onConfirm: (name: String, groupId: String?, sets: Int, reps: Int, notes: String?) -> Unit,
+    onConfirm: (name: String, groupIds: List<String>, sets: Int, reps: Int, notes: String?) -> Unit,
     onDismiss: () -> Unit
 ) {
     var name by remember { mutableStateOf(initialName) }
-    var selectedGroupId by remember { mutableStateOf(initialMuscleGroupId) }
+    var selectedGroupIds by remember { mutableStateOf(initialGroupIds.toSet()) }
     var setsText by remember { mutableStateOf(initialSets.toString()) }
     var repsText by remember { mutableStateOf(initialReps.toString()) }
     var notes by remember { mutableStateOf(initialNotes) }
-    var groupMenuExpanded by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -398,32 +399,28 @@ fun ExerciseDialog(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                ExposedDropdownMenuBox(
-                    expanded = groupMenuExpanded,
-                    onExpandedChange = { groupMenuExpanded = it }
-                ) {
-                    OutlinedTextField(
-                        value = availableGroups.find { it.id == selectedGroupId }?.name ?: "Nenhum grupo",
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Grupo muscular") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = groupMenuExpanded) },
-                        modifier = Modifier
-                            .menuAnchor()
-                            .fillMaxWidth()
+                Text(
+                    text = "Grupos",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                if (availableGroups.isEmpty()) {
+                    Text(
+                        text = "Nenhum grupo criado ainda",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    ExposedDropdownMenu(
-                        expanded = groupMenuExpanded,
-                        onDismissRequest = { groupMenuExpanded = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("Nenhum grupo") },
-                            onClick = { selectedGroupId = null; groupMenuExpanded = false }
-                        )
+                } else {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         availableGroups.forEach { group ->
-                            DropdownMenuItem(
-                                text = { Text(group.name) },
-                                onClick = { selectedGroupId = group.id; groupMenuExpanded = false }
+                            val id = group.id ?: return@forEach
+                            FilterChip(
+                                selected = id in selectedGroupIds,
+                                onClick = {
+                                    selectedGroupIds =
+                                        if (id in selectedGroupIds) selectedGroupIds - id else selectedGroupIds + id
+                                },
+                                label = { Text(group.name) }
                             )
                         }
                     }
@@ -464,7 +461,7 @@ fun ExerciseDialog(
                 onClick = {
                     onConfirm(
                         name,
-                        selectedGroupId,
+                        selectedGroupIds.toList(), // não filtra por availableGroups: se a lista ainda não carregou, não desfaz vínculos
                         setsText.toIntOrNull() ?: 3,
                         repsText.toIntOrNull() ?: 12,
                         notes.ifBlank { null }
@@ -510,9 +507,9 @@ fun ExerciseScreenWithDataPreview() {
             screenTitle = "Exercícios · Treino A",
             uiState = ExerciseUiState(
                 exercises = listOf(
-                    Exercise(id = "1", name = "Supino Reto", muscleGroupId = "g1", defaultSets = 4, defaultReps = 10),
-                    Exercise(id = "2", name = "Supino Inclinado", muscleGroupId = "g1", defaultSets = 3, defaultReps = 12),
-                    Exercise(id = "3", name = "Crucifixo", muscleGroupId = "g1", defaultSets = 3, defaultReps = 15),
+                    Exercise(id = "1", name = "Supino Reto", groupIds = listOf("g1"), defaultSets = 4, defaultReps = 10),
+                    Exercise(id = "2", name = "Supino Inclinado", groupIds = listOf("g1"), defaultSets = 3, defaultReps = 12),
+                    Exercise(id = "3", name = "Crucifixo", groupIds = listOf("g1"), defaultSets = 3, defaultReps = 15),
                 ),
                 selectedMuscleGroupId = "g1"
             ),

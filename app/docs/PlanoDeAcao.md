@@ -131,8 +131,8 @@ CREATE TABLE exercises (
 
 **Relacionamentos:**
 - `profile_id` → exercício pertence ao usuário
-- `muscle_group_id` → exercício pertence a um grupo muscular (opcional)
-- Um `muscle_group` pode ter N `exercises`
+- `muscle_group_id` → **legado** (21/10/2026): o exercício pertence a um grupo muscular (opcional)
+- Um `muscle_group` pode ter N `exercises` e um `exercise` pode estar em N `muscle_groups`, pela tabela `group_exercises` (migração 006)
 
 ---
 
@@ -186,8 +186,7 @@ CREATE TABLE workout_sets (
 
 ```
 profiles (1)
-  ├──(N) muscle_groups (1)
-  │         └──(N) exercises
+  ├──(N) muscle_groups (N)──group_exercises──(N) exercises   (desde a migração 006)
   │
   ├──(N) exercises
   │

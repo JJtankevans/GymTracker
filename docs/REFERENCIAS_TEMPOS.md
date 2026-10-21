@@ -25,3 +25,5 @@ Por isso o app mostra a faixa de hipertrofia como 60–180 s e deixa o usuário 
 1. Antes de ter dados, usa o ritmo padrão (3 s/rep) e o descanso do objetivo escolhido.
 2. Com dados, usa o **seu** ritmo (mediana dos últimos 10) e mostra o comparativo com a faixa de referência.
 3. Autorregulação: a literatura não mostra vantagem em descanso fixo versus ajustado pelo usuário (Henselmans & Schoenfeld 2014), então ajustar pelo seu ritmo é coerente.
+
+Os valores usados no app estão em `shared/src/commonMain/kotlin/com/vitoroliveira/gymtracker/presentation/circuit/ReferenceTimes.kt`.

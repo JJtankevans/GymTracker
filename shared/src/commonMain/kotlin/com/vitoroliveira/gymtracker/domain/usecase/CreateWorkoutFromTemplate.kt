@@ -6,7 +6,10 @@ import com.vitoroliveira.gymtracker.data.model.MuscleGroup
 import com.vitoroliveira.gymtracker.domain.repository.ExerciseRepository
 import com.vitoroliveira.gymtracker.domain.repository.MuscleGroupRepository
 
-/** Cria o grupo do treino pronto e os exercícios dele que ainda não existem (o nome é único por usuário). Devolve quantos entraram. */
+/**
+ * Cria o grupo do treino pronto e põe nele os exercícios do catálogo: os que o usuário já tem (em outro grupo, ou
+ * soltos depois de apagar um grupo) são reaproveitados, com o mesmo histórico; os outros são criados. Devolve quantos entraram.
+ */
 class CreateWorkoutFromTemplate(
     private val groups: MuscleGroupRepository,
     private val exercises: ExerciseRepository
@@ -24,17 +27,15 @@ class CreateWorkoutFromTemplate(
     }
 
     private suspend fun insertAll(template: WorkoutTemplate, groupId: String): Int {
-        val taken = exercises.getAll().map { it.name.trim().lowercase() }.toSet()
-        val items = template.exercises.filter { it.name.trim().lowercase() !in taken }
-        items.forEach { ex ->
-            exercises.insert(
-                Exercise(
-                    name = ex.name, muscleGroupId = groupId,
-                    defaultSets = ex.sets, defaultReps = ex.reps, notes = ex.hint
-                )
+        val known = exercises.getAll().toMutableList()
+        template.exercises.forEach { ex ->
+            exercises.addToGroups(
+                Exercise(name = ex.name, defaultSets = ex.sets, defaultReps = ex.reps, notes = ex.hint),
+                setOf(groupId),
+                known
             )
         }
-        return items.size
+        return template.exercises.size
     }
 
     /** "Push" já existe? Vira "Push 2", "Push 3"... */

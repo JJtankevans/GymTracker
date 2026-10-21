@@ -15,6 +15,10 @@ mandar aos poucos.
 
 A chave vem do nome (`CatalogExercise.imageKey`), e um teste garante que ela é única e válida.
 
+## Situação (21/10/2026): 41 de 56 prontas
+Faltam estas 15 (caem no ícone do equipamento): Supino na Máquina, Remada na Máquina, Desenvolvimento na Máquina, Rosca Martelo, Rosca na Polia, Tríceps Testa, Supino Fechado, Agachamento no Smith, Hack Squat, Elevação Pélvica, Cadeira Abdutora, Glúteo na Polia (Coice), Panturrilha Sentado, Panturrilha no Leg Press, Abdominal na Polia.
+As duas folhas originais (`docs/folhas/`) têm estilos diferentes (1 realista/sombreada, 2 plana); o ideal é regerar tudo no mesmo estilo. O script de corte usado nas folhas era temporário e não foi versionado (flood fill do fundo, tapa bolsões, agrupa peças por vizinhança, centraliza em 384×384).
+
 ## Lista
 
 | # | Exercício | Músculo · equipamento | Arquivo |

@@ -79,6 +79,8 @@ COMMENT ON COLUMN exercises.default_reps    IS 'Número padrão de repetições 
 COMMENT ON COLUMN exercises.muscle_group_id IS 'Grupo muscular ao qual o exercício pertence (nullable).';
 ```
 
+> **Atualização (migração 006, 21/10/2026):** `muscle_group_id` é **legado**. Um exercício pode estar em vários grupos pela tabela `group_exercises` (seção 6); o app não lê mais esta coluna. Veja `docs/supabase/006_exercicio_em_varios_grupos.sql`.
+
 ---
 
 ### 4. `workouts`
@@ -123,6 +125,22 @@ COMMENT ON TABLE  workout_sets              IS 'Séries realizadas em cada sess�
 COMMENT ON COLUMN workout_sets.set_number   IS 'Número da série dentro do exercício (1, 2, 3...).';
 COMMENT ON COLUMN workout_sets.weight_kg    IS 'Carga utilizada em quilogramas.';
 COMMENT ON COLUMN workout_sets.rest_seconds IS 'Tempo de descanso configurado após esta série (segundos).';
+```
+
+---
+
+### 6. `group_exercises` (migração 006)
+Relação N:N: em quais grupos cada exercício está. Apagar o grupo ou o exercício remove o vínculo (cascade); o exercício e o histórico dele permanecem se só o grupo for apagado.
+
+```sql
+CREATE TABLE group_exercises (
+  group_id    UUID        NOT NULL REFERENCES muscle_groups(id) ON DELETE CASCADE,
+  exercise_id UUID        NOT NULL REFERENCES exercises(id)     ON DELETE CASCADE,
+  profile_id  UUID        NOT NULL DEFAULT auth.uid() REFERENCES profiles(id) ON DELETE CASCADE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (group_id, exercise_id)
+);
+-- RLS: o dono lê, cria (só com grupo e exercício dele) e apaga. Não há update (troca = apagar + criar).
 ```
 
 ---
@@ -291,3 +309,11 @@ ORDER BY profile_id, week_start;
 ---
 
 *GymTracker — Supabase Schema v1.0*
+
+---
+
+## Atualizações posteriores ao schema original
+- `workouts.finished_exercise_ids` e `security_invoker` nas views: `docs/supabase/001_lacunas_do_schema.sql`.
+- Tabelas sociais (perfil público, seguir, grupos, desafios, feed, reações, músicas): `docs/supabase/002_social.sql`, `004`, `005` e `docs/SOCIAL_DESIGN.md`.
+- Peso corporal e dados do perfil: `docs/supabase/003_dados_corporais.sql`.
+- Exercício em vários grupos (`group_exercises`): `docs/supabase/006_exercicio_em_varios_grupos.sql`; índices `idx_group_exercises_exercise` e `idx_group_exercises_profile`.
