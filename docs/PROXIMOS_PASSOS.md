@@ -26,7 +26,7 @@
 - **Layout do treino ativo por tema**: `WorkoutLayout.FOCUS` (um exercício por vez, números gigantes, registrar já inicia o descanso) em Oceano, Tinta, Brutal, Neon, Aurora, Synthwave, Magma. Histórico, perfil, grupos e exercícios ainda têm a mesma estrutura em todos os temas.
 - **Segurança (achado)**: as views do schema original rodavam sem `security_invoker` e ignoravam a RLS; `001_lacunas_do_schema.sql` corrige.
 
-## Supabase — atenção *(superado: o projeto é `ygbrrypyydxnuskrobeu`; migrações 001–005 aplicadas, 006 pendente; ver CONTEXTO_SESSAO)*
+## Supabase — atenção *(superado: o projeto é `ygbrrypyydxnuskrobeu`; migrações 001–006 aplicadas; ver CONTEXTO_SESSAO)*
 Nenhum projeto Supabase da sua conta se chama GymTracker, então **não alterei nada** em banco nenhum. Rode `docs/supabase/001_lacunas_do_schema.sql` no projeto certo: adiciona `workouts.finished_exercise_ids` e a view `vw_exercise_progression`, que o código usa mas `supabaseSchema.md` não tem.
 
 ## Falta / ideias
@@ -93,5 +93,5 @@ Pendente / ideias:
 - **Bug:** apagar um grupo deixava o exercício sem grupo (`ON DELETE SET NULL`), mas o nome seguia único por usuário; não dava para pôr o mesmo exercício (ex.: Cadeira extensora) num grupo novo. Reproduzido num Postgres local.
 - **Mudança:** relação N:N em `group_exercises` (SQL `docs/supabase/006_exercicio_em_varios_grupos.sql`, testado local). `Exercise.groupIds`; `ExerciseRepositoryImpl` grava e sincroniza vínculos; `ExerciseRepository.addToGroups` (use case) reaproveita o exercício de mesmo nome; treino pronto reaproveita exercícios que o usuário já tem; diálogo de exercício com seleção múltipla de grupos; catálogo marca "já adicionado" só dentro do grupo filtrado.
 - **Testes:** +7 em `CatalogViewModelsTest` (mesmo exercício em dois grupos, órfão reaproveitado, nome com caixa/acento, vários grupos de uma vez, repetir no mesmo grupo, escopo do catálogo, treino pronto reaproveitando) e fakes ajustados.
-- **Pendente:** rodar o 006 no Supabase, compilar e rodar os testes (o ambiente de nuvem não tem Android SDK), testar no celular. Detalhes em `docs/CONTEXTO_SESSAO.md`.
+- **Validação:** o Thiago aplicou o 006 e testou no celular; funcionou. Os 7 testes novos não foram vistos rodando (o ambiente de nuvem não tem Android SDK); confirmar com `./gradlew.bat :shared:testDebugUnitTest`. Detalhes em `docs/CONTEXTO_SESSAO.md`.
 - **Documentação** revisada nesta rodada: números conferidos com o código (56 exercícios, 9 treinos prontos, 21 temas, 41/56 imagens, 142 `@Test` no `:shared`); `SOCIAL_DESIGN.md`, `IMAGENS_EXERCICIOS.md`, `REFERENCIAS_TEMPOS.md` e `app/docs/` atualizados.
