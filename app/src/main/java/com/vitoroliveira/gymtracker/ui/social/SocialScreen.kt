@@ -60,6 +60,7 @@ import com.vitoroliveira.gymtracker.presentation.social.ChallengeItem
 import com.vitoroliveira.gymtracker.presentation.social.ChallengeStatus
 import com.vitoroliveira.gymtracker.presentation.social.FeedItem
 import com.vitoroliveira.gymtracker.presentation.social.PersonItem
+import com.vitoroliveira.gymtracker.ui.profile.UserAvatar
 import com.vitoroliveira.gymtracker.presentation.social.ReactionKind
 import com.vitoroliveira.gymtracker.presentation.social.Relation
 import com.vitoroliveira.gymtracker.presentation.social.SocialUiState
@@ -416,6 +417,8 @@ private fun PersonRow(item: PersonItem, a: SocialActions) {
     val p = item.profile
     ThemedCard(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium, onClick = { a.openProfile(item) }) {
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            UserAvatar(url = p.avatarUrl, size = 44.dp, fallbackName = p.displayName)
+            Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(p.displayName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                 Text(

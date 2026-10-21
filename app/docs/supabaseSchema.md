@@ -316,4 +316,5 @@ ORDER BY profile_id, week_start;
 - `workouts.finished_exercise_ids` e `security_invoker` nas views: `docs/supabase/001_lacunas_do_schema.sql`.
 - Tabelas sociais (perfil público, seguir, grupos, desafios, feed, reações, músicas): `docs/supabase/002_social.sql`, `004`, `005` e `docs/SOCIAL_DESIGN.md`.
 - Peso corporal e dados do perfil: `docs/supabase/003_dados_corporais.sql`.
+- Foto de perfil: bucket público `user_profile_images` no Supabase Storage (arquivos em `<id do usuário>/<milissegundos>.jpg`; a URL pública fica em `profiles.avatar_url`); limites e RLS em `docs/supabase/007_foto_de_perfil_storage.sql`.
 - Exercício em vários grupos (`group_exercises`): `docs/supabase/006_exercicio_em_varios_grupos.sql`; índices `idx_group_exercises_exercise` e `idx_group_exercises_profile`.

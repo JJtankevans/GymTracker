@@ -2,7 +2,7 @@
 
 Objetivo: usuários interagirem **pelo treino e pelas playlists**, sem chat (por enquanto). Tudo opt-in: o perfil nasce `private`, sem compartilhar treino nem música.
 
-> **Status (21/10/2026):** o lado do app existe (feed, reações, grupos, desafios, pessoas, privacidade; ver `CONTEXTO_SESSAO.md` e `PROXIMOS_PASSOS.md`, Sétima rodada) e foi testado no celular com duas contas. As migrações 002, 004 (`public_profiles()` como função) e 005 (perfis "Só seguidores" aparecem na busca, com bio/números/posts escondidos até aceitar) já foram aplicadas no Supabase. Ainda sem teste no aparelho: desafio em equipes, privacidade de música, sair de grupo/desafio, tela de erro "Tentar de novo". Pendentes de produto: notificações, foto de perfil, ligas semanais.
+> **Status (21/10/2026):** o lado do app existe (feed, reações, grupos, desafios, pessoas, privacidade; ver `CONTEXTO_SESSAO.md` e `PROXIMOS_PASSOS.md`, Sétima rodada) e foi testado no celular com duas contas. As migrações 002, 004 (`public_profiles()` como função) e 005 (perfis "Só seguidores" aparecem na busca, com bio/números/posts escondidos até aceitar) já foram aplicadas no Supabase. Ainda sem teste no aparelho: desafio em equipes, privacidade de música, sair de grupo/desafio, tela de erro "Tentar de novo". Foto de perfil: o usuário já envia e troca a foto no Perfil (Supabase Storage, ver `007`) e ela aparece nas linhas de Pessoas; falta mostrar no feed, no placar e no perfil público. Pendentes de produto: notificações, ligas semanais.
 
 ## O que existe (SQL: `docs/supabase/002_social.sql`, testado num Postgres local com 3 usuários)
 | Peça | Como funciona |
