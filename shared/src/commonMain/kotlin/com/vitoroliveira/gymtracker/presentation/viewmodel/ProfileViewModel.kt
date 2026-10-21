@@ -7,6 +7,7 @@ import kotlin.coroutines.cancellation.CancellationException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vitoroliveira.gymtracker.data.model.Profile
+import com.vitoroliveira.gymtracker.domain.AvatarRules
 import com.vitoroliveira.gymtracker.domain.repository.AuthRepository
 import com.vitoroliveira.gymtracker.domain.repository.ProfileRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +20,9 @@ data class ProfileUiState(
     val profile: Profile? = null,
     val errorMessage: String? = null,
     val successMessage: String? = null,
-    val isSignedOut: Boolean = false
+    val isSignedOut: Boolean = false,
+    /** Enviando ou removendo a foto: a tela mostra um indicador sobre o avatar e bloqueia novo toque. */
+    val isUpdatingAvatar: Boolean = false
 )
 
 class ProfileViewModel(
@@ -85,6 +88,52 @@ class ProfileViewModel(
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     errorMessage = e.toUserMessage("Erro ao atualizar meta semanal")
+                )
+            }
+        }
+    }
+
+    /** Recebe a foto já recortada em JPEG (o app prepara; ver AvatarRules), envia ao Storage e recarrega o perfil. */
+    fun uploadAvatar(jpeg: ByteArray) {
+        if (_uiState.value.isUpdatingAvatar) return
+        if (jpeg.isEmpty()) {
+            _uiState.value = _uiState.value.copy(errorMessage = "Não foi possível ler essa imagem")
+            return
+        }
+        if (jpeg.size > AvatarRules.MAX_BYTES) {
+            _uiState.value = _uiState.value.copy(errorMessage = "A foto é grande demais (máximo 2 MB)")
+            return
+        }
+        changeAvatar("Foto de perfil atualizada", "Erro ao enviar a foto") { profileRepository.uploadAvatar(jpeg) }
+    }
+
+    fun removeAvatar() {
+        if (_uiState.value.isUpdatingAvatar || _uiState.value.profile?.avatarUrl == null) return
+        changeAvatar("Foto de perfil removida", "Erro ao remover a foto") { profileRepository.removeAvatar() }
+    }
+
+    /** O app não conseguiu abrir/decodificar a imagem escolhida. */
+    fun onAvatarReadFailed() {
+        _uiState.value = _uiState.value.copy(errorMessage = "Não foi possível ler essa imagem")
+    }
+
+    private fun changeAvatar(success: String, failure: String, action: suspend () -> Unit) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isUpdatingAvatar = true, errorMessage = null)
+            try {
+                action()
+                // o perfil recarregado traz a nova avatar_url; sem isLoading para a tela não virar spinner
+                val profile = profileRepository.getCurrentProfile()
+                _uiState.value = _uiState.value.copy(
+                    isUpdatingAvatar = false,
+                    profile = profile,
+                    successMessage = success
+                )
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                _uiState.value = _uiState.value.copy(
+                    isUpdatingAvatar = false,
+                    errorMessage = e.toUserMessage(failure)
                 )
             }
         }

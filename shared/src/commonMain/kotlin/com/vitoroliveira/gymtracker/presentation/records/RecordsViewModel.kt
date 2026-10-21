@@ -6,6 +6,9 @@ import com.vitoroliveira.gymtracker.domain.repository.ExerciseRepository
 import com.vitoroliveira.gymtracker.domain.repository.WorkoutRepository
 import com.vitoroliveira.gymtracker.presentation.toUserMessage
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -40,9 +43,13 @@ class RecordsViewModel(
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, errorMessage = null)
             try {
-                val rows = exerciseRepository.getAll().mapNotNull { e ->
-                    val id = e.id ?: return@mapNotNull null
-                    buildRecordRow(id, e.name, workoutRepository.getProgressionForExercise(id))
+                val rows = try {
+                    // caminho rápido: 1 chamada, o servidor calcula tudo (migração 008)
+                    workoutRepository.getRecordsSummary().map { it.toRecordRow() }
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                    // banco sem a função `records_summary()` (008 ainda não rodada): caminho antigo, mais lento
+                    loadPerExercise()
                 }
                 _state.value = RecordsUiState(
                     records = rows.sortedForDisplay(),
@@ -53,5 +60,18 @@ class RecordsViewModel(
                 _state.value = RecordsUiState(errorMessage = e.toUserMessage("Erro ao carregar os recordes"))
             }
         }
+    }
+
+    /** Uma consulta por exercício, mas em lotes paralelos de 8 (antes eram todas em sequência). */
+    private suspend fun loadPerExercise(): List<RecordRow> = coroutineScope {
+        exerciseRepository.getAll()
+            .mapNotNull { e -> e.id?.let { id -> id to e.name } }
+            .chunked(8)
+            .flatMap { lote ->
+                lote.map { (id, name) ->
+                    async { buildRecordRow(id, name, workoutRepository.getProgressionForExercise(id)) }
+                }.awaitAll()
+            }
+            .filterNotNull()
     }
 }

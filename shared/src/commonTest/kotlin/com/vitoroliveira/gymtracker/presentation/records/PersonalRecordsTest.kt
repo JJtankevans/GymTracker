@@ -2,6 +2,7 @@ package com.vitoroliveira.gymtracker.presentation.records
 
 import com.vitoroliveira.gymtracker.data.model.Exercise
 import com.vitoroliveira.gymtracker.data.model.ExerciseProgression
+import com.vitoroliveira.gymtracker.data.model.RecordSummary
 import com.vitoroliveira.gymtracker.presentation.viewmodel.FakeExerciseRepository
 import com.vitoroliveira.gymtracker.presentation.viewmodel.FakeWorkoutRepository
 import com.vitoroliveira.gymtracker.presentation.viewmodel.FixedClock
@@ -88,5 +89,42 @@ class PersonalRecordsTest {
         assertEquals(listOf("Supino"), s.records.map { it.exerciseName })
         assertEquals(70.0, s.records.single().bestWeightKg)
         assertEquals(1, s.recentCount)
+        assertEquals(1, workouts.summaryCalls) // tentou o caminho rápido e caiu no antigo
+    }
+
+    @Test fun usaOResumoDoServidorEmUmaChamadaSoSemConsultarCadaExercicio() {
+        val exercises = FakeExerciseRepository(listOf(Exercise(id = "e1", name = "Supino"), Exercise(id = "e2", name = "Terra")))
+        val workouts = FakeWorkoutRepository().apply {
+            recordsSummary = listOf(
+                RecordSummary("e1", "Supino", 70.0, "2026-10-18", 93.3, 60.0, 2),
+                RecordSummary("e2", "Terra", 100.0, "2026-10-05", 120.0, null, 3)
+            )
+        }
+        val vm = RecordsViewModel(exercises, workouts, FixedClock(Instant.parse("2026-10-20T12:00:00Z")))
+        val s = vm.state.value
+
+        assertEquals(1, workouts.summaryCalls)
+        assertEquals(0, workouts.progressionCalls) // nada de uma consulta por exercício
+        assertEquals(listOf("Supino", "Terra"), s.records.map { it.exerciseName })
+        assertEquals(10.0, s.records.first().improvementKg)
+        assertNull(s.records.last().previousBestKg)
+        assertEquals(2, s.recentCount) // 10/18 e 10/05 estão a menos de 30 dias de 10/20
+        assertNull(s.errorMessage)
+    }
+
+    @Test fun semNenhumRecordeMostraListaVazia() {
+        val workouts = FakeWorkoutRepository().apply { recordsSummary = emptyList() }
+        val vm = RecordsViewModel(FakeExerciseRepository(), workouts, FixedClock(Instant.parse("2026-10-20T12:00:00Z")))
+        assertTrue(vm.state.value.records.isEmpty())
+        assertNull(vm.state.value.errorMessage)
+    }
+
+    @Test fun caminhoAntigoTambemFalhandoMostraErro() {
+        val workouts = FakeWorkoutRepository().apply { failWith = null }
+        val broken = object : com.vitoroliveira.gymtracker.domain.repository.ExerciseRepository by FakeExerciseRepository() {
+            override suspend fun getAll(): List<Exercise> = throw RuntimeException("Unable to resolve host")
+        }
+        val vm = RecordsViewModel(broken, workouts, FixedClock(Instant.parse("2026-10-20T12:00:00Z")))
+        assertEquals("Sem conexão com a internet. Verifique sua rede e tente de novo.", vm.state.value.errorMessage)
     }
 }

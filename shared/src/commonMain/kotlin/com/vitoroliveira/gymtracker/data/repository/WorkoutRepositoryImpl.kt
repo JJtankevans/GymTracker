@@ -4,6 +4,7 @@ package com.vitoroliveira.gymtracker.data.repository
 
 import com.vitoroliveira.gymtracker.data.model.ExerciseBaseline
 import com.vitoroliveira.gymtracker.data.model.ExerciseProgression
+import com.vitoroliveira.gymtracker.data.model.RecordSummary
 import com.vitoroliveira.gymtracker.data.model.Workout
 import com.vitoroliveira.gymtracker.data.model.WorkoutSet
 import com.vitoroliveira.gymtracker.domain.repository.WorkoutRepository
@@ -110,6 +111,9 @@ class WorkoutRepositoryImpl(
             }
             .decodeList()
     }
+
+    override suspend fun getRecordsSummary(): List<RecordSummary> =
+        supabase.postgrest.rpc("records_summary").decodeList()
 
     override suspend fun updateSet(setId: String, reps: Int, weightKg: Double): WorkoutSet {
         return supabase.postgrest["workout_sets"]

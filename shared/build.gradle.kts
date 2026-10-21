@@ -33,6 +33,7 @@ kotlin {
             api(libs.supabase.auth)
             api(libs.supabase.postgrest)
             api(libs.supabase.realtime)
+            api(libs.supabase.storage)
 
             // Ktor
             implementation(libs.ktor.client.core)

@@ -57,6 +57,7 @@ supabase-bom            = { module = "io.github.jan-tennert.supabase:bom",      
 supabase-auth           = { module = "io.github.jan-tennert.supabase:auth-kt" }
 supabase-postgrest      = { module = "io.github.jan-tennert.supabase:postgrest-kt" }
 supabase-realtime       = { module = "io.github.jan-tennert.supabase:realtime-kt" }
+supabase-storage        = { module = "io.github.jan-tennert.supabase:storage-kt" }
 
 # --- Ktor engines ---
 ktor-client-android     = { module = "io.ktor:ktor-client-android",  version.ref = "ktor" }

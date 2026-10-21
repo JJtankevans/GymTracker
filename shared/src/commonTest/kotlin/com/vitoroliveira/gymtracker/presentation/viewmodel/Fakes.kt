@@ -3,6 +3,7 @@ package com.vitoroliveira.gymtracker.presentation.viewmodel
 import com.vitoroliveira.gymtracker.data.model.Exercise
 import com.vitoroliveira.gymtracker.data.model.ExerciseBaseline
 import com.vitoroliveira.gymtracker.data.model.ExerciseProgression
+import com.vitoroliveira.gymtracker.data.model.RecordSummary
 import com.vitoroliveira.gymtracker.data.model.Workout
 import com.vitoroliveira.gymtracker.data.model.WorkoutSet
 import com.vitoroliveira.gymtracker.domain.repository.ExerciseRepository
@@ -64,8 +65,19 @@ class FakeWorkoutRepository : WorkoutRepository {
 
     override suspend fun getSetsForWorkout(workoutId: String) = sets.toList()
     var progression: Map<String, List<ExerciseProgression>> = emptyMap()
-    override suspend fun getProgressionForExercise(exerciseId: String): List<ExerciseProgression> =
-        progression[exerciseId].orEmpty()
+    var progressionCalls = 0
+    override suspend fun getProgressionForExercise(exerciseId: String): List<ExerciseProgression> {
+        progressionCalls++
+        return progression[exerciseId].orEmpty()
+    }
+
+    /** null = a função `records_summary()` não existe no banco (a chamada falha, como no Supabase sem a migração 008). */
+    var recordsSummary: List<RecordSummary>? = null
+    var summaryCalls = 0
+    override suspend fun getRecordsSummary(): List<RecordSummary> {
+        summaryCalls++
+        return recordsSummary ?: throw UnsupportedOperationException("records_summary indisponível")
+    }
 
     override suspend fun updateSet(setId: String, reps: Int, weightKg: Double): WorkoutSet {
         maybeFail()
