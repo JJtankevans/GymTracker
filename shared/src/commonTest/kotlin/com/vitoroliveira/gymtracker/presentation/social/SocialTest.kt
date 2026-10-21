@@ -57,6 +57,12 @@ class FakeSocialRepository(val meId: String = "me") : SocialRepository {
         followList.replaceAll { if (it.followerId == userId && it.followedId == meId) it.copy(status = "accepted") else it }
     }
     override suspend fun rejectFollower(userId: String) { followList.removeAll { it.followerId == userId && it.followedId == meId } }
+    var titleList = mutableListOf<com.vitoroliveira.gymtracker.data.model.ProfileTitle>()
+    var failTitles = false
+    override suspend fun titles(profileIds: List<String>): List<com.vitoroliveira.gymtracker.data.model.ProfileTitle> {
+        if (failTitles) throw UnsupportedOperationException("profile_titles indisponível")
+        return titleList.filter { it.profileId in profileIds }
+    }
     var statsFor = mutableMapOf<String, com.vitoroliveira.gymtracker.data.model.ProfileStats>()
     var tracksFor = mutableMapOf<String, List<com.vitoroliveira.gymtracker.data.model.TopTrack>>()
     var failTracks = false

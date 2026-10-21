@@ -2,6 +2,7 @@ package com.vitoroliveira.gymtracker.data.catalog
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class ExerciseCatalogTest {
@@ -52,4 +53,28 @@ class ExerciseCatalogTest {
 
     @Test fun mesmoNomeIgnoraAcento() =
         assertTrue(ExerciseCatalog.isSameName("Elevação Pélvica", "elevacao pelvica"))
+
+    @Test fun apelidoAchaOExercicioDoCatalogoSemMisturarNomes() {
+        assertEquals("Hack Squat", ExerciseCatalog.find("Agachamento Hack")?.name)
+        assertEquals("Leg Press 45°", ExerciseCatalog.find("leg press 45")?.name)
+        assertEquals("Rosca Scott", ExerciseCatalog.find(" Rosca Scot ")?.name)
+        assertEquals("Elevação Frontal", ExerciseCatalog.find("Elevacao Frontral")?.name)
+        assertEquals("Crucifixo Inverso", ExerciseCatalog.find("Crucifixo Invertido na Máquina")?.name)
+        assertEquals("Hack Squat", ExerciseCatalog.find("hack squat")?.name) // nome certo continua valendo
+        assertNull(ExerciseCatalog.find("aaaaa"))
+        // o apelido não vira "mesmo nome": quem junta exercícios continua sendo o nome exato
+        assertTrue(!ExerciseCatalog.isSameName("Agachamento Hack", "Hack Squat"))
+    }
+
+    @Test fun apelidosNaoColidemComNomesNemEntreSi() {
+        val names = ExerciseCatalog.all.map { it.name.lowercase().trim() }.toSet()
+        val aliases = ExerciseCatalog.all.flatMap { it.aliases }.map { it.lowercase().trim() }
+        assertTrue(aliases.none { it in names }, "apelido igual a um nome do catálogo")
+        assertEquals(aliases.size, aliases.toSet().size, "apelido repetido")
+    }
+
+    @Test fun exerciciosNovosDosUsuariosEstaoNoCatalogo() {
+        listOf("Face Pull", "Remada Cavalinho", "Rosca Concentrada", "Cadeira Adutora", "Supino Guiado", "Tríceps na Máquina")
+            .forEach { assertTrue(ExerciseCatalog.find(it) != null, it) }
+    }
 }

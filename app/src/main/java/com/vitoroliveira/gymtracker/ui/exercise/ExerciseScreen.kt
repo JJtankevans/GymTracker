@@ -311,8 +311,7 @@ fun ExerciseItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             val catalog = remember(exercise.name) {
-                com.vitoroliveira.gymtracker.data.catalog.ExerciseCatalog.all
-                    .firstOrNull { com.vitoroliveira.gymtracker.data.catalog.ExerciseCatalog.isSameName(it.name, exercise.name) }
+                com.vitoroliveira.gymtracker.data.catalog.ExerciseCatalog.find(exercise.name)
             }
             if (catalog != null) {
                 val tint = catalog.muscle.tint()

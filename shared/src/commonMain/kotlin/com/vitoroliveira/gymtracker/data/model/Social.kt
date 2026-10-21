@@ -1,6 +1,8 @@
 package com.vitoroliveira.gymtracker.data.model
 
 import kotlinx.serialization.SerialName
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 
@@ -86,9 +88,14 @@ data class Challenge(
     val target: Double? = null,
     @SerialName("min_minutes_per_workout") val minMinutesPerWorkout: Int = 0,
     @SerialName("max_workouts_per_day") val maxWorkoutsPerDay: Int = 1,
-    @SerialName("max_participants") val maxParticipants: Int? = null
+    @SerialName("max_participants") val maxParticipants: Int? = null,
+    /** Título de falha: quem tiver MAIS que isso de treinos abaixo do mínimo de minutos (migração 010). Null = sem título de falha. */
+    @SerialName("fail_threshold") val failThreshold: Int? = null,
+    /** Dias seguidos para o título Alpha (2x Chad, 3x Giga Chad, 4x Mr. Olimpia). Null = sem títulos de honra. */
+    @SerialName("streak_goal") val streakGoal: Int? = null
 )
 
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class NewChallenge(
     @SerialName("creator_id") val creatorId: String,
@@ -106,6 +113,9 @@ data class NewChallenge(
     @SerialName("min_minutes_per_workout") val minMinutesPerWorkout: Int,
     @SerialName("max_workouts_per_day") val maxWorkoutsPerDay: Int,
     @SerialName("max_participants") val maxParticipants: Int?,
+    /** Só vão no INSERT quando definidos: assim o app não quebra se a migração 010 ainda não rodou. */
+    @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("fail_threshold") val failThreshold: Int? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("streak_goal") val streakGoal: Int? = null,
     /** Gerado pelo app, pelo mesmo motivo de [NewGroup.id]. */
     val id: String = ""
 )
@@ -164,4 +174,18 @@ data class TopTrack(
     val album: String? = null,
     val plays: Long = 0,
     @SerialName("last_played") val lastPlayed: String? = null
+)
+
+/** Linha de `profile_titles()` (migração 010): o título de desafio que o perfil exibe agora. */
+@Serializable
+data class ProfileTitle(
+    @SerialName("profile_id") val profileId: String,
+    /** "honor" (Alpha...Mr. Olimpia) ou "fail". */
+    val kind: String,
+    /** Honra: 1 Alpha, 2 Chad, 3 Giga Chad, 4 Mr. Olimpia. Falha: 0. */
+    val level: Int = 0,
+    @SerialName("challenge_id") val challengeId: String? = null,
+    @SerialName("challenge_title") val challengeTitle: String? = null,
+    @SerialName("streak_days") val streakDays: Int = 0,
+    val failures: Int = 0
 )

@@ -40,8 +40,9 @@ sealed class Screen(val route: String) {
     object History : Screen("history")
 
     // Novo — Detalhe do Treino (Passo 12.5), navegado a partir do Histórico
-    object WorkoutDetail : Screen("workout_detail/{workoutId}") {
-        fun createRoute(workoutId: String) = "workout_detail/$workoutId"
+    object WorkoutDetail : Screen("workout_detail/{workoutId}/{groupName}") {
+        fun createRoute(workoutId: String, groupName: String) =
+            "workout_detail/$workoutId/${URLEncoder.encode(groupName, "UTF-8")}"
     }
 
     object Exercises : Screen("exercises/{groupId}/{groupName}") {
@@ -252,8 +253,8 @@ fun GymTrackerNavHost() {
 
         composable(Screen.History.route) {
             HistoryScreen(
-                onWorkoutClick = { workoutId ->
-                    navController.navigate(Screen.WorkoutDetail.createRoute(workoutId))
+                onWorkoutClick = { workoutId, groupName ->
+                    navController.navigate(Screen.WorkoutDetail.createRoute(workoutId, groupName))
                 },
                 onBack = { navController.popBackStack() }
             )
@@ -263,8 +264,11 @@ fun GymTrackerNavHost() {
             val workoutId = backStackEntry.arguments?.getString("workoutId")
                 ?: return@composable
 
+            val groupName = URLDecoder.decode(backStackEntry.arguments?.getString("groupName") ?: "", "UTF-8")
+
             WorkoutDetailScreen(
                 workoutId = workoutId,
+                groupName = groupName,
                 onBack = { navController.popBackStack() }
             )
         }

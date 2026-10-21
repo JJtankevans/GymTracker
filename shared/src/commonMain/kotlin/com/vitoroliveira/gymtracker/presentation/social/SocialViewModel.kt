@@ -9,6 +9,7 @@ import com.vitoroliveira.gymtracker.data.model.TopTrack
 import com.vitoroliveira.gymtracker.data.model.SocialGroup
 import com.vitoroliveira.gymtracker.data.model.SocialProfile
 import com.vitoroliveira.gymtracker.data.model.SocialSettings
+import com.vitoroliveira.gymtracker.data.model.ProfileTitle
 import com.vitoroliveira.gymtracker.data.model.Standing
 import com.vitoroliveira.gymtracker.domain.repository.SocialRepository
 import com.vitoroliveira.gymtracker.presentation.toUserMessage
@@ -53,6 +54,8 @@ data class SocialUiState(
     val publicGroups: List<SocialGroup> = emptyList(),
     val challenges: List<ChallengeItem> = emptyList(),
     val standings: Map<String, List<Standing>> = emptyMap(),
+    /** Título de desafio de cada perfil (por id), incluindo o meu. Vazio se a migração 010 não rodou. */
+    val titles: Map<String, ProfileTitle> = emptyMap(),
     val profileView: ProfileView? = null,
     val message: String? = null,
     val error: String? = null,
@@ -101,6 +104,7 @@ class SocialViewModel(
             }
             section("seu perfil social") { loadSettings() }
             section("as pessoas") { loadPeople() }
+            loadTitlesQuietly()
             section("o feed") { loadFeed() }
             section("os grupos") { loadGroups() }
             section("os desafios") { loadChallenges() }
@@ -129,6 +133,17 @@ class SocialViewModel(
         val requests = follows.filter { it.followedId == me && it.status == "pending" }
             .mapNotNull { f -> profiles.firstOrNull { it.id == f.followerId } }
         update { copy(people = items, followRequests = requests) }
+    }
+
+    /** Títulos são um enfeite: se falhar (ex.: migração 010 ainda não rodou), a tela segue sem eles e sem mensagem de erro. */
+    private suspend fun loadTitlesQuietly() {
+        try {
+            val ids = _state.value.people.map { it.profile.id } + listOfNotNull(_state.value.me)
+            val titles = repo.titles(ids).associateBy { it.profileId }
+            update { copy(titles = titles) }
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+        }
     }
 
     private suspend fun loadFeed() {

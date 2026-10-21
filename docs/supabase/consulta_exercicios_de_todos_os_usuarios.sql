@@ -2,7 +2,7 @@
 -- ignora a RLS, por isso enxerga os exercícios de todo mundo). Só lê, não altera nada.
 --
 -- Uma linha por exercício distinto (nome sem caixa/acento/espaços nas pontas, como o app compara).
--- no_catalogo = false  -> já está no catálogo do app (56 itens; 41 têm imagem, 15 não)
+-- no_catalogo = false  -> já está no catálogo do app (70 itens; 41 têm imagem, 29 não)
 -- no_catalogo = true   -> criado à mão por algum usuário: são esses que ainda precisam de imagem
 -- Os que não estão no catálogo vêm primeiro. Depois do 006, os grupos vêm de group_exercises.
 
@@ -16,6 +16,9 @@ with catalogo(chave) as (values
     ('crucifixo na maquina (peck deck)'),
     ('crossover na polia'),
     ('flexao de braco'),
+    ('supino inclinado na maquina'),
+    ('supino declinado na maquina'),
+    ('supino guiado'),
     ('barra fixa'),
     ('puxada frontal na polia'),
     ('remada baixa na polia'),
@@ -24,6 +27,8 @@ with catalogo(chave) as (values
     ('remada unilateral com halter'),
     ('remada na maquina'),
     ('pulldown na polia'),
+    ('remada cavalinho'),
+    ('remada cavalinho na maquina'),
     ('desenvolvimento com barra'),
     ('desenvolvimento com halteres'),
     ('desenvolvimento na maquina'),
@@ -31,17 +36,24 @@ with catalogo(chave) as (values
     ('elevacao frontal'),
     ('crucifixo inverso'),
     ('encolhimento com halteres'),
+    ('elevacao lateral na maquina'),
+    ('face pull'),
     ('rosca direta com barra'),
     ('rosca alternada com halteres'),
     ('rosca martelo'),
     ('rosca scott'),
     ('rosca na polia'),
+    ('rosca com barra w'),
+    ('rosca concentrada'),
+    ('rosca martelo na polia'),
     ('triceps testa'),
     ('triceps pulley'),
     ('triceps corda'),
     ('triceps frances'),
     ('mergulho nas paralelas'),
     ('supino fechado'),
+    ('triceps coice na polia'),
+    ('triceps na maquina'),
     ('agachamento livre'),
     ('agachamento no smith'),
     ('leg press 45°'),
@@ -56,6 +68,8 @@ with catalogo(chave) as (values
     ('elevacao pelvica'),
     ('cadeira abdutora'),
     ('gluteo na polia (coice)'),
+    ('gluteo na maquina'),
+    ('cadeira adutora'),
     ('panturrilha em pe'),
     ('panturrilha sentado'),
     ('panturrilha no leg press'),

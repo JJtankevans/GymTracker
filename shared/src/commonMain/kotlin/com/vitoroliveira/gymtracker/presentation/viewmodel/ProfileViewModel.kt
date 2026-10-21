@@ -7,6 +7,8 @@ import kotlin.coroutines.cancellation.CancellationException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vitoroliveira.gymtracker.data.model.Profile
+import com.vitoroliveira.gymtracker.data.model.ProfileTitle
+import com.vitoroliveira.gymtracker.domain.repository.SocialRepository
 import com.vitoroliveira.gymtracker.domain.AvatarRules
 import com.vitoroliveira.gymtracker.domain.repository.AuthRepository
 import com.vitoroliveira.gymtracker.domain.repository.ProfileRepository
@@ -22,12 +24,15 @@ data class ProfileUiState(
     val successMessage: String? = null,
     val isSignedOut: Boolean = false,
     /** Enviando ou removendo a foto: a tela mostra um indicador sobre o avatar e bloqueia novo toque. */
-    val isUpdatingAvatar: Boolean = false
+    val isUpdatingAvatar: Boolean = false,
+    /** Meu título de desafio (honra ou falha), se houver. */
+    val title: ProfileTitle? = null
 )
 
 class ProfileViewModel(
     private val profileRepository: ProfileRepository,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val socialRepository: SocialRepository? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
@@ -46,6 +51,7 @@ class ProfileViewModel(
                     isLoading = false,
                     profile = profile
                 )
+                loadTitleQuietly(profile)
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 _uiState.value = _uiState.value.copy(
@@ -53,6 +59,17 @@ class ProfileViewModel(
                     errorMessage = e.toUserMessage("Erro ao carregar perfil")
                 )
             }
+        }
+    }
+
+    /** O título é um enfeite: se falhar (ex.: migração 010 ainda não rodou), o perfil segue sem ele e sem erro. */
+    private suspend fun loadTitleQuietly(profile: Profile) {
+        val id = profile.id ?: return
+        val repo = socialRepository ?: return
+        try {
+            _uiState.value = _uiState.value.copy(title = repo.titles(listOf(id)).firstOrNull())
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
         }
     }
 

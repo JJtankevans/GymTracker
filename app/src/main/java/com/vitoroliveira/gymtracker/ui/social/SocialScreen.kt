@@ -172,6 +172,7 @@ fun SocialContent(state: SocialUiState, a: SocialActions, onBack: () -> Unit) {
         val live = state.people.firstOrNull { it.profile.id == pv.person.profile.id }
         ProfileSheet(
             view = if (live != null) pv.copy(person = live) else pv,
+            title = state.titles[pv.person.profile.id],
             onFollow = { a.follow(pv.person.profile.id) },
             onUnfollow = { a.unfollow(pv.person.profile.id) },
             onDismiss = a.closeProfile
@@ -397,7 +398,7 @@ private fun PeopleTab(state: SocialUiState, a: SocialActions) {
                 "Aparecem perfis públicos e os que aceitam seguidores. Peça pra galera ajustar a privacidade do perfil."
             )
         }
-        items(list, key = { "u" + it.profile.id }) { PersonRow(it, a) }
+        items(list, key = { "u" + it.profile.id }) { PersonRow(it, a, state.titles[it.profile.id]) }
     }
 }
 
@@ -413,7 +414,7 @@ private fun RequestRow(p: SocialProfile, onAccept: () -> Unit, onReject: () -> U
 }
 
 @Composable
-private fun PersonRow(item: PersonItem, a: SocialActions) {
+private fun PersonRow(item: PersonItem, a: SocialActions, title: com.vitoroliveira.gymtracker.data.model.ProfileTitle? = null) {
     val p = item.profile
     ThemedCard(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium, onClick = { a.openProfile(item) }) {
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -425,6 +426,7 @@ private fun PersonRow(item: PersonItem, a: SocialActions) {
                     "@${p.username}" + if (item.followsMe) " · segue você" else "",
                     style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                title?.let { TitleChip(it, Modifier.padding(top = 4.dp)) }
                 p.bio?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodySmall, maxLines = 2) }
             }
             when (item.relation) {
