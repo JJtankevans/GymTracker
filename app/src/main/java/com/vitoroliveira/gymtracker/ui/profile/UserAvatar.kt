@@ -1,5 +1,6 @@
 package com.vitoroliveira.gymtracker.ui.profile
 
+import android.content.Context
 import android.graphics.BitmapFactory
 import android.util.LruCache
 import androidx.compose.foundation.Image
@@ -21,11 +22,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -40,8 +43,9 @@ fun UserAvatar(
     modifier: Modifier = Modifier,
     fallbackName: String? = null
 ) {
+    val cacheDir = LocalContext.current.cacheDir
     val image by produceState<ImageBitmap?>(initialValue = url?.let { AvatarCache.get(it) }, url) {
-        value = if (url.isNullOrBlank()) null else AvatarCache.get(url) ?: withContext(Dispatchers.IO) { download(url) }
+        value = if (url.isNullOrBlank()) null else AvatarCache.get(url) ?: withContext(Dispatchers.IO) { load(cacheDir, url) }
             ?.also { AvatarCache.put(url, it) }
     }
 
@@ -75,16 +79,43 @@ private object AvatarCache {
     fun put(url: String, image: ImageBitmap) { cache.put(url, image) }
 }
 
-/** Baixa a foto pública do Storage (JPEG de ~512 px, algumas dezenas de KB). Null se falhar: a tela fica com a inicial. */
-private fun download(url: String): ImageBitmap? = try {
+/**
+ * Foto pelo cache em disco ou, se não houver, baixada do Storage. Como a URL muda a cada troca de foto, o arquivo em
+ * cache nunca fica velho; guardar em disco evita baixar a mesma foto a cada abertura do app (economiza o tráfego do
+ * plano grátis do Supabase). Null se falhar: a tela fica com a inicial.
+ */
+private fun load(cacheDir: File, url: String): ImageBitmap? {
+    val dir = File(cacheDir, "avatars").apply { mkdirs() }
+    // o fim da URL já é único (<id do usuário>/<milissegundos>.jpg); troca o que não serve em nome de arquivo
+    val file = File(dir, url.substringAfter("/user_profile_images/", url).replace(Regex("[^A-Za-z0-9._-]"), "_").takeLast(120))
+    if (file.exists()) {
+        BitmapFactory.decodeFile(file.path)?.let { return it.asImageBitmap() }
+        file.delete() // arquivo corrompido: baixa de novo
+    }
+    val bytes = download(url) ?: return null
+    runCatching {
+        val tmp = File(dir, file.name + ".tmp")
+        tmp.writeBytes(bytes)
+        tmp.renameTo(file)
+        trim(dir)
+    }
+    return BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
+}
+
+/** Mantém no máximo 60 fotos em cache (as mais recentes); o resto é apagado. */
+private fun trim(dir: File, keep: Int = 60) {
+    val files = dir.listFiles()?.sortedByDescending { it.lastModified() } ?: return
+    files.drop(keep).forEach { it.delete() }
+}
+
+/** Baixa os bytes da foto pública (JPEG de 384 px, em geral 20-50 KB). */
+private fun download(url: String): ByteArray? = try {
     val conn = (URL(url).openConnection() as HttpURLConnection).apply {
         connectTimeout = 10_000
         readTimeout = 10_000
     }
     try {
-        if (conn.responseCode == HttpURLConnection.HTTP_OK) {
-            conn.inputStream.use { BitmapFactory.decodeStream(it) }?.asImageBitmap()
-        } else null
+        if (conn.responseCode == HttpURLConnection.HTTP_OK) conn.inputStream.use { it.readBytes() } else null
     } finally {
         conn.disconnect()
     }

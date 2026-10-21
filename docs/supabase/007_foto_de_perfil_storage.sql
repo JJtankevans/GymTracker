@@ -11,7 +11,7 @@ begin
   end if;
 end $$;
 
--- Limites no próprio bucket: até 2 MB por arquivo e só imagem (o app já envia JPEG 512x512, ~50-150 KB).
+-- Limites no próprio bucket: até 2 MB por arquivo e só imagem (o app já envia JPEG 384x384, em geral 20-50 KB e no máximo ~100 KB; ver AvatarRules).
 update storage.buckets
    set public = true,
        file_size_limit = 2097152,

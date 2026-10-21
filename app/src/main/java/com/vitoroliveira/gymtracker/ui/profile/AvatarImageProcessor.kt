@@ -48,7 +48,7 @@ object AvatarImageProcessor {
                 drawColor(Color.WHITE)
                 drawBitmap(upright, Rect(left, top, left + side, top + side), Rect(0, 0, size, size), Paint(Paint.FILTER_BITMAP_FLAG))
             }
-            val bytes = ByteArrayOutputStream().also { out.compress(Bitmap.CompressFormat.JPEG, AvatarRules.JPEG_QUALITY, it) }.toByteArray()
+            val bytes = compressUnderTarget(out)
             if (upright !== decoded) upright.recycle()
             decoded.recycle()
             out.recycle()
@@ -57,6 +57,16 @@ object AvatarImageProcessor {
             null
         } catch (e: OutOfMemoryError) {
             null
+        }
+    }
+
+    /** JPEG na qualidade padrão; se passar da meta de tamanho (foto cheia de detalhe/ruído), baixa de 10 em 10 até caber. */
+    private fun compressUnderTarget(bitmap: Bitmap): ByteArray {
+        var quality = AvatarRules.JPEG_QUALITY
+        while (true) {
+            val bytes = ByteArrayOutputStream().also { bitmap.compress(Bitmap.CompressFormat.JPEG, quality, it) }.toByteArray()
+            if (bytes.size <= AvatarRules.TARGET_BYTES || quality <= AvatarRules.MIN_JPEG_QUALITY) return bytes
+            quality = (quality - 10).coerceAtLeast(AvatarRules.MIN_JPEG_QUALITY)
         }
     }
 

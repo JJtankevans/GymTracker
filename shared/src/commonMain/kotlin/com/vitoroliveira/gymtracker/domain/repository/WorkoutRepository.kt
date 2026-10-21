@@ -4,6 +4,7 @@ package com.vitoroliveira.gymtracker.domain.repository
 
 import com.vitoroliveira.gymtracker.data.model.ExerciseBaseline
 import com.vitoroliveira.gymtracker.data.model.ExerciseProgression
+import com.vitoroliveira.gymtracker.data.model.RecordSummary
 import com.vitoroliveira.gymtracker.data.model.Workout
 import com.vitoroliveira.gymtracker.data.model.WorkoutSet
 
@@ -17,6 +18,8 @@ interface WorkoutRepository {
     suspend fun addSet(workoutSet: WorkoutSet): WorkoutSet
     suspend fun getSetsForWorkout(workoutId: String): List<WorkoutSet>
     suspend fun getProgressionForExercise(exerciseId: String): List<ExerciseProgression>
+    /** Recordes de carga de todos os exercícios em UMA chamada (função `records_summary()`, migração 008). */
+    suspend fun getRecordsSummary(): List<RecordSummary>
     suspend fun updateSet(setId: String, reps: Int, weightKg: Double): WorkoutSet
     suspend fun deleteSet(setId: String)
 

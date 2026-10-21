@@ -1,6 +1,7 @@
 package com.vitoroliveira.gymtracker.presentation.records
 
 import com.vitoroliveira.gymtracker.data.model.ExerciseProgression
+import com.vitoroliveira.gymtracker.data.model.RecordSummary
 import com.vitoroliveira.gymtracker.presentation.body.estimateOneRepMax
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.daysUntil
@@ -48,6 +49,10 @@ fun buildRecordRow(exerciseId: String, exerciseName: String, progression: List<E
     }
     return RecordRow(exerciseId, exerciseName, best, sessions[bestIndex].sessionDate, oneRm, previousBest, sessions.size)
 }
+
+/** O servidor (`records_summary()`) já fez a mesma conta de [buildRecordRow]; aqui só muda o formato. */
+fun RecordSummary.toRecordRow() =
+    RecordRow(exerciseId, exerciseName, bestWeightKg, bestDate, bestOneRmKg, previousBestKg, sessions)
 
 /** Mais recentes primeiro; empate resolvido pelo maior recorde. */
 fun List<RecordRow>.sortedForDisplay(): List<RecordRow> =
