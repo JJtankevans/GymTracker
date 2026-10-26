@@ -26,7 +26,7 @@ val uiModule = module {
     single<TimingStore> { PrefsTimingStore(androidContext()) }
     viewModel { CircuitViewModel(get()) }
     single<BodyStore> { PrefsBodyStore(androidContext()) }
-    single { BodyRepository(get()) }
+    single { BodyRepository(get(), get()) }
     viewModel { BodyViewModel(get()) }
     viewModel { EvolutionViewModel(get(), get()) }
 }

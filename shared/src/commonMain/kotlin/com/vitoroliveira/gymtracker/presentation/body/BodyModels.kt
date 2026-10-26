@@ -24,9 +24,33 @@ data class BodyWeightEntry(val epochDay: Int, val kg: Double)
 @Serializable
 data class BodyData(
     val profile: BodyProfile = BodyProfile(),
-    val weights: List<BodyWeightEntry> = emptyList()
+    val weights: List<BodyWeightEntry> = emptyList(),
+    /** Dias apagados aqui que ainda não foram apagados na nuvem (sem isso a sincronização "ressuscitaria" o registro). */
+    val pendingDeletes: Set<Int> = emptySet()
 ) {
     val latestKg: Double? get() = weights.maxByOrNull { it.epochDay }?.kg
+}
+
+/** Cópia dos dados corporais no Supabase (tabela body_weights e colunas de profiles, migração 003). */
+interface BodyCloud {
+    suspend fun fetchWeights(): List<BodyWeightEntry>
+    /** Um registro por dia: substitui o do mesmo dia. */
+    suspend fun upsertWeight(entry: BodyWeightEntry)
+    suspend fun deleteWeight(epochDay: Int)
+    suspend fun fetchProfile(): BodyProfile?
+    suspend fun saveProfile(profile: BodyProfile)
+}
+
+/** Peso como o banco guarda (numeric(5,1)): uma casa decimal. */
+fun roundWeight(kg: Double): Double = kotlin.math.round(kg * 10) / 10.0
+
+/**
+ * Junta os pesos do aparelho com os da nuvem: o aparelho vence quando os dois têm o mesmo dia; os dias só da nuvem
+ * (outro celular, reinstalação) entram; os apagados aqui e ainda pendentes não voltam.
+ */
+fun mergeWeights(local: List<BodyWeightEntry>, remote: List<BodyWeightEntry>, deleted: Set<Int>): List<BodyWeightEntry> {
+    val localDays = local.map { it.epochDay }.toSet()
+    return (local + remote.filter { it.epochDay !in localDays && it.epochDay !in deleted }).sortedBy { it.epochDay }
 }
 
 interface BodyStore {

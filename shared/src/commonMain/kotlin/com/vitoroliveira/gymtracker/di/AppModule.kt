@@ -36,6 +36,7 @@ fun appModule(supabaseClient: SupabaseClient) = module {
     single<ExerciseRepository> { ExerciseRepositoryImpl(get()) }
     single<WorkoutRepository> { WorkoutRepositoryImpl(get()) }
     single<ProfileRepository> { ProfileRepositoryImpl(get()) }
+    single<com.vitoroliveira.gymtracker.presentation.body.BodyCloud> { com.vitoroliveira.gymtracker.data.repository.BodyCloudImpl(get()) }
     single<com.vitoroliveira.gymtracker.domain.repository.SocialRepository> {
         com.vitoroliveira.gymtracker.data.repository.SocialRepositoryImpl(get())
     }
