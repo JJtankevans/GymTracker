@@ -103,13 +103,13 @@ class ScreenGalleryTest {
 
     @Test
     fun history() = shots("historico") {
-        val base = kotlinx.datetime.Instant.parse("2026-10-18T18:00:00Z")
+        val base = kotlin.time.Instant.parse("2026-10-18T18:00:00Z")
         HistoryScreenContent(
             uiState = HistoryUiState(
                 workouts = listOf(
                     WorkoutHistoryItem("a", "Peito e Tríceps", "#FF5722", base, base, 62),
-                    WorkoutHistoryItem("b", "Costas e Bíceps", "#2196F3", kotlinx.datetime.Instant.parse("2026-10-16T18:00:00Z"), null, 55),
-                    WorkoutHistoryItem("c", "Pernas", "#4CAF50", kotlinx.datetime.Instant.parse("2026-10-14T18:00:00Z"), null, 71)
+                    WorkoutHistoryItem("b", "Costas e Bíceps", "#2196F3", kotlin.time.Instant.parse("2026-10-16T18:00:00Z"), null, 55),
+                    WorkoutHistoryItem("c", "Pernas", "#4CAF50", kotlin.time.Instant.parse("2026-10-14T18:00:00Z"), null, 71)
                 )
             )
         )

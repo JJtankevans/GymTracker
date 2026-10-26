@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.*
@@ -42,6 +43,7 @@ fun ProfileScreen(
     onBack: () -> Unit = {},
     onNavigateToThemes: () -> Unit = {},
     onNavigateToEvolution: () -> Unit = {},
+    onNavigateToAchievements: () -> Unit = {},
     viewModel: ProfileViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -68,6 +70,7 @@ fun ProfileScreen(
         onBack = onBack,
         onNavigateToThemes = onNavigateToThemes,
         onNavigateToEvolution = onNavigateToEvolution,
+        onNavigateToAchievements = onNavigateToAchievements,
         onUpdateWeeklyGoal = { viewModel.updateWeeklyGoal(it) },
         onSignOut = { viewModel.signOut() },
         onClearMessages = { viewModel.clearMessages() },
@@ -83,6 +86,7 @@ fun ProfileScreenContent(
     onBack: () -> Unit = {},
     onNavigateToThemes: () -> Unit = {},
     onNavigateToEvolution: () -> Unit = {},
+    onNavigateToAchievements: () -> Unit = {},
     onUpdateWeeklyGoal: (Int) -> Unit,
     onSignOut: () -> Unit,
     onClearMessages: () -> Unit,
@@ -253,6 +257,17 @@ fun ProfileScreenContent(
                 HorizontalDivider()
 
                 Spacer(modifier = Modifier.height(32.dp))
+
+                OutlinedButton(
+                    onClick = onNavigateToAchievements,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.EmojiEvents, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Conquistas")
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedButton(
                     onClick = onNavigateToEvolution,
