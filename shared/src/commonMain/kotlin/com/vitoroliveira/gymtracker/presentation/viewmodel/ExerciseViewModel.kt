@@ -106,7 +106,8 @@ class ExerciseViewModel(
                     notes = notes
                 )
                 val result = repository.addToGroups(newExercise, groupIds.toSet())
-                loadExercises()
+                // clearError = false: a recarga roda depois e apagaria o aviso "já está na sua lista" (ver armadilhas no CONTEXTO)
+                loadExercises(clearError = false)
                 _uiState.value = when (result) {
                     is AddToGroupsResult.Created -> _uiState.value.copy(successMessage = "Exercício '$name' criado com sucesso")
                     is AddToGroupsResult.Linked -> _uiState.value.copy(successMessage = "Exercício '$name' já existia e foi adicionado ao grupo")
@@ -136,7 +137,7 @@ class ExerciseViewModel(
                         known
                     )
                 }
-                loadExercises()
+                loadExercises(clearError = false)
                 val changed = results.filter { it !is AddToGroupsResult.Unchanged }
                 _uiState.value = when {
                     changed.isEmpty() -> _uiState.value.copy(errorMessage = "Esses exercícios já estão na sua lista")
