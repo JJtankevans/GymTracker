@@ -86,6 +86,18 @@ class WorkoutRepositoryImpl(
             .decodeList()
     }
 
+    override suspend fun getWorkout(workoutId: String): Workout? =
+        supabase.postgrest["workouts"]
+            .select { filter { eq("id", workoutId) } }
+            .decodeSingleOrNull()
+
+    override suspend fun updateNotes(workoutId: String, notes: String?) {
+        supabase.postgrest["workouts"]
+            .update({ set<String?>("notes", notes?.trim()?.takeIf { it.isNotEmpty() }) }) {
+                filter { eq("id", workoutId) }
+            }
+    }
+
     override suspend fun addSet(workoutSet: WorkoutSet): WorkoutSet {
         return supabase.postgrest["workout_sets"]
             .insert(workoutSet){

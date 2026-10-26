@@ -57,6 +57,14 @@ class FakeWorkoutRepository : WorkoutRepository {
     override suspend fun getActiveWorkout(): Workout? { maybeFail(); return activeWorkout }
     override suspend fun updateFinishedExercises(workoutId: String, finishedExerciseIds: List<String>) {}
     override suspend fun getHistory(): List<Workout> = history.toList()
+    var failNotes: Throwable? = null
+    override suspend fun getWorkout(workoutId: String): Workout? =
+        (history + listOfNotNull(activeWorkout)).firstOrNull { it.id == workoutId }
+    override suspend fun updateNotes(workoutId: String, notes: String?) {
+        failNotes?.let { throw it }
+        val clean = notes?.trim()?.takeIf { it.isNotEmpty() }
+        history.replaceAll { if (it.id == workoutId) it.copy(notes = clean) else it }
+    }
 
     override suspend fun addSet(workoutSet: WorkoutSet): WorkoutSet {
         maybeFail()

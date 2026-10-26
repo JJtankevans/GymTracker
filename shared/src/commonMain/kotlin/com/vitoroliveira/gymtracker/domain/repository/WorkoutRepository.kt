@@ -15,6 +15,10 @@ interface WorkoutRepository {
     suspend fun getActiveWorkout(): Workout?
     suspend fun updateFinishedExercises(workoutId: String, finishedExerciseIds: List<String>)
     suspend fun getHistory(): List<Workout>
+    /** Um treino pelo id (null se não existe ou não é meu). */
+    suspend fun getWorkout(workoutId: String): Workout?
+    /** Grava a anotação do treino (null ou vazio apaga). */
+    suspend fun updateNotes(workoutId: String, notes: String?)
     suspend fun addSet(workoutSet: WorkoutSet): WorkoutSet
     suspend fun getSetsForWorkout(workoutId: String): List<WorkoutSet>
     suspend fun getProgressionForExercise(exerciseId: String): List<ExerciseProgression>
