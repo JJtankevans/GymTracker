@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -44,8 +45,15 @@ fun MuscleGroupScreen(
     viewModel: MuscleGroupViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val scheduleVm: com.vitoroliveira.gymtracker.presentation.schedule.ScheduleViewModel = koinViewModel()
+    val plan by scheduleVm.plan.collectAsState()
+    var showSchedule by remember { mutableStateOf(false) }
+    if (showSchedule) {
+        ScheduleDialog(uiState.muscleGroups, plan, onSet = scheduleVm::set, onDismiss = { showSchedule = false })
+    }
 
     MuscleGroupScreenContent(
+        onOpenSchedule = { showSchedule = true },
         uiState = uiState,
         onNavigateToExercises = onNavigateToExercises,
         onBack = onBack,
@@ -67,7 +75,8 @@ fun MuscleGroupScreenContent(
     onUpdate: (MuscleGroup) -> Unit,
     onDelete: (String) -> Unit,
     onClearMessages: () -> Unit,
-    onCreateFromTemplate: (com.vitoroliveira.gymtracker.data.catalog.WorkoutTemplate) -> Unit = {}
+    onCreateFromTemplate: (com.vitoroliveira.gymtracker.data.catalog.WorkoutTemplate) -> Unit = {},
+    onOpenSchedule: () -> Unit = {}
 ) {
     var showTemplates by remember { mutableStateOf(false) }
     var showCreateDialog by remember { mutableStateOf(false) }
@@ -98,6 +107,11 @@ fun MuscleGroupScreenContent(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onOpenSchedule) {
+                        Icon(Icons.Default.CalendarMonth, contentDescription = "Agenda da semana")
                     }
                 }
             )

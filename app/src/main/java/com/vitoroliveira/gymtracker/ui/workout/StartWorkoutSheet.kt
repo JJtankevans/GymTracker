@@ -37,6 +37,9 @@ fun StartWorkoutSheet(
     // mesmo ViewModel da Home (o sheet abre dentro da tela Home): traz a sugestão do próximo grupo da rotação
     val homeVm: com.vitoroliveira.gymtracker.presentation.viewmodel.HomeViewModel = koinViewModel()
     val home by homeVm.uiState.collectAsState()
+    val scheduleVm: com.vitoroliveira.gymtracker.presentation.schedule.ScheduleViewModel = koinViewModel()
+    val plan by scheduleVm.plan.collectAsState()
+    val today = java.time.LocalDate.now().dayOfWeek.value
     val body by bodyVm.data.collectAsState()
 
     // skipPartiallyExpanded: só "aberto" e "fechado" (como os outros sheets do app). Com o estado parcial, arrastar
@@ -51,6 +54,7 @@ fun StartWorkoutSheet(
             onStartCircuit = onStartCircuit,
             onDismiss = onDismiss,
             suggestedGroupId = home.suggestedGroupId,
+            plannedGroupId = com.vitoroliveira.gymtracker.presentation.schedule.plannedGroupFor(plan, today, uiState.muscleGroups.map { it.id }),
             weighIn = if (body.profile.askWeightEachWorkout) WeighIn(body.latestKg) { kg ->
                 bodyVm.logWeight(com.vitoroliveira.gymtracker.ui.components.todayEpochDay(), kg)
             } else null
@@ -65,6 +69,7 @@ fun StartWorkoutSheetContent(
     onDismiss: () -> Unit,
     onStartCircuit: (muscleGroupId: String?, muscleGroupName: String?) -> Unit = { _, _ -> },
     suggestedGroupId: String? = null,
+    plannedGroupId: String? = null,
     weighIn: WeighIn? = null
 ) {
     var circuit by remember { mutableStateOf(false) }
@@ -147,13 +152,18 @@ fun StartWorkoutSheetContent(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    // o sugerido (próximo da rotação) vem primeiro, com selo
-                    val ordered = uiState.muscleGroups.sortedBy { it.id != suggestedGroupId }
+                    // o planejado para hoje (agenda) vem primeiro; sem agenda, o sugerido pela rotação
+                    val highlight = plannedGroupId ?: suggestedGroupId
+                    val ordered = uiState.muscleGroups.sortedBy { it.id != highlight }
                     ordered.forEach { group ->
                         key(group.id ?: group.name) {
                             MuscleGroupSelectItem(
                                 muscleGroup = group,
-                                suggested = suggestedGroupId != null && group.id == suggestedGroupId,
+                                badge = when {
+                                    plannedGroupId != null && group.id == plannedGroupId -> "Planejado para hoje"
+                                    plannedGroupId == null && suggestedGroupId != null && group.id == suggestedGroupId -> "Sugerido: próximo da sua rotação"
+                                    else -> null
+                                },
                                 onClick = { start(group.id, group.name) }
                             )
                         }
@@ -168,7 +178,7 @@ fun StartWorkoutSheetContent(
 fun MuscleGroupSelectItem(
     muscleGroup: MuscleGroup,
     onClick: () -> Unit,
-    suggested: Boolean = false
+    badge: String? = null
 ) {
     val color = runCatching {
         Color(android.graphics.Color.parseColor(muscleGroup.colorHex))
@@ -200,9 +210,9 @@ fun MuscleGroupSelectItem(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Medium
                 )
-                if (suggested) {
+                if (badge != null) {
                     Text(
-                        "Sugerido: próximo da sua rotação",
+                        badge,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold

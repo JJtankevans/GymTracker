@@ -29,4 +29,7 @@ val uiModule = module {
     single { BodyRepository(get(), get()) }
     viewModel { BodyViewModel(get()) }
     viewModel { EvolutionViewModel(get(), get()) }
+    single<com.vitoroliveira.gymtracker.presentation.schedule.ScheduleStore> { com.vitoroliveira.gymtracker.ui.muscleGroup.PrefsScheduleStore(androidContext()) }
+    single { com.vitoroliveira.gymtracker.presentation.schedule.ScheduleRepository(get()) }
+    viewModel { com.vitoroliveira.gymtracker.presentation.schedule.ScheduleViewModel(get()) }
 }
