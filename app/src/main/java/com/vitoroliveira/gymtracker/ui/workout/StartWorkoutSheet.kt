@@ -34,6 +34,9 @@ fun StartWorkoutSheet(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val bodyVm: com.vitoroliveira.gymtracker.presentation.body.BodyViewModel = koinViewModel()
+    // mesmo ViewModel da Home (o sheet abre dentro da tela Home): traz a sugestão do próximo grupo da rotação
+    val homeVm: com.vitoroliveira.gymtracker.presentation.viewmodel.HomeViewModel = koinViewModel()
+    val home by homeVm.uiState.collectAsState()
     val body by bodyVm.data.collectAsState()
 
     // skipPartiallyExpanded: só "aberto" e "fechado" (como os outros sheets do app). Com o estado parcial, arrastar
@@ -47,6 +50,7 @@ fun StartWorkoutSheet(
             onStartWorkout = onStartWorkout,
             onStartCircuit = onStartCircuit,
             onDismiss = onDismiss,
+            suggestedGroupId = home.suggestedGroupId,
             weighIn = if (body.profile.askWeightEachWorkout) WeighIn(body.latestKg) { kg ->
                 bodyVm.logWeight(com.vitoroliveira.gymtracker.ui.components.todayEpochDay(), kg)
             } else null
@@ -60,6 +64,7 @@ fun StartWorkoutSheetContent(
     onStartWorkout: (muscleGroupId: String?, muscleGroupName: String?) -> Unit,
     onDismiss: () -> Unit,
     onStartCircuit: (muscleGroupId: String?, muscleGroupName: String?) -> Unit = { _, _ -> },
+    suggestedGroupId: String? = null,
     weighIn: WeighIn? = null
 ) {
     var circuit by remember { mutableStateOf(false) }
@@ -142,10 +147,13 @@ fun StartWorkoutSheetContent(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    uiState.muscleGroups.forEach { group ->
+                    // o sugerido (próximo da rotação) vem primeiro, com selo
+                    val ordered = uiState.muscleGroups.sortedBy { it.id != suggestedGroupId }
+                    ordered.forEach { group ->
                         key(group.id ?: group.name) {
                             MuscleGroupSelectItem(
                                 muscleGroup = group,
+                                suggested = suggestedGroupId != null && group.id == suggestedGroupId,
                                 onClick = { start(group.id, group.name) }
                             )
                         }
@@ -159,7 +167,8 @@ fun StartWorkoutSheetContent(
 @Composable
 fun MuscleGroupSelectItem(
     muscleGroup: MuscleGroup,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    suggested: Boolean = false
 ) {
     val color = runCatching {
         Color(android.graphics.Color.parseColor(muscleGroup.colorHex))
@@ -185,12 +194,21 @@ fun MuscleGroupSelectItem(
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            Text(
-                text = muscleGroup.name,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.weight(1f)
-            )
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = muscleGroup.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium
+                )
+                if (suggested) {
+                    Text(
+                        "Sugerido: próximo da sua rotação",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
 
             Icon(
                 Icons.Default.PlayArrow,

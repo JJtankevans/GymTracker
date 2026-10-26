@@ -11,6 +11,7 @@ import com.vitoroliveira.gymtracker.presentation.DashboardCalculator
 import com.vitoroliveira.gymtracker.presentation.WeekBucket
 import com.vitoroliveira.gymtracker.domain.repository.MuscleGroupRepository
 import com.vitoroliveira.gymtracker.domain.resolveGroupName
+import com.vitoroliveira.gymtracker.presentation.workout.suggestNextGroup
 import com.vitoroliveira.gymtracker.domain.repository.ProfileRepository
 import com.vitoroliveira.gymtracker.domain.repository.WorkoutRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,6 +36,8 @@ data class HomeUiState(
     /** Já formatada como "dd/MM" para exibição direta na tela. */
     val lastWorkoutDate: String? = null,
     val lastWorkoutMuscleGroupName: String? = null,
+    /** Próximo grupo da rotação (o treinado há mais tempo); null se não há o que sugerir. */
+    val suggestedGroupId: String? = null,
     val errorMessage: String? = null
 )
 
@@ -82,6 +85,7 @@ class HomeViewModel(
                     streakDays = streakDays,
                     weeklyHistory = weeklyHistory,
                     totalWorkouts = history.size,
+                    suggestedGroupId = suggestNextGroup(muscleGroups, history),
                     lastWorkoutDate = lastWorkout?.let { formatDate(it.startedAt) },
                     lastWorkoutMuscleGroupName = lastWorkout?.let {
                         lastWorkoutGroupName ?: "Treino livre"
