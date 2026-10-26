@@ -80,6 +80,9 @@ class FakeWorkoutRepository : WorkoutRepository {
     }
 
     /** null = a função `records_summary()` não existe no banco (a chamada falha, como no Supabase sem a migração 008). */
+    var recentSets: List<com.vitoroliveira.gymtracker.data.model.RecentSet> = emptyList()
+    override suspend fun getSetsSince(sinceIso: String) = recentSets
+
     var recordsSummary: List<RecordSummary>? = null
     var summaryCalls = 0
     override suspend fun getRecordsSummary(): List<RecordSummary> {

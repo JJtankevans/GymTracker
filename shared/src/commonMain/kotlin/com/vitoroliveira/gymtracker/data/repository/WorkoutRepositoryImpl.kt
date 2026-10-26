@@ -5,6 +5,7 @@ package com.vitoroliveira.gymtracker.data.repository
 import com.vitoroliveira.gymtracker.data.model.ExerciseBaseline
 import com.vitoroliveira.gymtracker.data.model.ExerciseProgression
 import com.vitoroliveira.gymtracker.data.model.RecordSummary
+import com.vitoroliveira.gymtracker.data.model.RecentSet
 import com.vitoroliveira.gymtracker.data.model.Workout
 import com.vitoroliveira.gymtracker.data.model.WorkoutSet
 import com.vitoroliveira.gymtracker.domain.repository.WorkoutRepository
@@ -123,6 +124,13 @@ class WorkoutRepositoryImpl(
             }
             .decodeList()
     }
+
+    override suspend fun getSetsSince(sinceIso: String): List<RecentSet> =
+        supabase.postgrest["workout_sets"]
+            .select(Columns.raw("exercise_id, reps, weight_kg, workouts!inner(started_at)")) {
+                filter { gte("workouts.started_at", sinceIso) }
+            }
+            .decodeList()
 
     override suspend fun getRecordsSummary(): List<RecordSummary> =
         supabase.postgrest.rpc("records_summary").decodeList()

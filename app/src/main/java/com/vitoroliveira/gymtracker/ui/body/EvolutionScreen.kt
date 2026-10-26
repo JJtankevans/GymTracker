@@ -65,6 +65,7 @@ fun EvolutionContent(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             item(key = "weight") { BodyWeightCard(body, onLog = onLog, onDelete = onDelete, onEditData = { showData = true }) }
+            if (evo.weeklySets.any { it.sets > 0 }) item(key = "weekly-sets") { WeeklySetsCard(evo.weeklySets) }
             item(key = "lifts-title") {
                 Text("Cargas nos básicos", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             }
@@ -87,6 +88,41 @@ fun EvolutionContent(
     }
 
     if (showData) BodyDataDialog(body.profile, onSave = { onSaveProfile(it); showData = false }, onDismiss = { showData = false })
+}
+
+/** Séries por músculo nos últimos 7 dias, com a faixa de referência marcada. */
+@Composable
+private fun WeeklySetsCard(rows: List<com.vitoroliveira.gymtracker.presentation.body.MuscleSets>) {
+    val range = com.vitoroliveira.gymtracker.presentation.body.WEEKLY_SETS_RANGE
+    com.vitoroliveira.gymtracker.ui.theme.ThemedCard(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Séries por músculo (7 dias)", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            rows.forEach { r ->
+                val inRange = r.sets in range
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(r.label, Modifier.width(96.dp), style = MaterialTheme.typography.bodyMedium, maxLines = 1)
+                    LinearProgressIndicator(
+                        progress = { (r.sets / range.last.toFloat()).coerceIn(0f, 1f) },
+                        modifier = Modifier.weight(1f).height(10.dp),
+                        color = when {
+                            r.sets == 0 -> MaterialTheme.colorScheme.outline
+                            inRange -> MaterialTheme.colorScheme.primary
+                            else -> MaterialTheme.colorScheme.tertiary
+                        }
+                    )
+                    Text(
+                        "${r.sets}", Modifier.width(36.dp), textAlign = androidx.compose.ui.text.style.TextAlign.End,
+                        fontWeight = if (inRange) FontWeight.Bold else FontWeight.Normal
+                    )
+                }
+            }
+            Text(
+                "Referência comum para hipertrofia: ${range.first} a ${range.last} séries por músculo por semana (Schoenfeld e colegas, 2017). " +
+                    "É uma faixa, não regra: iniciantes crescem com menos. Exercícios fora do catálogo contam em \"Outros\".",
+                style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
 }
 
 @Composable
