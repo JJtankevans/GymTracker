@@ -50,7 +50,7 @@ fun appModule(supabaseClient: SupabaseClient) = module {
     viewModel { ExerciseViewModel(get()) }
     viewModel { ProfileViewModel(get(), get(), get()) }
     viewModel { WorkoutViewModel(get(), get()) }
-    viewModel { HomeViewModel(get(), get(), get()) }
+    viewModel { HomeViewModel(get(), get(), get(), get()) }
     viewModel { HistoryViewModel(get(), get()) }
     viewModel { com.vitoroliveira.gymtracker.presentation.records.RecordsViewModel(get(), get()) }
     viewModel { com.vitoroliveira.gymtracker.presentation.social.SocialViewModel(get()) }

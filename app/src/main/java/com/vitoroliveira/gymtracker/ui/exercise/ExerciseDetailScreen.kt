@@ -104,7 +104,39 @@ fun ExerciseDetailScreenContent(
                     StatsRow(uiState)
                     ProgressionChart(uiState.progression)
                     uiState.oneRmKg?.let { RepMaxCard(it) }
+                    SessionsCard(uiState.progression)
                 }
+            }
+        }
+    }
+}
+
+/** Últimas sessões do exercício (mais recente primeiro): dia, séries, repetições e carga máxima. */
+@Composable
+private fun SessionsCard(progression: List<ExerciseProgression>) {
+    val recent = remember(progression) { progression.asReversed().take(20) }
+    ThemedCard(modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text("Sessões", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Row(Modifier.fillMaxWidth()) {
+                Text("Dia", Modifier.weight(1f), style = MaterialTheme.typography.labelMedium)
+                Text("Séries", Modifier.weight(1f), style = MaterialTheme.typography.labelMedium)
+                Text("Reps", Modifier.weight(1f), style = MaterialTheme.typography.labelMedium)
+                Text("Máx.", Modifier.weight(1f), style = MaterialTheme.typography.labelMedium)
+            }
+            HorizontalDivider()
+            recent.forEach { p ->
+                val day = runCatching { LocalDate.parse(p.sessionDate) }.getOrNull()
+                    ?.let { d -> "${d.dayOfMonth.toString().padStart(2, '0')}/${d.monthNumber.toString().padStart(2, '0')}" } ?: p.sessionDate
+                Row(Modifier.fillMaxWidth()) {
+                    Text(day, Modifier.weight(1f))
+                    Text("${p.totalSets}", Modifier.weight(1f))
+                    Text("${p.totalReps}", Modifier.weight(1f))
+                    Text(if (p.maxWeightKg > 0) "${formatKg(p.maxWeightKg)} kg" else "—", Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
+                }
+            }
+            if (progression.size > recent.size) {
+                Text("Mostrando as ${recent.size} mais recentes de ${progression.size}.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }

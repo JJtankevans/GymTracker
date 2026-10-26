@@ -38,13 +38,16 @@ data class HomeUiState(
     val lastWorkoutMuscleGroupName: String? = null,
     /** Próximo grupo da rotação (o treinado há mais tempo); null se não há o que sugerir. */
     val suggestedGroupId: String? = null,
+    /** Pedidos para me seguir esperando resposta (selo no ícone do Social). */
+    val pendingFollowRequests: Int = 0,
     val errorMessage: String? = null
 )
 
 class HomeViewModel(
     private val workoutRepository: WorkoutRepository,
     private val profileRepository: ProfileRepository,
-    private val muscleGroupRepository: MuscleGroupRepository
+    private val muscleGroupRepository: MuscleGroupRepository,
+    private val socialRepository: com.vitoroliveira.gymtracker.domain.repository.SocialRepository? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -86,6 +89,7 @@ class HomeViewModel(
                     weeklyHistory = weeklyHistory,
                     totalWorkouts = history.size,
                     suggestedGroupId = suggestNextGroup(muscleGroups, history),
+                    pendingFollowRequests = countFollowRequestsQuietly(),
                     lastWorkoutDate = lastWorkout?.let { formatDate(it.startedAt) },
                     lastWorkoutMuscleGroupName = lastWorkout?.let {
                         lastWorkoutGroupName ?: "Treino livre"
@@ -113,6 +117,18 @@ class HomeViewModel(
         val day = date.dayOfMonth.toString().padStart(2, '0')
         val month = date.monthNumber.toString().padStart(2, '0')
         return "$day/$month"
+    }
+
+    /** Contagem é um extra: sem rede ou sem as tabelas sociais, fica 0 e a Home segue normal. */
+    private suspend fun countFollowRequestsQuietly(): Int {
+        val repo = socialRepository ?: return 0
+        return try {
+            val me = repo.currentUserId()
+            repo.follows().count { it.followedId == me && it.status == "pending" }
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            0
+        }
     }
 
     fun clearError() {
