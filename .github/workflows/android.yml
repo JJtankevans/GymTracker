@@ -17,12 +17,13 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # fixo no 24.04: o "ubuntu-latest" passou para o Ubuntu 26 em out/2026 e a instalação do Android SDK falhou nele
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 17
