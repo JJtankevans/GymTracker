@@ -6,6 +6,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- aviso de fim do descanso com a tela bloqueada (pedida só na primeira vez que o timer roda) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:name=".GymTrackerApplication"

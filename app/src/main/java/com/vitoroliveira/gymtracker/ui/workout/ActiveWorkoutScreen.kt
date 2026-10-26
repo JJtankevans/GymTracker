@@ -76,6 +76,14 @@ import com.vitoroliveira.gymtracker.ui.utils.formatKg
 import com.vitoroliveira.gymtracker.ui.utils.formatVolume
 import com.vitoroliveira.gymtracker.ui.utils.formatWeightInput
 import com.vitoroliveira.gymtracker.ui.utils.restFinishedFeedback
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.lifecycle.Lifecycle
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import org.koin.compose.viewmodel.koinViewModel
 
 // Opções de tempo de descanso em segundos
@@ -107,10 +115,36 @@ fun ActiveWorkoutScreen(
         onDispose { view.keepScreenOn = false }
     }
 
-    // Vibra + bipe quando o descanso termina
-    LaunchedEffect(uiState.timerState.isFinished) {
-        if (uiState.timerState.isFinished) context.restFinishedFeedback()
+    // Descanso: bipe/vibração no fim e notificação com contagem regressiva, também com a tela bloqueada.
+    // Coleta o estado direto do ViewModel (e não por recomposição): com o app em segundo plano a tela não recompõe,
+    // mas esta coleta continua, então o aviso de fim chega mesmo fora do app.
+    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    val restNotifier = remember { RestNotifier(context) }
+    var askedNotificationPermission by rememberSaveable { mutableStateOf(false) }
+    val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    LaunchedEffect(viewModel) {
+        var previous: TimerState? = null
+        viewModel.uiState.map { it.timerState }.distinctUntilChanged().collect { t ->
+            val prev = previous
+            previous = t
+            val visible = lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
+            when {
+                t.isFinished && prev?.isFinished != true -> {
+                    context.restFinishedFeedback()
+                    if (visible) restNotifier.cancel() else restNotifier.showFinished()
+                }
+                t.isRunning && (prev == null || !prev.isRunning || t.totalSeconds != prev.totalSeconds || t.remainingSeconds > prev.remainingSeconds) -> {
+                    if (Build.VERSION.SDK_INT >= 33 && !restNotifier.canNotify() && !askedNotificationPermission) {
+                        askedNotificationPermission = true
+                        notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                    restNotifier.showCountdown(t.remainingSeconds)
+                }
+                !t.isRunning && !t.isFinished -> restNotifier.cancel() // pausado ou cancelado
+            }
+        }
     }
+    DisposableEffect(Unit) { onDispose { restNotifier.cancel() } }
 
     ActiveWorkoutScreenContent(
         muscleGroupName = muscleGroupName,
