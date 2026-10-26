@@ -33,14 +33,14 @@ class CsvExportTest {
 
     private val w1 = ExportWorkout(id = "w1", startedAt = "2026-10-26T13:05:00Z", muscleGroupId = "g1")
     private val w2 = ExportWorkout(id = "w2", startedAt = "2026-10-20T09:00:00Z", muscleGroupId = null, muscleGroupName = "Pernas (apagado)")
-    private val sets = listOf(
+    private val rows = listOf(
         ExportSet("e1", 2, 10, 42.5, "2026-10-26T13:10:00Z", w1),
         ExportSet("e1", 1, 12, 40.0, "2026-10-26T13:07:00Z", w1),
         ExportSet("e2", 1, 15, 0.0, "2026-10-20T09:05:00Z", w2)
     )
 
     @Test fun geraUmaLinhaPorSerieOrdenadaPorData() {
-        val csv = historyCsv(sets, mapOf("e1" to "Supino; Reto", "e2" to "Prancha"), mapOf("g1" to "Peito"), TimeZone.UTC)
+        val csv = historyCsv(rows, mapOf("e1" to "Supino; Reto", "e2" to "Prancha"), mapOf("g1" to "Peito"), TimeZone.UTC)
         val lines = csv.trimEnd().lines()
         assertEquals("data;hora;grupo;exercicio;serie;reps;carga_kg;volume_kg", lines[0])
         assertEquals("20/10/2026;09:00;Pernas (apagado);Prancha;1;15;0;0", lines[1])
@@ -54,7 +54,7 @@ class CsvExportTest {
     }
 
     @Test fun viewModelGeraECsvEDepoisLimpa() {
-        val repo = FakeWorkoutRepository().apply { exportSets = sets }
+        val repo = FakeWorkoutRepository().apply { exportSets = rows }
         val vm = ExportViewModel(repo, FakeExerciseRepository(listOf(Exercise(id = "e1", name = "Supino"))), Groups(emptyList()))
         vm.export()
         assertEquals(3, vm.state.value.rows)

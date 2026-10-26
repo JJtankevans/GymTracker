@@ -66,6 +66,12 @@ class WorkoutSummaryTest {
         assertEquals("Registrado no GymTracker", lines.last())
     }
 
+    @Test fun recordesNovosEntramAntesDoTotal() {
+        val lines = shareText("Pernas", workout, groups, utc, newRecords = listOf("Cadeira Extensora")).lines()
+        assertEquals("Novo recorde: Cadeira Extensora", lines[3])
+        assertEquals("3 séries · 905 kg de volume", lines[4])
+    }
+
     @Test fun semGrupoViraSoTreino() {
         assertTrue(shareText("Sem grupo", null, groups, utc).startsWith("Treino\n"))
         assertTrue(shareText(null, null, groups, utc).startsWith("Treino\n"))

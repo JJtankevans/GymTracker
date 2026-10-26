@@ -163,6 +163,13 @@ fun ActiveWorkoutScreen(
         onDiscardWorkout = { viewModel.discardAndStartNew(muscleGroupId) },
         onToggleExerciseFinished = { viewModel.toggleExerciseFinished(it) },
         onSummaryDone = onWorkoutFinished,
+        onShareSummary = {
+            val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(android.content.Intent.EXTRA_TEXT, viewModel.shareText(muscleGroupName))
+            }
+            context.startActivity(android.content.Intent.createChooser(send, "Compartilhar treino"))
+        },
         onBack = onBack,
         topSlot = { com.vitoroliveira.gymtracker.ui.music.MiniPlayer() }
     )
@@ -188,6 +195,7 @@ fun ActiveWorkoutScreenContent(
     onUpdateSet: (setId: String, reps: Int, weightKg: Double) -> Unit = { _, _, _ -> },
     onDeleteSet: (setId: String) -> Unit = {},
     onSummaryDone: () -> Unit = {},
+    onShareSummary: () -> Unit = {},
     topSlot: @Composable () -> Unit = {}
 ) {
     var showFinishDialog by remember { mutableStateOf(false) }
@@ -367,7 +375,7 @@ fun ActiveWorkoutScreenContent(
     }
 
     uiState.summary?.let { summary ->
-        WorkoutSummaryDialog(summary = summary, onDone = onSummaryDone)
+        WorkoutSummaryDialog(summary = summary, onDone = onSummaryDone, onShare = onShareSummary)
     }
 }
 
@@ -703,7 +711,7 @@ private fun EditSetDialog(
 }
 
 @Composable
-fun WorkoutSummaryDialog(summary: WorkoutSummary, onDone: () -> Unit) {
+fun WorkoutSummaryDialog(summary: WorkoutSummary, onDone: () -> Unit, onShare: (() -> Unit)? = null) {
     AlertDialog(
         onDismissRequest = { },
         title = { Text("Treino concluído!") },
@@ -731,7 +739,8 @@ fun WorkoutSummaryDialog(summary: WorkoutSummary, onDone: () -> Unit) {
                 }
             }
         },
-        confirmButton = { Button(onClick = onDone) { Text("Concluir") } }
+        confirmButton = { Button(onClick = onDone) { Text("Concluir") } },
+        dismissButton = onShare?.let { share -> { TextButton(onClick = share) { Text("Compartilhar") } } }
     )
 }
 

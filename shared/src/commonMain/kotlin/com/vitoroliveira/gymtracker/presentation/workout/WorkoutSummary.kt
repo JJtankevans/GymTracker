@@ -49,7 +49,11 @@ fun summarize(workout: Workout?, groups: List<ExerciseSetGroup>, zone: TimeZone 
  *   ...
  *   12 séries · 4.320 kg de volume
  */
-fun shareText(groupName: String?, workout: Workout?, groups: List<ExerciseSetGroup>, zone: TimeZone = TimeZone.currentSystemDefault()): String {
+fun shareText(
+    groupName: String?, workout: Workout?, groups: List<ExerciseSetGroup>,
+    zone: TimeZone = TimeZone.currentSystemDefault(),
+    newRecords: List<String> = emptyList()
+): String {
     val s = summarize(workout, groups, zone)
     val title = buildString {
         append(groupName?.takeIf { it.isNotBlank() && it != "Sem grupo" }?.let { "Treino de $it" } ?: "Treino")
@@ -68,6 +72,7 @@ fun shareText(groupName: String?, workout: Workout?, groups: List<ExerciseSetGro
     return buildString {
         appendLine(title)
         lines.forEach { appendLine(it) }
+        if (newRecords.isNotEmpty()) appendLine((if (newRecords.size == 1) "Novo recorde: " else "Novos recordes: ") + newRecords.joinToString(", "))
         appendLine(total)
         workout?.notes?.takeIf { it.isNotBlank() }?.let { appendLine("Nota: ${it.trim()}") }
         append("Registrado no GymTracker")
