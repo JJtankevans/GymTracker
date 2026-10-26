@@ -127,6 +127,13 @@ fun FocusWorkoutBody(
                     BigStepper("KG", formatKg(kg), Modifier.weight(1f),
                         { inputs[id] = Pair(reps, (kg - 2.5).coerceAtLeast(0.0)) }, { inputs[id] = Pair(reps, kg + 2.5) })
                 }
+                if (kg > 0) {
+                    var showPlates by remember { mutableStateOf(false) }
+                    if (showPlates) com.vitoroliveira.gymtracker.ui.exercise.PlateCalculatorSheet(initialKg = kg, onDismiss = { showPlates = false })
+                    TextButton(onClick = { showPlates = true }, modifier = Modifier.fillMaxWidth()) {
+                        Text("Ver anilhas para ${formatKg(kg)} kg")
+                    }
+                }
 
                 Button(
                     onClick = {

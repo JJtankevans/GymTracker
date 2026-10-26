@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
@@ -601,10 +602,21 @@ fun ExerciseWorkoutCard(
                     singleLine = true
                 )
 
+                var showPlates by remember { mutableStateOf(false) }
+                if (showPlates) {
+                    com.vitoroliveira.gymtracker.ui.exercise.PlateCalculatorSheet(
+                        initialKg = weight.replace(",", ".").toDoubleOrNull(), onDismiss = { showPlates = false }
+                    )
+                }
                 OutlinedTextField(
                     value = weight,
                     onValueChange = { weight = formatWeightInput(it); weightError = false },
                     label = { Text("Peso (kg)") },
+                    trailingIcon = {
+                        IconButton(onClick = { showPlates = true }) {
+                            Icon(Icons.Default.Calculate, contentDescription = "Calculadora de anilhas")
+                        }
+                    },
                     isError = weightError,
                     supportingText = if (weightError) ({ Text("Informe o peso") }) else null,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
