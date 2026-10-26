@@ -28,8 +28,13 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      # instala o Android SDK (cmdline-tools) e aceita as licenças; o Gradle baixa o restante (plataforma 36 etc.)
-      - uses: android-actions/setup-android@v3
+      # O runner já traz o Android SDK (ANDROID_HOME). Só aceita as licenças; o Gradle baixa o que faltar (plataforma 36 etc.).
+      - name: Aceitar as licenças do Android SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          if ! (yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > sdk-licenses.log 2>&1); then
+            echo "::warning title=sdkmanager::$(tail -n 5 sdk-licenses.log | sed ':a;N;$!ba;s/\n/%0A/g')"
+          fi
 
       - uses: gradle/actions/setup-gradle@v4
 
@@ -47,7 +52,11 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Gerar o APK debug
-        run: ./gradlew :app:assembleDebug --stacktrace
+        run: |
+          ./gradlew :app:assembleDebug --stacktrace > build-apk.log 2>&1 || {
+            echo "::error title=Falha ao gerar o APK::$(grep -E 'error:|e: |FAILED|What went wrong|> ' build-apk.log | head -n 25 | sed ':a;N;$!ba;s/\n/%0A/g')"
+            exit 1
+          }
 
       - name: Guardar o APK
         uses: actions/upload-artifact@v4
@@ -59,7 +68,11 @@ jobs:
 
       # depois do APK: se algum teste falhar, o APK já está guardado e o relatório vira artefato
       - name: Testes do :shared
-        run: ./gradlew :shared:testDebugUnitTest --stacktrace
+        run: |
+          ./gradlew :shared:testDebugUnitTest --stacktrace > test-shared.log 2>&1 || {
+            echo "::error title=Falha nos testes do shared::$(grep -E 'FAILED|e: |What went wrong|> |Test.*>' test-shared.log | head -n 25 | sed ':a;N;$!ba;s/\n/%0A/g')"
+            exit 1
+          }
 
       - name: Relatório dos testes
         if: always()
