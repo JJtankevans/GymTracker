@@ -25,6 +25,8 @@ interface WorkoutRepository {
     suspend fun getProgressionForExercise(exerciseId: String): List<ExerciseProgression>
     /** Todas as séries de treinos iniciados a partir de [sinceIso] (instante ISO), em uma chamada. */
     suspend fun getSetsSince(sinceIso: String): List<RecentSet>
+    /** Todas as minhas séries (treinos terminados), em páginas, para exportar. */
+    suspend fun getAllSetsForExport(): List<com.vitoroliveira.gymtracker.data.model.ExportSet>
     /** Recordes de carga de todos os exercícios em UMA chamada (função `records_summary()`, migração 008). */
     suspend fun getRecordsSummary(): List<RecordSummary>
     suspend fun updateSet(setId: String, reps: Int, weightKg: Double): WorkoutSet

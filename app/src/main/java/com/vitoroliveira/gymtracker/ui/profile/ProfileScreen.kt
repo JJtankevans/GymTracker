@@ -21,6 +21,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.*
@@ -48,6 +49,16 @@ fun ProfileScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val exportVm: com.vitoroliveira.gymtracker.presentation.workout.ExportViewModel = koinViewModel()
+    val export by exportVm.state.collectAsState()
+    // CSV pronto: salva e abre o compartilhar; erro vira mensagem na tela
+    LaunchedEffect(export.csv, export.errorMessage) {
+        export.csv?.let { csv ->
+            runCatching { context.shareCsv(csv) }.onFailure { viewModel.onExternalError("Não foi possível compartilhar o arquivo") }
+            exportVm.consumed()
+        }
+        export.errorMessage?.let { viewModel.onExternalError(it); exportVm.consumed() }
+    }
     val scope = rememberCoroutineScope()
 
     // Galeria do sistema (Photo Picker): não pede permissão de armazenamento
@@ -75,7 +86,9 @@ fun ProfileScreen(
         onSignOut = { viewModel.signOut() },
         onClearMessages = { viewModel.clearMessages() },
         onPickPhoto = { photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
-        onRemovePhoto = { viewModel.removeAvatar() }
+        onRemovePhoto = { viewModel.removeAvatar() },
+        isExporting = export.isExporting,
+        onExport = exportVm::export
     )
 }
 
@@ -91,7 +104,9 @@ fun ProfileScreenContent(
     onSignOut: () -> Unit,
     onClearMessages: () -> Unit,
     onPickPhoto: () -> Unit = {},
-    onRemovePhoto: () -> Unit = {}
+    onRemovePhoto: () -> Unit = {},
+    isExporting: Boolean = false,
+    onExport: () -> Unit = {}
 ) {
     var weeklyGoal by remember(uiState.profile) {
         mutableStateOf(uiState.profile?.weeklyGoal ?: 3)
@@ -276,6 +291,19 @@ fun ProfileScreenContent(
                     Icon(Icons.Default.ShowChart, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Evolução e meus dados")
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedButton(
+                    onClick = onExport,
+                    enabled = !isExporting,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    if (isExporting) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                    else Icon(Icons.Default.Download, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(if (isExporting) "Exportando..." else "Exportar meus treinos (CSV)")
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))

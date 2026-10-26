@@ -132,6 +132,26 @@ class WorkoutRepositoryImpl(
             }
             .decodeList()
 
+    override suspend fun getAllSetsForExport(): List<com.vitoroliveira.gymtracker.data.model.ExportSet> {
+        // o Supabase devolve no máximo 1000 linhas por chamada: busca em páginas até acabar
+        val page = 1000L
+        val all = mutableListOf<com.vitoroliveira.gymtracker.data.model.ExportSet>()
+        var from = 0L
+        while (true) {
+            val chunk = supabase.postgrest["workout_sets"]
+                .select(Columns.raw("exercise_id, set_number, reps, weight_kg, completed_at, workouts!inner(id, started_at, muscle_group_id, muscle_group_name)")) {
+                    filter { filterNot("workouts.finished_at", FilterOperator.IS, null) }
+                    order("completed_at", Order.ASCENDING)
+                    range(from, from + page - 1)
+                }
+                .decodeList<com.vitoroliveira.gymtracker.data.model.ExportSet>()
+            all += chunk
+            if (chunk.size < page) break
+            from += page
+        }
+        return all
+    }
+
     override suspend fun getRecordsSummary(): List<RecordSummary> =
         supabase.postgrest.rpc("records_summary").decodeList()
 

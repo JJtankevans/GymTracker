@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Arquivos que o app compartilha com outros apps (ex.: CSV exportado), via FileProvider. -->
+<paths>
+    <cache-path name="exports" path="exports/" />
+</paths>

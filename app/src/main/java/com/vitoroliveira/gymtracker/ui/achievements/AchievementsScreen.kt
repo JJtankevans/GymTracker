@@ -62,7 +62,7 @@ fun AchievementsContent(state: AchievementsUiState, onBack: () -> Unit, onRetry:
                 Modifier.fillMaxSize().padding(padding).padding(32.dp),
                 verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(state.errorMessage, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(state.errorMessage.orEmpty(), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 TextButton(onRetry) { Text("Tentar de novo") }
             }
             else -> LazyColumn(
