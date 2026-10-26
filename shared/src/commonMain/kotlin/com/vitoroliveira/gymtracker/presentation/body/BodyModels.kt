@@ -21,12 +21,35 @@ data class BodyProfile(
 @Serializable
 data class BodyWeightEntry(val epochDay: Int, val kg: Double)
 
+/** Onde a fita métrica foi passada. */
+@Serializable
+enum class MeasureSite(val label: String) {
+    WAIST("Cintura"), HIPS("Quadril"), CHEST("Peito"), ARM("Braço"), THIGH("Coxa"), CALF("Panturrilha")
+}
+
+/** Uma medida em cm num dia. Um registro por dia e local. */
+@Serializable
+data class BodyMeasurement(val epochDay: Int, val site: MeasureSite, val cm: Double)
+
+/** Resumo de um local: valor mais recente e quanto mudou desde a primeira medida. */
+data class MeasureSummary(val site: MeasureSite, val latestCm: Double, val latestDay: Int, val firstDay: Int, val changeCm: Double)
+
+/** Só os locais com pelo menos uma medida, na ordem de [MeasureSite]. */
+fun summarizeMeasurements(list: List<BodyMeasurement>): List<MeasureSummary> =
+    MeasureSite.entries.mapNotNull { site ->
+        val ms = list.filter { it.site == site }.sortedBy { it.epochDay }
+        if (ms.isEmpty()) null
+        else MeasureSummary(site, ms.last().cm, ms.last().epochDay, ms.first().epochDay, roundWeight(ms.last().cm - ms.first().cm))
+    }
+
 @Serializable
 data class BodyData(
     val profile: BodyProfile = BodyProfile(),
     val weights: List<BodyWeightEntry> = emptyList(),
     /** Dias apagados aqui que ainda não foram apagados na nuvem (sem isso a sincronização "ressuscitaria" o registro). */
-    val pendingDeletes: Set<Int> = emptySet()
+    val pendingDeletes: Set<Int> = emptySet(),
+    /** Medidas com fita (só no aparelho por enquanto). */
+    val measurements: List<BodyMeasurement> = emptyList()
 ) {
     val latestKg: Double? get() = weights.maxByOrNull { it.epochDay }?.kg
 }

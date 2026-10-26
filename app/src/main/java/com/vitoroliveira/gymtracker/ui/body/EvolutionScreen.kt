@@ -40,13 +40,19 @@ fun EvolutionScreen(
 ) {
     val body by bodyVm.data.collectAsState()
     val evo by evoVm.state.collectAsState()
-    EvolutionContent(body, evo, onBack, bodyVm::logWeight, bodyVm::deleteWeight, bodyVm::setProfile)
+    EvolutionContent(
+        body, evo, onBack, bodyVm::logWeight, bodyVm::deleteWeight, bodyVm::setProfile,
+        onLogMeasure = { site, cm -> bodyVm.logMeasurement(todayEpochDay(), site, cm) },
+        onDeleteMeasure = bodyVm::deleteMeasurement
+    )
 }
 
 @Composable
 fun EvolutionContent(
     body: BodyData, evo: EvolutionUiState, onBack: () -> Unit,
-    onLog: (Int, Double) -> Unit, onDelete: (Int) -> Unit, onSaveProfile: (BodyProfile) -> Unit
+    onLog: (Int, Double) -> Unit, onDelete: (Int) -> Unit, onSaveProfile: (BodyProfile) -> Unit,
+    onLogMeasure: (MeasureSite, Double) -> Unit = { _, _ -> },
+    onDeleteMeasure: (Int, MeasureSite) -> Unit = { _, _ -> }
 ) {
     var showData by remember { mutableStateOf(false) }
 
@@ -65,6 +71,7 @@ fun EvolutionContent(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             item(key = "weight") { BodyWeightCard(body, onLog = onLog, onDelete = onDelete, onEditData = { showData = true }) }
+            item(key = "measures") { MeasurementsCard(body.measurements, onLogMeasure, onDeleteMeasure) }
             if (evo.weeklySets.any { it.sets > 0 }) item(key = "weekly-sets") { WeeklySetsCard(evo.weeklySets) }
             item(key = "lifts-title") {
                 Text("Cargas nos básicos", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
@@ -121,6 +128,52 @@ private fun WeeklySetsCard(rows: List<com.vitoroliveira.gymtracker.presentation.
                     "É uma faixa, não regra: iniciantes crescem com menos. Exercícios fora do catálogo contam em \"Outros\".",
                 style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
+    }
+}
+
+/** Medidas com fita: último valor de cada local e quanto mudou desde a primeira medida. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun MeasurementsCard(list: List<BodyMeasurement>, onLog: (MeasureSite, Double) -> Unit, onDelete: (Int, MeasureSite) -> Unit) {
+    var site by remember { mutableStateOf(MeasureSite.WAIST) }
+    var input by remember { mutableStateOf("") }
+    val summary = remember(list) { summarizeMeasurements(list) }
+    ThemedCard(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text("Medidas", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            if (summary.isEmpty()) Text(
+                "Meça com fita (sempre no mesmo lugar e horário) para ver se a cintura cai e o braço cresce, mesmo quando a balança não mexe.",
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            summary.forEach { s ->
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(s.site.label, Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
+                    Text("${formatKg(s.latestCm)} cm", fontWeight = FontWeight.Bold)
+                    if (s.firstDay != s.latestDay) {
+                        val sign = if (s.changeCm > 0) "+" else ""
+                        Text(
+                            "  ($sign${formatKg(s.changeCm)} desde ${dayLabel(s.firstDay)})",
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    IconButton({ onDelete(s.latestDay, s.site) }) { Icon(Icons.Default.Close, "Apagar a última medida de ${s.site.label}") }
+                }
+            }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                MeasureSite.entries.forEach { m -> FilterChip(site == m, { site = m }, { Text(m.label) }) }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(
+                    input, { input = it.filter { c -> c.isDigit() || c == ',' || c == '.' }.take(5) },
+                    Modifier.weight(1f), label = { Text("${site.label} hoje (cm)") }, singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                )
+                Button(
+                    onClick = { input.replace(',', '.').toDoubleOrNull()?.let { onLog(site, it); input = "" } },
+                    enabled = input.replace(',', '.').toDoubleOrNull() != null
+                ) { Text("Registrar") }
+            }
         }
     }
 }
@@ -227,7 +280,7 @@ fun BodyDataDialog(profile: BodyProfile, onSave: (BodyProfile) -> Unit, onDismis
         title = { Text("Meus dados") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("Tudo é opcional e fica só neste aparelho. Servem para sugerir cargas e mostrar referências.",
+                Text("Tudo é opcional. Fica no aparelho e com uma cópia na sua conta (só você vê), para não perder ao trocar de celular. Serve para sugerir cargas e mostrar referências.",
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 OutlinedTextField(height, { height = it.filter(Char::isDigit).take(3) }, label = { Text("Altura (cm)") }, singleLine = true,
                     isError = !heightOk, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))

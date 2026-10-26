@@ -40,6 +40,18 @@ class BodyRepository(private val store: BodyStore, private val cloud: BodyCloud?
         }
     }
 
+    /** Uma medida por dia e local; valores fora de 10–300 cm são ignorados. */
+    fun logMeasurement(epochDay: Int, site: MeasureSite, cm: Double) {
+        if (cm !in 10.0..300.0) return
+        change { d ->
+            d.copy(measurements = (d.measurements.filterNot { it.epochDay == epochDay && it.site == site } + BodyMeasurement(epochDay, site, cm))
+                .sortedWith(compareBy({ it.epochDay }, { it.site.ordinal })))
+        }
+    }
+
+    fun deleteMeasurement(epochDay: Int, site: MeasureSite) =
+        change { d -> d.copy(measurements = d.measurements.filterNot { it.epochDay == epochDay && it.site == site }) }
+
     fun deleteWeight(epochDay: Int) =
         change { d -> d.copy(weights = d.weights.filter { it.epochDay != epochDay }, pendingDeletes = d.pendingDeletes + epochDay) }
 
@@ -94,6 +106,8 @@ class BodyViewModel(private val repo: BodyRepository) : ViewModel() {
     fun setProfile(p: BodyProfile) { repo.setProfile(p); quietly { repo.pushProfile() } }
     fun logWeight(epochDay: Int, kg: Double) { repo.logWeight(epochDay, kg); quietly { repo.pushWeight(epochDay) } }
     fun deleteWeight(epochDay: Int) { repo.deleteWeight(epochDay); quietly { repo.pushDelete(epochDay) } }
+    fun logMeasurement(epochDay: Int, site: MeasureSite, cm: Double) = repo.logMeasurement(epochDay, site, cm)
+    fun deleteMeasurement(epochDay: Int, site: MeasureSite) = repo.deleteMeasurement(epochDay, site)
 
     /** A nuvem é cópia: se falhar (sem internet, migração 003 ausente), fica para a próxima sincronização, sem erro na tela. */
     private fun quietly(block: suspend () -> Unit) {
