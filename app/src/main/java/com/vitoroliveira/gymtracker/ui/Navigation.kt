@@ -21,8 +21,8 @@ import com.vitoroliveira.gymtracker.ui.workout.ActiveWorkoutScreen
 import com.vitoroliveira.gymtracker.ui.workout.StartWorkoutSheet
 import com.vitoroliveira.gymtracker.ui.history.HistoryScreen
 import com.vitoroliveira.gymtracker.ui.workout.WorkoutDetailScreen
-import java.net.URLDecoder
-import java.net.URLEncoder
+import android.net.Uri
+import android.os.Bundle
 
 sealed class Screen(val route: String) {
     object Splash : Screen("splash")
@@ -43,31 +43,44 @@ sealed class Screen(val route: String) {
     // Novo — Detalhe do Treino (Passo 12.5), navegado a partir do Histórico
     object WorkoutDetail : Screen("workout_detail/{workoutId}/{groupName}") {
         fun createRoute(workoutId: String, groupName: String) =
-            "workout_detail/$workoutId/${URLEncoder.encode(groupName, "UTF-8")}"
+            "workout_detail/$workoutId/${routeArg(groupName)}"
     }
 
     object Exercises : Screen("exercises/{groupId}/{groupName}") {
         fun createRoute(groupId: String, groupName: String) =
-            "exercises/$groupId/${URLEncoder.encode(groupName, "UTF-8")}"
+            "exercises/$groupId/${routeArg(groupName)}"
     }
 
     // Preparado para o Passo 13 (Fase 4) — gráfico de progressão de carga.
     // Ainda não tem tela implementada, só a rota reservada.
     object ExerciseDetail : Screen("exercise_detail/{exerciseId}/{exerciseName}") {
         fun createRoute(exerciseId: String, exerciseName: String) =
-            "exercise_detail/$exerciseId/${URLEncoder.encode(exerciseName, "UTF-8")}"
+            "exercise_detail/$exerciseId/${routeArg(exerciseName)}"
     }
 
     object Circuit : Screen("circuit/{muscleGroupId}/{muscleGroupName}") {
         fun createRoute(muscleGroupId: String?, muscleGroupName: String?) =
-            "circuit/${muscleGroupId ?: "null"}/${muscleGroupName ?: "Treino Livre"}"
+            "circuit/${routeArg(muscleGroupId)}/${routeArg(muscleGroupName ?: "Treino Livre")}"
     }
 
     object ActiveWorkout : Screen("active_workout/{muscleGroupId}/{muscleGroupName}") {
         fun createRoute(muscleGroupId: String?, muscleGroupName: String?) =
-            "active_workout/${muscleGroupId ?: "null"}/${muscleGroupName ?: "Treino Livre"}"
+            "active_workout/${routeArg(muscleGroupId)}/${routeArg(muscleGroupName ?: "Treino Livre")}"
     }
 }
+
+/** Valor ausente (treino livre, nome vazio) dentro da rota: a rota não aceita um pedaço vazio. */
+private const val NO_ROUTE_VALUE = "null"
+
+/**
+ * Texto livre (nome de grupo ou de exercício) como pedaço da rota. Sem codificar, um "/" no nome ("Peito/Tríceps")
+ * criava um pedaço a mais e a rota não era encontrada (o app fechava); "?", "#" e "%" também quebravam.
+ * O Navigation devolve o argumento já decodificado: leia com [routeText], nunca com URLDecoder de novo.
+ */
+internal fun routeArg(value: String?): String = Uri.encode(value?.takeIf { it.isNotBlank() } ?: NO_ROUTE_VALUE)
+
+/** Argumento da rota montado com [routeArg]; null quando o valor era ausente. */
+private fun Bundle?.routeText(key: String): String? = this?.getString(key)?.takeIf { it != NO_ROUTE_VALUE }
 
 @Composable
 fun GymTrackerNavHost() {
@@ -164,9 +177,8 @@ fun GymTrackerNavHost() {
         }
 
         composable(Screen.Exercises.route) { backStackEntry ->
-            val groupId = backStackEntry.arguments?.getString("groupId")
-            val groupNameEncoded = backStackEntry.arguments?.getString("groupName") ?: ""
-            val groupName = URLDecoder.decode(groupNameEncoded, "UTF-8")
+            val groupId = backStackEntry.arguments.routeText("groupId")
+            val groupName = backStackEntry.arguments.routeText("groupName").orEmpty()
 
             ExerciseScreen(
                 muscleGroupId = groupId,
@@ -181,9 +193,8 @@ fun GymTrackerNavHost() {
         }
 
         composable(Screen.ExerciseDetail.route) { backStackEntry ->
-            val exerciseId = backStackEntry.arguments?.getString("exerciseId") ?: return@composable
-            val exerciseNameEncoded = backStackEntry.arguments?.getString("exerciseName") ?: ""
-            val exerciseName = URLDecoder.decode(exerciseNameEncoded, "UTF-8")
+            val exerciseId = backStackEntry.arguments.routeText("exerciseId") ?: return@composable
+            val exerciseName = backStackEntry.arguments.routeText("exerciseName").orEmpty()
 
             ExerciseDetailScreen(
                 exerciseId = exerciseId,
@@ -227,8 +238,8 @@ fun GymTrackerNavHost() {
         }
 
         composable(Screen.Circuit.route) { backStackEntry ->
-            val gid = backStackEntry.arguments?.getString("muscleGroupId")?.takeIf { it != "null" }
-            val gname = backStackEntry.arguments?.getString("muscleGroupName")?.takeIf { it != "null" }
+            val gid = backStackEntry.arguments.routeText("muscleGroupId")
+            val gname = backStackEntry.arguments.routeText("muscleGroupName")
             com.vitoroliveira.gymtracker.ui.circuit.CircuitScreen(
                 muscleGroupId = gid, muscleGroupName = gname,
                 onExit = {
@@ -238,12 +249,8 @@ fun GymTrackerNavHost() {
         }
 
         composable(Screen.ActiveWorkout.route) { backStackEntry ->
-            val muscleGroupId = backStackEntry.arguments
-                ?.getString("muscleGroupId")
-                ?.takeIf { it != "null" }
-            val muscleGroupName = backStackEntry.arguments
-                ?.getString("muscleGroupName")
-                ?.takeIf { it != "null" }
+            val muscleGroupId = backStackEntry.arguments.routeText("muscleGroupId")
+            val muscleGroupName = backStackEntry.arguments.routeText("muscleGroupName")
 
             ActiveWorkoutScreen(
                 muscleGroupId = muscleGroupId,
@@ -267,10 +274,10 @@ fun GymTrackerNavHost() {
         }
 
         composable(Screen.WorkoutDetail.route) { backStackEntry ->
-            val workoutId = backStackEntry.arguments?.getString("workoutId")
+            val workoutId = backStackEntry.arguments.routeText("workoutId")
                 ?: return@composable
 
-            val groupName = URLDecoder.decode(backStackEntry.arguments?.getString("groupName") ?: "", "UTF-8")
+            val groupName = backStackEntry.arguments.routeText("groupName").orEmpty()
 
             WorkoutDetailScreen(
                 workoutId = workoutId,

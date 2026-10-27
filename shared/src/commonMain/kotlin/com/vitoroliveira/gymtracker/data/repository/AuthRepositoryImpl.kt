@@ -6,6 +6,7 @@ import com.vitoroliveira.gymtracker.domain.repository.AuthRepository
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 
@@ -30,8 +31,14 @@ class AuthRepositoryImpl(
         }
     }
 
+    /** Sem internet o pedido de logout ao servidor falha; a sessão salva no aparelho é apagada mesmo assim. */
     override suspend fun signOut() {
-        supabase.auth.signOut()
+        try {
+            supabase.auth.signOut()
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            supabase.auth.clearSession()
+        }
     }
 
     override suspend fun awaitSession(): Boolean {

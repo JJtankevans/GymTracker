@@ -18,6 +18,8 @@ class BodyRepository(private val store: BodyStore, private val cloud: BodyCloud?
     private val _data = MutableStateFlow(store.load())
     val data: StateFlow<BodyData> = _data.asStateFlow()
     private var synced = false
+    /** Muda a cada [clear]: uma sincronização que começou antes (da conta anterior) para de gravar e é descartada. */
+    private var generation = 0
 
     /** Há cópia na nuvem configurada (no app sempre há; nos testes sem nuvem nada é disparado). */
     val hasCloud: Boolean get() = cloud != null
@@ -62,12 +64,17 @@ class BodyRepository(private val store: BodyStore, private val cloud: BodyCloud?
     suspend fun sync(force: Boolean = false) {
         val c = cloud ?: return
         if (synced && !force) return
+        val gen = generation
         val start = _data.value
-        start.pendingDeletes.forEach { c.deleteWeight(it) }
+        // cada ida à nuvem confere se ninguém saiu da conta no meio: senão os dados da conta anterior iriam para a nova
+        start.pendingDeletes.forEach { if (gen != generation) return; c.deleteWeight(it) }
+        if (gen != generation) return
         val remote = c.fetchWeights()
         val remoteKg = remote.associate { it.epochDay to it.kg }
-        start.weights.filter { remoteKg[it.epochDay] != roundWeight(it.kg) }.forEach { c.upsertWeight(it) }
+        start.weights.filter { remoteKg[it.epochDay] != roundWeight(it.kg) }.forEach { if (gen != generation) return; c.upsertWeight(it) }
+        if (gen != generation) return
         val profile = if (start.profile == BodyProfile()) c.fetchProfile() else { c.saveProfile(start.profile); null }
+        if (gen != generation) return
         // junta com o estado de AGORA (o usuário pode ter mexido durante a sincronização)
         change { cur ->
             val stillPending = cur.pendingDeletes - start.pendingDeletes
@@ -78,6 +85,17 @@ class BodyRepository(private val store: BodyStore, private val cloud: BodyCloud?
             )
         }
         synced = true
+    }
+
+    /**
+     * Apaga os dados corporais do aparelho (ao sair da conta). Os pesos e o perfil corporal têm cópia na nuvem e voltam
+     * na próxima sincronização da mesma conta; as medidas com fita ainda são só locais e se perdem.
+     */
+    fun clear() {
+        generation++
+        synced = false
+        _data.value = BodyData()
+        store.save(BodyData())
     }
 
     /** Envia um peso já gravado no aparelho. */

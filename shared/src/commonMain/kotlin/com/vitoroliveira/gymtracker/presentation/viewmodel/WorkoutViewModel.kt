@@ -16,6 +16,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,6 +25,17 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 import kotlin.time.Instant
+
+/** Séries a mais que dá para registrar além das séries do plano do exercício. */
+const val EXTRA_SETS_ALLOWED = 2
+
+/** Máximo de séries do exercício num treino: as do plano + [EXTRA_SETS_ALLOWED]. */
+fun maxSetsFor(exercise: Exercise): Int = exercise.defaultSets + EXTRA_SETS_ALLOWED
+
+/** Aviso mostrado quando o exercício chega ao máximo de séries (no treino ativo e no circuito). */
+fun setLimitMessage(exercise: Exercise): String =
+    "Você chegou ao limite de ${maxSetsFor(exercise)} séries em ${exercise.name} " +
+        "(${exercise.defaultSets} do plano + $EXTRA_SETS_ALLOWED extras)."
 
 /** Resumo mostrado ao terminar o treino. */
 data class WorkoutSummary(
@@ -67,6 +79,8 @@ class WorkoutViewModel(
 
     private val timerManager = TimerManager(viewModelScope)
     private var tickerJob: Job? = null
+    /** Séries ainda sendo gravadas: o fim do treino espera por elas (senão a última série do circuito ficava de fora). */
+    private val pendingSaves = mutableListOf<Job>()
 
     init {
         viewModelScope.launch {
@@ -214,8 +228,8 @@ class WorkoutViewModel(
         // maior número + 1 (e não "quantidade + 1"): continua certo depois de apagar uma série do meio
         val setNumber = (existing.maxOfOrNull { it.setNumber } ?: 0) + 1
 
-        if (existing.size + 1 > exercise.defaultSets + 2) {
-            _uiState.value = _uiState.value.copy(errorMessage = "Limite de séries atingido para este exercício")
+        if (existing.size >= maxSetsFor(exercise)) {
+            _uiState.value = _uiState.value.copy(errorMessage = setLimitMessage(exercise))
             return
         }
 
@@ -227,7 +241,8 @@ class WorkoutViewModel(
             weightKg = weightKg
         )
 
-        viewModelScope.launch {
+        pendingSaves.removeAll { it.isCompleted }
+        pendingSaves += viewModelScope.launch {
             try {
                 val saved = workoutRepository.addSet(newSet)
                 val state = _uiState.value
@@ -314,6 +329,8 @@ class WorkoutViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             try {
+                // séries que ainda estão indo para o banco entram no resumo e no post do feed (o gatilho calcula na hora do fim)
+                pendingSaves.toList().joinAll()
                 workoutRepository.finishWorkout(workoutId)
                 timerManager.cancel()
                 tickerJob?.cancel()

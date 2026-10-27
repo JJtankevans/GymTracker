@@ -31,6 +31,13 @@ class CatalogPrefs(context: Context) {
         _recent.value = next
     }
 
+    /** Apaga favoritos e recentes (ao sair da conta). */
+    fun clear() {
+        prefs.edit().remove(KEY_FAVS).remove(KEY_RECENT).apply()
+        _favorites.value = emptySet()
+        _recent.value = emptyList()
+    }
+
     private companion object {
         const val KEY_FAVS = "catalog_favorites"
         const val KEY_RECENT = "catalog_recent"

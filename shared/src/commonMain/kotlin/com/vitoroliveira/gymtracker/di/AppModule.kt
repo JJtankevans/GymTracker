@@ -48,7 +48,8 @@ fun appModule(supabaseClient: SupabaseClient) = module {
     factory { com.vitoroliveira.gymtracker.domain.usecase.CreateWorkoutFromTemplate(get(), get()) }
     viewModel { MuscleGroupViewModel(get(), get()) }
     viewModel { ExerciseViewModel(get()) }
-    viewModel { ProfileViewModel(get(), get(), get()) }
+    // LocalUserData vem do módulo do app (dados guardados no aparelho, apagados ao sair da conta)
+    viewModel { ProfileViewModel(get(), get(), get(), get()) }
     viewModel { WorkoutViewModel(get(), get()) }
     viewModel { HomeViewModel(get(), get(), get(), get()) }
     viewModel { HistoryViewModel(get(), get()) }

@@ -321,12 +321,13 @@ fun ProfileScreenContent(
 
                 OutlinedButton(
                     onClick = { showLogoutDialog = true },
+                    enabled = !uiState.isSigningOut,
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text("Sair da conta")
+                    Text(if (uiState.isSigningOut) "Saindo..." else "Sair da conta")
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -359,7 +360,12 @@ fun ProfileScreenContent(
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
             title = { Text("Sair da conta") },
-            text = { Text("Tem certeza que deseja sair?") },
+            text = {
+                Text(
+                    "Seus treinos, o peso e os dados do corpo ficam salvos na conta. O que existe só neste celular é apagado: " +
+                        "medidas corporais, agenda da semana, favoritos do catálogo e o ritmo aprendido no circuito."
+                )
+            },
             confirmButton = {
                 TextButton(onClick = {
                     showLogoutDialog = false

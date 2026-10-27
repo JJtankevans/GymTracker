@@ -26,6 +26,8 @@ import androidx.compose.ui.unit.sp
 import com.vitoroliveira.gymtracker.data.model.Exercise
 import com.vitoroliveira.gymtracker.presentation.circuit.*
 import com.vitoroliveira.gymtracker.presentation.viewmodel.WorkoutViewModel
+import com.vitoroliveira.gymtracker.presentation.viewmodel.maxSetsFor
+import com.vitoroliveira.gymtracker.presentation.viewmodel.setLimitMessage
 import com.vitoroliveira.gymtracker.ui.home.ProgressRing
 import com.vitoroliveira.gymtracker.ui.music.MiniPlayer
 import com.vitoroliveira.gymtracker.ui.theme.ThemedCard
@@ -33,6 +35,7 @@ import com.vitoroliveira.gymtracker.ui.theme.ThemedScaffold
 import com.vitoroliveira.gymtracker.ui.theme.ThemedTopAppBar
 import com.vitoroliveira.gymtracker.ui.utils.formatKg
 import com.vitoroliveira.gymtracker.ui.workout.WorkoutSummaryDialog
+import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
@@ -53,6 +56,15 @@ fun CircuitScreen(
     val cues = rememberCircuitCues()
     val view = LocalView.current
     var confirmExit by remember { mutableStateOf(false) }
+    val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    // avisos do treino (ex.: limite de séries do exercício, erro ao gravar): antes o circuito não mostrava nada
+    LaunchedEffect(w.errorMessage) {
+        w.errorMessage?.let {
+            workoutVm.clearError()
+            snackbar.showSnackbar(it)
+        }
+    }
 
     com.vitoroliveira.gymtracker.ui.music.TrackRecording(w.activeWorkout?.id, w.summary != null)
     LaunchedEffect(Unit) { workoutVm.startWorkout(muscleGroupId) }
@@ -76,6 +88,7 @@ fun CircuitScreen(
     }
 
     ThemedScaffold(
+        snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
             ThemedTopAppBar(
                 title = { Column { Text("Circuito"); Text("experimental", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.tertiary) } },
@@ -99,6 +112,7 @@ fun CircuitScreen(
                     exercises = w.exercises,
                     lastWeights = suggestedWeights(w.exercises, w.baselines),
                     learner = circuitVm.learner,
+                    onMessage = { msg -> scope.launch { snackbar.showSnackbar(msg) } },
                     onStart = { steps -> circuitVm.start(steps) }
                 )
                 else -> CircuitRun(c, circuitVm)
@@ -144,6 +158,7 @@ internal fun CircuitSetup(
     exercises: List<Exercise>,
     lastWeights: Map<String, Double?>,
     learner: SetTimingLearner,
+    onMessage: (String) -> Unit = {},
     onStart: (List<CircuitStep>) -> Unit
 ) {
     var order by remember { mutableStateOf(CircuitPlanner.Order.SEQUENTIAL) }
@@ -209,7 +224,11 @@ internal fun CircuitSetup(
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Mini("séries", "${r.sets}", { rows[i] = r.copy(sets = (r.sets - 1).coerceAtLeast(1)) }, { rows[i] = r.copy(sets = (r.sets + 1).coerceAtMost(10)) })
+                        Mini("séries", "${r.sets}", { rows[i] = r.copy(sets = (r.sets - 1).coerceAtLeast(1)) }, {
+                            // mesmo limite do treino: séries do plano + extras (passar disso o treino recusaria a série)
+                            if (r.sets >= maxSetsFor(r.e)) onMessage(setLimitMessage(r.e))
+                            else rows[i] = r.copy(sets = r.sets + 1)
+                        })
                         Mini("reps", "${r.reps}", { rows[i] = r.copy(reps = (r.reps - 1).coerceAtLeast(1)) }, { rows[i] = r.copy(reps = (r.reps + 1).coerceAtMost(50)) })
                         Mini("kg", formatKg(r.kg), { rows[i] = r.copy(kg = (r.kg - 2.5).coerceAtLeast(0.0)) }, { rows[i] = r.copy(kg = r.kg + 2.5) })
                     }

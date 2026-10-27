@@ -66,6 +66,12 @@ class WorkoutTrackRecorder(
         if (toSend.isEmpty()) return
         scope.launch { runCatching { repo.uploadTracks(id, toSend) } }
     }
+
+    /** Joga fora as músicas anotadas sem enviar (ao sair da conta no meio de um treino). */
+    fun discard() {
+        job?.cancel(); job = null; workoutId = null; lastKey = null
+        synchronized(tracks) { tracks.clear() }
+    }
 }
 
 /** Liga a gravação ao ciclo do treino: começa quando há treino ativo, envia quando termina. */
