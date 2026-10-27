@@ -13,8 +13,8 @@ class WearActivity : ComponentActivity() {
     // Modo ambiente: com a tela "sempre ligada", o app continua visível (em preto e branco) ao baixar o pulso,
     // em vez de voltar para o mostrador. O alarme do descanso vibra mesmo assim.
     private val ambientCallback = object : AmbientLifecycleObserver.AmbientLifecycleCallback {
-        override fun onEnterAmbient(ambientDetails: AmbientLifecycleObserver.AmbientDetails) = controller.setAmbient(true)
-        override fun onExitAmbient() = controller.setAmbient(false)
+        override fun onEnterAmbient(ambientDetails: AmbientLifecycleObserver.AmbientDetails) = controller.onAmbientChanged(true)
+        override fun onExitAmbient() = controller.onAmbientChanged(false)
         override fun onUpdateAmbient() {}
     }
 

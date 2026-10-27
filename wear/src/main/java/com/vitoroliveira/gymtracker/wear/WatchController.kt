@@ -100,7 +100,7 @@ class WatchController(
         session?.let { store.session = it }
     }
 
-    fun setAmbient(on: Boolean) {
+    fun onAmbientChanged(on: Boolean) {
         ambient = on
         if (!on) checkRestFromAlarm()
         updateHeartRate()
@@ -139,16 +139,16 @@ class WatchController(
             val id = item.workout.id
             if (!item.posted) {
                 sync.sendWorkout(item.workout)
-                setOutbox(outbox.markPosted(id))
+                saveOutbox(outbox.markPosted(id))
             } else if (!sync.isQueued(id)) {
-                setOutbox(outbox.remove(id))     // o celular gravou e apagou o item
+                saveOutbox(outbox.remove(id))     // o celular gravou e apagou o item
             }
         }
     }
 
-    private fun onSaved(workoutId: String) = setOutbox(outbox.remove(workoutId))
+    private fun onSaved(workoutId: String) = saveOutbox(outbox.remove(workoutId))
 
-    private fun setOutbox(o: WatchOutbox) {
+    private fun saveOutbox(o: WatchOutbox) {
         outbox = o
         store.outbox = o
     }
@@ -167,7 +167,7 @@ class WatchController(
     private fun begin(s: WatchSession) {
         cancelRest()
         lastFinish = null
-        setSession(s)
+        saveSession(s)
         loadDraft()
         OngoingWorkout.show(app, s.title, s.startedAt)
         updateHeartRate()
@@ -175,7 +175,7 @@ class WatchController(
 
     fun select(index: Int) {
         val s = session ?: return
-        setSession(s.select(index))
+        saveSession(s.select(index))
         loadDraft()
     }
 
@@ -190,7 +190,7 @@ class WatchController(
     fun registerSet() {
         val s = session ?: return
         val result = s.addSet(draftReps, draftKg, System.currentTimeMillis())
-        setSession(result.session)
+        saveSession(result.session)
         if (s.isQuick) { store.quickReps = draftReps; store.quickKg = draftKg.toFloat() }
         app.buzz(if (result.newRecord) Buzz.RECORD else Buzz.TAP)
         recordFlash = result.newRecord
@@ -200,7 +200,7 @@ class WatchController(
 
     fun undoLastSet() {
         val s = session ?: return
-        setSession(s.undoLastSet())
+        saveSession(s.undoLastSet())
         loadDraft()
     }
 
@@ -214,7 +214,7 @@ class WatchController(
             s.doneExercises, if (s.isQuick) 0 else s.exercises.size,
             s.avgHeartRate, s.maxHeartRate, s.records, workout?.id
         )
-        if (workout != null) setOutbox(outbox.add(workout))
+        if (workout != null) saveOutbox(outbox.add(workout))
         close()
         if (workout != null) {
             scope.launch {
@@ -234,13 +234,13 @@ class WatchController(
 
     private fun close() {
         cancelRest()
-        setSession(null)
+        saveSession(null)
         OngoingWorkout.hide(app)
         heartRate = null
         updateHeartRate()
     }
 
-    private fun setSession(s: WatchSession?) {
+    private fun saveSession(s: WatchSession?) {
         session = s
         store.session = s
     }
@@ -258,7 +258,7 @@ class WatchController(
 
     fun startRest(seconds: Int) {
         val r = RestState(System.currentTimeMillis() + seconds * 1000L, seconds)
-        setRest(r)
+        saveRest(r)
         warned = false
         exactAlarm = RestAlarm.schedule(app, seconds * 1000L)
     }
@@ -268,7 +268,7 @@ class WatchController(
         val r = rest ?: return
         val now = System.currentTimeMillis()
         val ends = maxOf(now + 5_000, r.endsAt + deltaSec * 1000L)
-        setRest(RestState(ends, (r.totalSec + deltaSec).coerceAtLeast(5)))
+        saveRest(RestState(ends, (r.totalSec + deltaSec).coerceAtLeast(5)))
         if (ends - now > 10_000) warned = false
         exactAlarm = RestAlarm.schedule(app, ends - now)
     }
@@ -288,7 +288,7 @@ class WatchController(
             // tela ligada: vibra daqui e desarma o alarme (senão vibraria duas vezes)
             RestAlarm.cancel(app)
             app.buzz(Buzz.REST_DONE)
-            setRest(null)
+            saveRest(null)
             recordFlash = false
         }
     }
@@ -296,7 +296,7 @@ class WatchController(
     private fun checkRestFromAlarm() {
         val r = rest ?: return
         if (store.rest == null || r.endsAt <= System.currentTimeMillis() - 60_000) {
-            setRest(null)
+            saveRest(null)
             recordFlash = false
             RestAlarm.cancel(app)
         }
@@ -304,10 +304,10 @@ class WatchController(
 
     private fun cancelRest() {
         RestAlarm.cancel(app)
-        setRest(null)
+        saveRest(null)
     }
 
-    private fun setRest(r: RestState?) {
+    private fun saveRest(r: RestState?) {
         rest = r
         store.rest = r
     }
