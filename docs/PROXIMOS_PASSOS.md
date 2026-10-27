@@ -17,7 +17,7 @@
 - **Layouts de Home por tema** (`HomeLayout` em `ThemeSpec.kt`, telas em `ui/home/HomeLayouts.kt`): Clássico, Bento, Pôster, Terminal, Orbit, Editorial. O tema escolhe em `extras.homeLayout`. Falta estender a mesma ideia ao treino ativo, histórico e perfil.
 - **Música** (`ui/music/`): `MusicController` lê a sessão de mídia ativa (exige "acesso a notificações", ligado em Aparência → Cores da música); `MiniPlayer` na Home e no treino; a cor da capa troca a cor primária e a decoração dos temas animados. Não existe visualizador de batida real (Android não oferece de forma confiável), a animação segue a capa e o play/pause.
 - **Relógio** (`:wear`, Compose for Wear OS, standalone): descanso 60/90/120 s com vibração, registrar série com coroa giratória, resumo e 4 cores. Instalar: `adb connect IP:PORTA` (Depuração sem fio no relógio) e `adb install wear-debug.apk`.
-  - Ainda NÃO sincroniza com o celular: os dados do relógio ficam só nele. Próximo passo: Data Layer (play-services-wearable) para o relógio mandar as séries pro treino ativo do celular.
+  - Ainda NÃO sincroniza com o celular: os dados do relógio ficam só nele. Próximo passo: Data Layer (play-services-wearable) para o relógio mandar as séries pro treino ativo do celular. *(superado em 27/10/2026: relógio 2.0, ver `docs/RELOGIO.md`)*
 
 ## Terceira rodada (circuito, social, layouts)
 - **Modo Circuito (beta)** — `presentation/circuit/` (motor puro, 17 testes) + `ui/circuit/`. Liga em Iniciar Treino → "Modo circuito". Aprende segundos/repetição por exercício (mediana das últimas 10, descarta absurdos), entra no descanso sozinho, "AINDA NÃO TERMINEI" soma o tempo e reinicia o descanso, voz (TTS pt-BR) + vibração. Ideias ainda não feitas: notificação fixa com botão "Terminei" (espelha no relógio), botão do fone/coroa do relógio como toque único, ajuste de descanso por esforço (fácil/ok/difícil), progressão automática de carga.
@@ -149,6 +149,14 @@ Pendente / ideias:
 - **Depois (5ª sessão, 27/10):** o Thiago rodou a `010`, a `011` e a `012` e cadastrou os secrets `SUPABASE_URL`/`SUPABASE_KEY` no GitHub; APK com login gerado pela execução 40512678834 (disparada no `master`). Falta decidir a chave de assinatura fixa para distribuir atualizações sem desinstalar.
 
 ---
+
+## Décima sétima rodada (27/10/2026, 6ª sessão na nuvem) — relógio 2.0
+- **Pedido:** "melhorar mil por cento" a versão do relógio e ajudar a instalar.
+- **Arquitetura:** o celular é o hub. `:shared/watch/WatchProtocol.kt` (caminhos e JSON da Data Layer, `buildWatchRoutines`), `WatchSession.kt` (regras do treino no relógio: sugestão de carga, avanço de exercício, recorde, desfazer, batimentos, fila), `domain/usecase/ImportWatchWorkout.kt` (grava no Supabase de forma idempotente: id do relógio, séries numa chamada, fecha por último para o gatilho do feed). Repositório ganhou `createWorkout`, `addSets`, `finishWorkoutAt`. 12 testes novos (`WatchSyncTest`).
+- **Celular:** `app/.../wear/WearSyncService.kt` (WearableListenerService): responde ao pedido de rotinas e importa os treinos (também os pendentes, a cada pedido de rotinas).
+- **Relógio:** reescrito (`WatchController`, `WatchApp`, `WorkoutScreens`, `WatchSync`, `HeartRateMonitor`, `WatchAlerts`): navegação com deslize para voltar, início com os grupos, treino em 3 telas (exercícios · série/descanso · números), coroa/bezel, alarme exato do descanso (vibra com a tela apagada), aviso aos 10 s, recorde com vibração própria, batimentos (Health Services), modo ambiente, atalho no mostrador (Ongoing Activity), resumo, fila de envio, ajustes (cor, descanso, passo da carga, descanso automático, batimentos), ícone novo.
+- **CI:** gera `gymtracker-wear-apk`, roda os testes de tela do `:wear` (sem derrubar a execução) e aceita o secret opcional `DEBUG_KEYSTORE_BASE64` (chave fixa).
+- **Não testado no aparelho:** nada disso (só compilação e testes no CI). Roteiro em `docs/RELOGIO.md`.
 
 # Anexo: notas detalhadas das sessões de 21 a 27/10/2026 (movidas do CONTEXTO_SESSAO.md em 27/10/2026; retrato daquele momento, ex.: os PRs citados como abertos já foram mergeados)
 
