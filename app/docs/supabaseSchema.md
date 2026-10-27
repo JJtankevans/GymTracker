@@ -313,6 +313,10 @@ ORDER BY profile_id, week_start;
 ---
 
 ## Atualizações posteriores ao schema original
+> **Atenção (27/10/2026):** `started_at::DATE` (na view acima, em `records_summary()` e em `profile_stats()`) converte no fuso da sessão do banco, que no Supabase é UTC: treino depois das 21h de Brasília conta no dia seguinte. Correção proposta em `docs/ERROS_CONHECIDOS.md` (nº 10).
+
+Colunas acrescentadas depois do schema acima (o app lê/grava todas): `workouts.finished_exercise_ids` (001), `workouts.muscle_group_name` (009); `profiles.bio`, `visibility`, `share_workouts`, `share_music` (002); `profiles.height_cm`, `birth_year`, `sex`, `ask_weight_each_workout` (003); `challenges.fail_threshold`, `streak_goal` (010). Tabelas novas: `follows`, `groups`, `group_members`, `challenges`, `challenge_participants`, `feed_posts`, `post_reactions`, `workout_tracks` (002), `body_weights` (003), `group_exercises` (006), `shared_routines` (011).
+
 - `workouts.finished_exercise_ids` e `security_invoker` nas views: `docs/supabase/001_lacunas_do_schema.sql`.
 - Tabelas sociais (perfil público, seguir, grupos, desafios, feed, reações, músicas): `docs/supabase/002_social.sql`, `004`, `005` e `docs/SOCIAL_DESIGN.md`.
 - Peso corporal e dados do perfil: `docs/supabase/003_dados_corporais.sql`.
