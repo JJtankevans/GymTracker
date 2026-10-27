@@ -127,7 +127,7 @@ private fun Summary(state: RecordsUiState) {
 @Composable
 private fun RecordCard(r: RecordRow, state: RecordsUiState) {
     val catalog = remember(r.exerciseName) {
-        ExerciseCatalog.all.firstOrNull { ExerciseCatalog.isSameName(it.name, r.exerciseName) }
+        ExerciseCatalog.find(r.exerciseName)
     }
     val recent = state.today?.let { r.isRecent(it) } == true
 

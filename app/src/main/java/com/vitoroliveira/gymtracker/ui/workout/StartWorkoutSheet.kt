@@ -3,8 +3,8 @@ package com.vitoroliveira.gymtracker.ui.workout
 import com.vitoroliveira.gymtracker.ui.theme.ThemedCard
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -36,7 +36,12 @@ fun StartWorkoutSheet(
     val bodyVm: com.vitoroliveira.gymtracker.presentation.body.BodyViewModel = koinViewModel()
     val body by bodyVm.data.collectAsState()
 
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    // skipPartiallyExpanded: só "aberto" e "fechado" (como os outros sheets do app). Com o estado parcial, arrastar
+    // para cima deixava o sheet preso no topo, e a lista rolável de grupos dentro dele disputava o gesto com o sheet.
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ) {
         StartWorkoutSheetContent(
             uiState = uiState,
             onStartWorkout = onStartWorkout,
@@ -64,9 +69,11 @@ fun StartWorkoutSheetContent(
         weighIn?.let { w -> weightText.replace(',', '.').toDoubleOrNull()?.let(w.onLog) }
         if (circuit) onStartCircuit(id, name) else onStartWorkout(id, name)
     }
+    // Uma única rolagem para o conteúdo todo (nada de lista rolável dentro do sheet): se não couber, rola aqui.
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp)
             .padding(bottom = 32.dp)
     ) {
@@ -134,15 +141,14 @@ fun StartWorkoutSheetContent(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.heightIn(max = 300.dp)
-                ) {
-                    items(uiState.muscleGroups, key = { it.id ?: it.name }) { group ->
-                        MuscleGroupSelectItem(
-                            muscleGroup = group,
-                            onClick = { start(group.id, group.name) }
-                        )
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    uiState.muscleGroups.forEach { group ->
+                        key(group.id ?: group.name) {
+                            MuscleGroupSelectItem(
+                                muscleGroup = group,
+                                onClick = { start(group.id, group.name) }
+                            )
+                        }
                     }
                 }
             }

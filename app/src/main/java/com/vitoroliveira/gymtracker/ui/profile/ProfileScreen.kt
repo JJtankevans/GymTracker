@@ -187,6 +187,10 @@ fun ProfileScreenContent(
                     text = uiState.profile?.username ?: "",
                     style = MaterialTheme.typography.titleLarge
                 )
+                uiState.title?.let { title ->
+                    Spacer(modifier = Modifier.height(8.dp))
+                    com.vitoroliveira.gymtracker.ui.social.TitleChip(title)
+                }
 
                 Spacer(modifier = Modifier.height(32.dp))
 
@@ -288,7 +292,10 @@ fun ProfileScreenContent(
     }
 
     if (showPhotoSheet) {
-        ModalBottomSheet(onDismissRequest = { showPhotoSheet = false }) {
+        ModalBottomSheet(
+            onDismissRequest = { showPhotoSheet = false },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ) {
             ListItem(
                 headlineContent = { Text("Escolher da galeria") },
                 leadingContent = { Icon(Icons.Default.PhotoLibrary, contentDescription = null) },

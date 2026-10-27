@@ -11,6 +11,7 @@ import com.vitoroliveira.gymtracker.data.model.NewChallenge
 import com.vitoroliveira.gymtracker.data.model.NewGroup
 import com.vitoroliveira.gymtracker.data.model.PostReaction
 import com.vitoroliveira.gymtracker.data.model.ProfileStats
+import com.vitoroliveira.gymtracker.data.model.ProfileTitle
 import com.vitoroliveira.gymtracker.data.model.TopTrack
 import com.vitoroliveira.gymtracker.data.model.SocialGroup
 import com.vitoroliveira.gymtracker.data.model.SocialProfile
@@ -22,7 +23,9 @@ import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.put
 
 class SocialRepositoryImpl(private val supabase: SupabaseClient) : SocialRepository {
@@ -86,6 +89,14 @@ class SocialRepositoryImpl(private val supabase: SupabaseClient) : SocialReposit
 
     override suspend fun topTracks(userId: String): List<TopTrack> =
         supabase.postgrest.rpc("profile_top_tracks", buildJsonObject { put("p_profile", userId); put("p_limit", 10) }).decodeList()
+
+    override suspend fun titles(profileIds: List<String>): List<ProfileTitle> {
+        if (profileIds.isEmpty()) return emptyList()
+        return supabase.postgrest.rpc(
+            "profile_titles",
+            buildJsonObject { put("p_profiles", JsonArray(profileIds.distinct().map { JsonPrimitive(it) })) }
+        ).decodeList()
+    }
 
     // ── feed ──
 
