@@ -47,6 +47,20 @@ class FakeWorkoutRepository : WorkoutRepository {
     }
 
     override suspend fun finishWorkout(workoutId: String) { maybeFail(); finished = true }
+    override suspend fun createWorkout(workoutId: String, muscleGroupId: String?, startedAtIso: String) {
+        maybeFail()
+        activeWorkout = Workout(id = workoutId, muscleGroupId = muscleGroupId, startedAt = startedAtIso)
+    }
+    var finishedAt: String? = null
+    override suspend fun finishWorkoutAt(workoutId: String, finishedAtIso: String) {
+        maybeFail()
+        finishedAt = finishedAtIso
+        activeWorkout?.takeIf { it.id == workoutId }?.let { history += it.copy(finishedAt = finishedAtIso); activeWorkout = null }
+    }
+    override suspend fun addSets(sets: List<WorkoutSet>) {
+        maybeFail()
+        sets.forEach { this.sets += it.copy(id = "s${nextId++}") }
+    }
     var failDelete: Throwable? = null
     val history = mutableListOf<Workout>()
     override suspend fun deleteWorkout(workoutId: String) {

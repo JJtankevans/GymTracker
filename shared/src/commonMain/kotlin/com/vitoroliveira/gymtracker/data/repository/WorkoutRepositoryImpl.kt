@@ -46,6 +46,25 @@ class WorkoutRepositoryImpl(
             }
     }
 
+    override suspend fun createWorkout(workoutId: String, muscleGroupId: String?, startedAtIso: String) {
+        val userId = supabase.auth.currentUserOrNull()?.id
+            ?: throw IllegalStateException("Usuário não autenticado")
+        supabase.postgrest["workouts"]
+            .insert(Workout(id = workoutId, profileId = userId, muscleGroupId = muscleGroupId, startedAt = startedAtIso))
+    }
+
+    override suspend fun finishWorkoutAt(workoutId: String, finishedAtIso: String) {
+        supabase.postgrest["workouts"]
+            .update({ set("finished_at", finishedAtIso) }) {
+                filter { eq("id", workoutId) }
+            }
+    }
+
+    override suspend fun addSets(sets: List<WorkoutSet>) {
+        if (sets.isEmpty()) return
+        supabase.postgrest["workout_sets"].insert(sets)
+    }
+
     override suspend fun deleteWorkout(workoutId: String) {
         supabase.postgrest["workouts"]
             .delete {
