@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.minutes
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -290,6 +291,21 @@ class WorkoutViewModel(
     }
 
     // ───────────────────────── Finalização ─────────────────────────
+
+    /** Texto para compartilhar o treino que acabou de terminar (usa o resumo final para a duração). */
+    fun shareText(groupName: String?): String {
+        val s = _uiState.value
+        val names = s.exercises.associate { it.id to it.name }
+        val groups = s.completedSets.map { it.exerciseId }.distinct().map { id ->
+            ExerciseSetGroup(id, names[id] ?: "Exercício", s.completedSets.filter { it.exerciseId == id }.sortedBy { it.setNumber })
+        }
+        val started = s.activeWorkout?.startedAt?.let { runCatching { kotlin.time.Instant.parse(it) }.getOrNull() }
+        val finished = started?.let { st -> s.summary?.let { st + it.durationMinutes.minutes } }
+        val workout = s.activeWorkout?.copy(finishedAt = finished?.toString())
+        return com.vitoroliveira.gymtracker.presentation.workout.shareText(
+            groupName, workout, groups, newRecords = s.summary?.newRecords.orEmpty()
+        )
+    }
 
     fun finishWorkout() {
         val state = _uiState.value

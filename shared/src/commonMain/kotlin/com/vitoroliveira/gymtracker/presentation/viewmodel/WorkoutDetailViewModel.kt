@@ -6,7 +6,10 @@ import com.vitoroliveira.gymtracker.presentation.toUserMessage
 import kotlin.coroutines.cancellation.CancellationException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.vitoroliveira.gymtracker.data.model.Workout
 import com.vitoroliveira.gymtracker.data.model.WorkoutSet
+import com.vitoroliveira.gymtracker.presentation.workout.WorkoutSummary
+import com.vitoroliveira.gymtracker.presentation.workout.summarize
 import com.vitoroliveira.gymtracker.domain.repository.ExerciseRepository
 import com.vitoroliveira.gymtracker.domain.repository.WorkoutRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,7 +26,12 @@ data class ExerciseSetGroup(
 data class WorkoutDetailUiState(
     val isLoading: Boolean = false,
     val exerciseGroups: List<ExerciseSetGroup> = emptyList(),
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    /** O treino em si (data, duração, anotação); null enquanto carrega ou se falhar (as séries ainda aparecem). */
+    val workout: Workout? = null,
+    val summary: WorkoutSummary? = null,
+    val successMessage: String? = null,
+    val isSavingNotes: Boolean = false
 )
 
 class WorkoutDetailViewModel(
@@ -59,7 +67,14 @@ class WorkoutDetailViewModel(
                     )
                 }
 
-                _uiState.value = _uiState.value.copy(isLoading = false, exerciseGroups = groups)
+                // o treino em si é um extra: se falhar, as séries continuam aparecendo
+                val workout = try { workoutRepository.getWorkout(workoutId) } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                    null
+                }
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false, exerciseGroups = groups, workout = workout, summary = summarize(workout, groups)
+                )
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 _uiState.value = _uiState.value.copy(
@@ -70,7 +85,34 @@ class WorkoutDetailViewModel(
         }
     }
 
+    /** Salva a anotação do treino; texto vazio apaga. */
+    fun saveNotes(text: String) {
+        val clean = text.trim().takeIf { it.isNotEmpty() }
+        if (clean != null && clean.length > 1000) {
+            _uiState.value = _uiState.value.copy(errorMessage = "A anotação pode ter até 1000 caracteres")
+            return
+        }
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isSavingNotes = true, errorMessage = null)
+            try {
+                workoutRepository.updateNotes(workoutId, clean)
+                val w = (_uiState.value.workout ?: Workout(id = workoutId)).copy(notes = clean)
+                _uiState.value = _uiState.value.copy(
+                    isSavingNotes = false, workout = w,
+                    successMessage = if (clean == null) "Anotação apagada" else "Anotação salva"
+                )
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                _uiState.value = _uiState.value.copy(isSavingNotes = false, errorMessage = e.toUserMessage("Erro ao salvar a anotação"))
+            }
+        }
+    }
+
+    /** Texto pronto para compartilhar (WhatsApp, Instagram...). */
+    fun shareText(groupName: String?): String =
+        com.vitoroliveira.gymtracker.presentation.workout.shareText(groupName, _uiState.value.workout, _uiState.value.exerciseGroups)
+
     fun clearError() {
-        _uiState.value = _uiState.value.copy(errorMessage = null)
+        _uiState.value = _uiState.value.copy(errorMessage = null, successMessage = null)
     }
 }

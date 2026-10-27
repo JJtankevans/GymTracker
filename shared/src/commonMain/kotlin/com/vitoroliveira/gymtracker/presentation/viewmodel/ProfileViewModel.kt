@@ -129,6 +129,11 @@ class ProfileViewModel(
         changeAvatar("Foto de perfil removida", "Erro ao remover a foto") { profileRepository.removeAvatar() }
     }
 
+    /** Erro vindo de fora do ViewModel (ex.: exportação), mostrado no mesmo lugar das outras mensagens. */
+    fun onExternalError(message: String) {
+        _uiState.value = _uiState.value.copy(errorMessage = message)
+    }
+
     /** O app não conseguiu abrir/decodificar a imagem escolhida. */
     fun onAvatarReadFailed() {
         _uiState.value = _uiState.value.copy(errorMessage = "Não foi possível ler essa imagem")

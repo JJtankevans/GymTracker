@@ -11,10 +11,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -44,8 +47,38 @@ fun MuscleGroupScreen(
     viewModel: MuscleGroupViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val scheduleVm: com.vitoroliveira.gymtracker.presentation.schedule.ScheduleViewModel = koinViewModel()
+    val plan by scheduleVm.plan.collectAsState()
+    var showSchedule by remember { mutableStateOf(false) }
+    if (showSchedule) {
+        ScheduleDialog(uiState.muscleGroups, plan, onSet = scheduleVm::set, onDismiss = { showSchedule = false })
+    }
+
+    // compartilhar / importar treino por código
+    val shareVm: com.vitoroliveira.gymtracker.presentation.share.RoutineShareViewModel = koinViewModel()
+    val share by shareVm.state.collectAsState()
+    var showImport by remember { mutableStateOf(false) }
+    LaunchedEffect(share.importedCount) {
+        if (share.importedCount > 0) {
+            viewModel.loadMuscleGroups()
+            showImport = false
+        }
+    }
+    share.shared?.let { ShareCodeDialog(it, onDismiss = shareVm::closeShared) }
+    if (showImport) {
+        ImportRoutineDialog(
+            preview = share.preview,
+            isWorking = share.isWorking,
+            error = share.error,
+            onLookup = shareVm::lookup,
+            onConfirm = shareVm::confirmImport,
+            onBackToCode = { shareVm.closePreview(); shareVm.clearMessages() },
+            onDismiss = { showImport = false; shareVm.closePreview(); shareVm.clearMessages() }
+        )
+    }
 
     MuscleGroupScreenContent(
+        onOpenSchedule = { showSchedule = true },
         uiState = uiState,
         onNavigateToExercises = onNavigateToExercises,
         onBack = onBack,
@@ -53,7 +86,12 @@ fun MuscleGroupScreen(
         onUpdate = { muscleGroup -> viewModel.updateMuscleGroup(muscleGroup) },
         onDelete = { id -> viewModel.deleteMuscleGroup(id) },
         onClearMessages = { viewModel.clearMessages() },
-        onCreateFromTemplate = { viewModel.createFromTemplate(it) }
+        onCreateFromTemplate = { viewModel.createFromTemplate(it) },
+        onShare = shareVm::share,
+        onOpenImport = { shareVm.clearMessages(); showImport = true },
+        isSharing = share.isWorking && !showImport,
+        extraMessage = share.message ?: share.error.takeIf { !showImport },
+        onExtraMessageShown = shareVm::clearMessages
     )
 }
 
@@ -67,7 +105,13 @@ fun MuscleGroupScreenContent(
     onUpdate: (MuscleGroup) -> Unit,
     onDelete: (String) -> Unit,
     onClearMessages: () -> Unit,
-    onCreateFromTemplate: (com.vitoroliveira.gymtracker.data.catalog.WorkoutTemplate) -> Unit = {}
+    onCreateFromTemplate: (com.vitoroliveira.gymtracker.data.catalog.WorkoutTemplate) -> Unit = {},
+    onOpenSchedule: () -> Unit = {},
+    onShare: (MuscleGroup) -> Unit = {},
+    onOpenImport: () -> Unit = {},
+    isSharing: Boolean = false,
+    extraMessage: String? = null,
+    onExtraMessageShown: () -> Unit = {}
 ) {
     var showTemplates by remember { mutableStateOf(false) }
     var showCreateDialog by remember { mutableStateOf(false) }
@@ -89,6 +133,12 @@ fun MuscleGroupScreenContent(
             onClearMessages()
         }
     }
+    LaunchedEffect(extraMessage) {
+        extraMessage?.let {
+            onExtraMessageShown()
+            snackbarHostState.showSnackbar(it)
+        }
+    }
 
     ThemedScaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -98,6 +148,14 @@ fun MuscleGroupScreenContent(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onOpenImport) {
+                        Icon(Icons.Default.Download, contentDescription = "Importar treino")
+                    }
+                    IconButton(onClick = onOpenSchedule) {
+                        Icon(Icons.Default.CalendarMonth, contentDescription = "Agenda da semana")
                     }
                 }
             )
@@ -136,6 +194,8 @@ fun MuscleGroupScreenContent(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(onClick = { showTemplates = true }) { Text("Começar com um treino pronto") }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedButton(onClick = onOpenImport) { Text("Importar treino de um amigo") }
                 }
             }
         } else {
@@ -147,6 +207,7 @@ fun MuscleGroupScreenContent(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = PaddingValues(vertical = 16.dp)
             ) {
+                if (isSharing) item(key = "sharing") { LinearProgressIndicator(Modifier.fillMaxWidth()) }
                 item(key = "templates") {
                     OutlinedButton(onClick = { showTemplates = true }, modifier = Modifier.fillMaxWidth()) {
                         Text("Treinos prontos (Push, Pull, Pernas…)")
@@ -161,7 +222,8 @@ fun MuscleGroupScreenContent(
                             }
                         },
                         onEdit = { groupToEdit = group },
-                        onDelete = { groupToDelete = group }
+                        onDelete = { groupToDelete = group },
+                        onShare = { onShare(group) }
                     )
                 }
             }
@@ -233,7 +295,8 @@ fun MuscleGroupItem(
     muscleGroup: MuscleGroup,
     onClick: () -> Unit,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onShare: (() -> Unit)? = null
 ) {
     val color = runCatching {
         Color(android.graphics.Color.parseColor(muscleGroup.colorHex))
@@ -266,6 +329,16 @@ fun MuscleGroupItem(
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.weight(1f)
             )
+
+            onShare?.let {
+                IconButton(onClick = it) {
+                    Icon(
+                        Icons.Default.Share,
+                        contentDescription = "Compartilhar com amigos",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
 
             IconButton(onClick = onEdit) {
                 Icon(

@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vitoroliveira.gymtracker.data.model.ExerciseProgression
 import com.vitoroliveira.gymtracker.domain.repository.WorkoutRepository
+import com.vitoroliveira.gymtracker.presentation.records.buildRecordRow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,6 +20,8 @@ data class ExerciseDetailUiState(
     val maxWeightKg: Double? = null,
     val lastWeightKg: Double? = null,
     val totalSessions: Int = 0,
+    /** Melhor 1RM estimado (Epley) entre as sessões; null sem carga registrada. */
+    val oneRmKg: Double? = null,
     val errorMessage: String? = null
 )
 
@@ -46,7 +49,8 @@ class ExerciseDetailViewModel(
                     progression = progression,
                     maxWeightKg = progression.maxOfOrNull { it.maxWeightKg },
                     lastWeightKg = progression.lastOrNull()?.maxWeightKg,
-                    totalSessions = progression.size
+                    totalSessions = progression.size,
+                    oneRmKg = buildRecordRow(exerciseId, "", progression)?.bestOneRmKg
                 )
             } catch (e: Exception) {
                 if (e is CancellationException) throw e

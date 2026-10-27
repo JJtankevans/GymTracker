@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
@@ -76,6 +77,14 @@ import com.vitoroliveira.gymtracker.ui.utils.formatKg
 import com.vitoroliveira.gymtracker.ui.utils.formatVolume
 import com.vitoroliveira.gymtracker.ui.utils.formatWeightInput
 import com.vitoroliveira.gymtracker.ui.utils.restFinishedFeedback
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.lifecycle.Lifecycle
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import org.koin.compose.viewmodel.koinViewModel
 
 // Opções de tempo de descanso em segundos
@@ -107,31 +116,68 @@ fun ActiveWorkoutScreen(
         onDispose { view.keepScreenOn = false }
     }
 
-    // Vibra + bipe quando o descanso termina
-    LaunchedEffect(uiState.timerState.isFinished) {
-        if (uiState.timerState.isFinished) context.restFinishedFeedback()
+    // Descanso: bipe/vibração no fim e notificação com contagem regressiva, também com a tela bloqueada.
+    // Coleta o estado direto do ViewModel (e não por recomposição): com o app em segundo plano a tela não recompõe,
+    // mas esta coleta continua, então o aviso de fim chega mesmo fora do app.
+    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    val restNotifier = remember { RestNotifier(context) }
+    var askedNotificationPermission by rememberSaveable { mutableStateOf(false) }
+    val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    LaunchedEffect(viewModel) {
+        var previous: TimerState? = null
+        viewModel.uiState.map { it.timerState }.distinctUntilChanged().collect { t ->
+            val prev = previous
+            previous = t
+            val visible = lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
+            when {
+                t.isFinished && prev?.isFinished != true -> {
+                    context.restFinishedFeedback()
+                    if (visible) restNotifier.cancel() else restNotifier.showFinished()
+                }
+                t.isRunning && (prev == null || !prev.isRunning || t.totalSeconds != prev.totalSeconds || t.remainingSeconds > prev.remainingSeconds) -> {
+                    if (Build.VERSION.SDK_INT >= 33 && !restNotifier.canNotify() && !askedNotificationPermission) {
+                        askedNotificationPermission = true
+                        notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                    restNotifier.showCountdown(t.remainingSeconds)
+                }
+                !t.isRunning && !t.isFinished -> restNotifier.cancel() // pausado ou cancelado
+            }
+        }
     }
+    DisposableEffect(Unit) { onDispose { restNotifier.cancel() } }
 
-    ActiveWorkoutScreenContent(
-        muscleGroupName = muscleGroupName,
-        uiState = uiState,
-        elapsedSeconds = elapsed,
-        onAddSet = { exerciseId, reps, weight -> viewModel.addSet(exerciseId, reps, weight) },
-        onUpdateSet = { id, reps, weight -> viewModel.updateSet(id, reps, weight) },
-        onDeleteSet = { viewModel.deleteSet(it) },
-        onStartTimer = { viewModel.startTimer(it) },
-        onPauseTimer = { viewModel.pauseTimer() },
-        onResumeTimer = { viewModel.resumeTimer() },
-        onCancelTimer = { viewModel.cancelTimer() },
-        onFinishWorkout = { viewModel.finishWorkout() },
-        onClearError = { viewModel.clearError() },
-        onResumeWorkout = { viewModel.resumeWorkout(it) },
-        onDiscardWorkout = { viewModel.discardAndStartNew(muscleGroupId) },
-        onToggleExerciseFinished = { viewModel.toggleExerciseFinished(it) },
-        onSummaryDone = onWorkoutFinished,
-        onBack = onBack,
-        topSlot = { com.vitoroliveira.gymtracker.ui.music.MiniPlayer() }
-    )
+    androidx.compose.foundation.layout.Box {
+        ActiveWorkoutScreenContent(
+            muscleGroupName = muscleGroupName,
+            uiState = uiState,
+            elapsedSeconds = elapsed,
+            onAddSet = { exerciseId, reps, weight -> viewModel.addSet(exerciseId, reps, weight) },
+            onUpdateSet = { id, reps, weight -> viewModel.updateSet(id, reps, weight) },
+            onDeleteSet = { viewModel.deleteSet(it) },
+            onStartTimer = { viewModel.startTimer(it) },
+            onPauseTimer = { viewModel.pauseTimer() },
+            onResumeTimer = { viewModel.resumeTimer() },
+            onCancelTimer = { viewModel.cancelTimer() },
+            onFinishWorkout = { viewModel.finishWorkout() },
+            onClearError = { viewModel.clearError() },
+            onResumeWorkout = { viewModel.resumeWorkout(it) },
+            onDiscardWorkout = { viewModel.discardAndStartNew(muscleGroupId) },
+            onToggleExerciseFinished = { viewModel.toggleExerciseFinished(it) },
+            onSummaryDone = onWorkoutFinished,
+            onShareSummary = {
+                val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(android.content.Intent.EXTRA_TEXT, viewModel.shareText(muscleGroupName))
+                }
+                context.startActivity(android.content.Intent.createChooser(send, "Compartilhar treino"))
+            },
+            onBack = onBack,
+            topSlot = { com.vitoroliveira.gymtracker.ui.music.MiniPlayer() }
+        )
+        // explosão de confete ao bater recorde de carga
+        RecordCelebration(uiState.newRecordExerciseIds.size)
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -154,6 +200,7 @@ fun ActiveWorkoutScreenContent(
     onUpdateSet: (setId: String, reps: Int, weightKg: Double) -> Unit = { _, _, _ -> },
     onDeleteSet: (setId: String) -> Unit = {},
     onSummaryDone: () -> Unit = {},
+    onShareSummary: () -> Unit = {},
     topSlot: @Composable () -> Unit = {}
 ) {
     var showFinishDialog by remember { mutableStateOf(false) }
@@ -333,7 +380,7 @@ fun ActiveWorkoutScreenContent(
     }
 
     uiState.summary?.let { summary ->
-        WorkoutSummaryDialog(summary = summary, onDone = onSummaryDone)
+        WorkoutSummaryDialog(summary = summary, onDone = onSummaryDone, onShare = onShareSummary)
     }
 }
 
@@ -559,10 +606,21 @@ fun ExerciseWorkoutCard(
                     singleLine = true
                 )
 
+                var showPlates by remember { mutableStateOf(false) }
+                if (showPlates) {
+                    com.vitoroliveira.gymtracker.ui.exercise.PlateCalculatorSheet(
+                        initialKg = weight.replace(",", ".").toDoubleOrNull(), onDismiss = { showPlates = false }
+                    )
+                }
                 OutlinedTextField(
                     value = weight,
                     onValueChange = { weight = formatWeightInput(it); weightError = false },
                     label = { Text("Peso (kg)") },
+                    trailingIcon = {
+                        IconButton(onClick = { showPlates = true }) {
+                            Icon(Icons.Default.Calculate, contentDescription = "Calculadora de anilhas")
+                        }
+                    },
                     isError = weightError,
                     supportingText = if (weightError) ({ Text("Informe o peso") }) else null,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -669,7 +727,7 @@ private fun EditSetDialog(
 }
 
 @Composable
-fun WorkoutSummaryDialog(summary: WorkoutSummary, onDone: () -> Unit) {
+fun WorkoutSummaryDialog(summary: WorkoutSummary, onDone: () -> Unit, onShare: (() -> Unit)? = null) {
     AlertDialog(
         onDismissRequest = { },
         title = { Text("Treino concluído!") },
@@ -697,7 +755,8 @@ fun WorkoutSummaryDialog(summary: WorkoutSummary, onDone: () -> Unit) {
                 }
             }
         },
-        confirmButton = { Button(onClick = onDone) { Text("Concluir") } }
+        confirmButton = { Button(onClick = onDone) { Text("Concluir") } },
+        dismissButton = onShare?.let { share -> { TextButton(onClick = share) { Text("Compartilhar") } } }
     )
 }
 

@@ -58,6 +58,13 @@ fun HistoryScreenContent(
     onDeleteWorkout: (String) -> Unit = {}
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
+    val calendar = remember(uiState.workouts) {
+        val tz = TimeZone.currentSystemDefault()
+        com.vitoroliveira.gymtracker.presentation.workout.buildTrainingCalendar(
+            uiState.workouts.map { it.startedAt.toLocalDateTime(tz).date },
+            kotlin.time.Clock.System.now().toLocalDateTime(tz).date
+        )
+    }
     var pendingDelete by remember { mutableStateOf<WorkoutHistoryItem?>(null) }
 
     LaunchedEffect(uiState.errorMessage) {
@@ -89,6 +96,7 @@ fun HistoryScreenContent(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    item(key = "heatmap") { TrainingHeatmap(calendar) }
                     item {
                         Text(
                             "Segure um treino para apagar.",

@@ -181,7 +181,7 @@ fun SocialContent(state: SocialUiState, a: SocialActions, onBack: () -> Unit) {
     openChallenge?.let { item ->
         val current = state.challenges.firstOrNull { it.challenge.id == item.challenge.id } ?: item
         ChallengeSheet(
-            item = current, standings = state.standings[item.challenge.id], me = state.me,
+            item = current, standings = state.standings[item.challenge.id], me = state.me, titles = state.titles,
             onLoad = { a.loadStandings(item.challenge.id) },
             onJoin = { team -> a.joinChallenge(item.challenge.id, team) },
             onLeave = { a.leaveChallenge(item.challenge.id) },
@@ -220,18 +220,28 @@ private fun FeedTab(state: SocialUiState, a: SocialActions, onOpenSettings: () -
         if (state.feed.isEmpty()) item(key = "empty") {
             Empty("Feed vazio", "Quando você (ou quem você segue) finalizar um treino compartilhado, ele aparece aqui.")
         }
-        items(state.feed, key = { it.post.id }) { FeedCard(it, onEdit = { c, v -> a.editPost(it.post.id, c, v) }) { kind -> a.react(it.post.id, kind) } }
+        items(state.feed, key = { it.post.id }) {
+            FeedCard(it, state.titles[it.post.profileId], onEdit = { c, v -> a.editPost(it.post.id, c, v) }) { kind -> a.react(it.post.id, kind) }
+        }
     }
 }
 
 @Composable
-private fun FeedCard(item: FeedItem, onEdit: (String?, String) -> Unit, onReact: (ReactionKind) -> Unit) {
+private fun FeedCard(
+    item: FeedItem, title: com.vitoroliveira.gymtracker.data.model.ProfileTitle?,
+    onEdit: (String?, String) -> Unit, onReact: (ReactionKind) -> Unit
+) {
     var editing by remember { mutableStateOf(false) }
     if (editing) PostDialog(item.post.caption.orEmpty(), item.post.visibility, onSave = { c, v -> onEdit(c, v); editing = false }, onDismiss = { editing = false })
     ThemedCard(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(item.author, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                UserAvatar(url = item.avatarUrl, size = 36.dp, fallbackName = item.author)
+                Spacer(Modifier.width(10.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(item.author, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    title?.let { TitleChip(it, Modifier.padding(top = 2.dp)) }
+                }
                 if (item.isMine) TextButton({ editing = true }) { Text("Editar") }
                 Text(
                     item.post.createdAt?.take(10)?.split("-")?.let { if (it.size == 3) "${it[2]}/${it[1]}" else "" }.orEmpty(),

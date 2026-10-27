@@ -288,6 +288,7 @@ private fun NumberField(label: String, value: String, onChange: (String) -> Unit
 @Composable
 fun ChallengeSheet(
     item: ChallengeItem, standings: List<Standing>?, me: String?,
+    titles: Map<String, com.vitoroliveira.gymtracker.data.model.ProfileTitle> = emptyMap(),
     onLoad: () -> Unit, onJoin: (String?) -> Unit, onLeave: () -> Unit, onDismiss: () -> Unit
 ) {
     LaunchedEffect(item.challenge.id) { onLoad() }
@@ -376,10 +377,13 @@ fun ChallengeSheet(
                             Text("${s.rank}º", Modifier.size(width = 40.dp, height = 24.dp), fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.primary)
                             UserAvatar(url = s.avatarUrl, size = 36.dp, fallbackName = s.username)
                             Spacer(Modifier.width(10.dp))
-                            Text(
-                                s.username + (s.team?.takeIf { it.isNotBlank() }?.let { " · $it" } ?: "") + if (s.profileId == me) " (você)" else "",
-                                Modifier.weight(1f), fontWeight = if (s.profileId == me) FontWeight.Bold else FontWeight.Normal
-                            )
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    s.username + (s.team?.takeIf { it.isNotBlank() }?.let { " · $it" } ?: "") + if (s.profileId == me) " (você)" else "",
+                                    fontWeight = if (s.profileId == me) FontWeight.Bold else FontWeight.Normal
+                                )
+                                titles[s.profileId]?.let { TitleChip(it, Modifier.padding(top = 2.dp)) }
+                            }
                             Spacer(Modifier.width(12.dp))
                             Text(item.metric?.format(s.score) ?: s.score.toLong().toString(), fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
                         }
@@ -405,7 +409,11 @@ fun ProfileSheet(
             Modifier.fillMaxWidth().navigationBarsPadding().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(p.displayName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                UserAvatar(url = p.avatarUrl, size = 64.dp, fallbackName = p.displayName)
+                Spacer(Modifier.width(14.dp))
+                Text(p.displayName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            }
             Text(
                 "@${p.username} · ${visibilityLabel(p.visibility)}" + if (view.person.followsMe) " · segue você" else "",
                 style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant

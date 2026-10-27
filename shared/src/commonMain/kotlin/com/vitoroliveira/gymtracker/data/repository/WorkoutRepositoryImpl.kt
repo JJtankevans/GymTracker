@@ -5,6 +5,7 @@ package com.vitoroliveira.gymtracker.data.repository
 import com.vitoroliveira.gymtracker.data.model.ExerciseBaseline
 import com.vitoroliveira.gymtracker.data.model.ExerciseProgression
 import com.vitoroliveira.gymtracker.data.model.RecordSummary
+import com.vitoroliveira.gymtracker.data.model.RecentSet
 import com.vitoroliveira.gymtracker.data.model.Workout
 import com.vitoroliveira.gymtracker.data.model.WorkoutSet
 import com.vitoroliveira.gymtracker.domain.repository.WorkoutRepository
@@ -86,6 +87,18 @@ class WorkoutRepositoryImpl(
             .decodeList()
     }
 
+    override suspend fun getWorkout(workoutId: String): Workout? =
+        supabase.postgrest["workouts"]
+            .select { filter { eq("id", workoutId) } }
+            .decodeSingleOrNull()
+
+    override suspend fun updateNotes(workoutId: String, notes: String?) {
+        supabase.postgrest["workouts"]
+            .update({ set<String?>("notes", notes?.trim()?.takeIf { it.isNotEmpty() }) }) {
+                filter { eq("id", workoutId) }
+            }
+    }
+
     override suspend fun addSet(workoutSet: WorkoutSet): WorkoutSet {
         return supabase.postgrest["workout_sets"]
             .insert(workoutSet){
@@ -110,6 +123,33 @@ class WorkoutRepositoryImpl(
                 order("session_date", Order.ASCENDING)
             }
             .decodeList()
+    }
+
+    override suspend fun getSetsSince(sinceIso: String): List<RecentSet> =
+        supabase.postgrest["workout_sets"]
+            .select(Columns.raw("exercise_id, reps, weight_kg, workouts!inner(started_at)")) {
+                filter { gte("workouts.started_at", sinceIso) }
+            }
+            .decodeList()
+
+    override suspend fun getAllSetsForExport(): List<com.vitoroliveira.gymtracker.data.model.ExportSet> {
+        // o Supabase devolve no máximo 1000 linhas por chamada: busca em páginas até acabar
+        val page = 1000L
+        val all = mutableListOf<com.vitoroliveira.gymtracker.data.model.ExportSet>()
+        var from = 0L
+        while (true) {
+            val chunk = supabase.postgrest["workout_sets"]
+                .select(Columns.raw("exercise_id, set_number, reps, weight_kg, completed_at, workouts!inner(id, started_at, muscle_group_id, muscle_group_name)")) {
+                    filter { filterNot("workouts.finished_at", FilterOperator.IS, null) }
+                    order("completed_at", Order.ASCENDING)
+                    range(from, from + page - 1)
+                }
+                .decodeList<com.vitoroliveira.gymtracker.data.model.ExportSet>()
+            all += chunk
+            if (chunk.size < page) break
+            from += page
+        }
+        return all
     }
 
     override suspend fun getRecordsSummary(): List<RecordSummary> =

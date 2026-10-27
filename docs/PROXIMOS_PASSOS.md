@@ -113,3 +113,16 @@ Pendente / ideias:
 - **Desafios:** fotos no placar; biblioteca de mensagens com 3 layouts (frases do Thiago + sugestões minhas para líder/meta batida); títulos no perfil (falha = treino abaixo do mínimo; honra = dias seguidos; Alpha/Chad/Giga Chad/Mr. Olimpia em 1x/2x/3x/4x; dura o desafio + 7 dias) com SQL 010 testado em 10 cenários.
 - **Imagens:** o Claude não gera imagens; criados `docs/PROMPTS_IMAGENS_EXERCICIOS.md` (texto para o gerador) e `tools/cortar_folha.py` (corte automático das folhas, testado nas duas folhas atuais).
 - **Pendente:** rodar 009 e 010; compilar e rodar os 25 testes novos; validar no celular; receber a lista de exercícios dos usuários e gerar as imagens; decidir se mostra o título também no placar do desafio e no feed.
+
+## Décima segunda rodada (26/10/2026, sessão na nuvem) — CI no GitHub e 15 melhorias
+- **CI (`.github/workflows/android.yml`):** compila o APK debug (artefato `gymtracker-debug-apk`) e roda os testes do `:shared` a cada push/PR; secrets `SUPABASE_URL`/`SUPABASE_KEY` viram `local.properties`. Ajustes até funcionar: `ubuntu-24.04` fixo, SDK do próprio runner (só aceita licenças), erro do Gradle em anotações (os logs ficam inacessíveis da nuvem).
+- **Primeira compilação real** do código das sessões de 21/10: compilou; 1 teste pegou um bug (aviso "já está na sua lista" apagado pela recarga; corrigido com `loadExercises(clearError = false)`).
+- **Melhorias (branch `claude/melhorias`):** fotos/títulos no feed e placar; detalhe do treino com resumo, anotação e compartilhar; compartilhar no fim do treino; calculadora de anilhas (detalhe e treino ativo) e tabela de 1RM; sessões do exercício; sugestão do próximo grupo + agenda da semana; sincronização do peso/dados do corpo com o Supabase; medidas corporais (local); séries por músculo na semana; aviso de descanso com tela bloqueada; conquistas; exportar CSV; selo de pedidos para seguir; Instant atualizado. Testes: 179 → 230.
+- **Pendente:** testar tudo no celular; medidas corporais na nuvem (precisaria de tabela nova); conquistas por desafio/títulos; deload automático; sincronizar o relógio.
+
+## Décima terceira rodada (27/10/2026, sessão na nuvem) — compartilhar treinos, temas Loucos e extras
+- **Compartilhar grupo por código** (`shared_routines` + `get_shared_routine`, migração `011`, pendente no Supabase): cópia do grupo (nome, cor, até 40 exercícios com séries/reps/observação); o amigo importa colando o código ou o convite inteiro; nome repetido ganha número; exercícios de mesmo nome são reaproveitados; falha no meio desfaz o grupo. Decisão: código em vez de link (sem domínio próprio para link clicável no WhatsApp).
+- **Temas:** categoria "Loucos" (Matrix, Hipnose, Hiperespaço, Glitch, Lâmpada de Lava, Arcade, Carnaval) e decorações novas em Oceano (ondas), Floresta (vaga-lumes) e Ouro (art déco). Total: 28 temas.
+- **Extras:** mapa de calor no Histórico, aquecimento na calculadora de anilhas, confete ao bater recorde, conquistas especiais (horário, duração, dia da semana).
+- **Pendente:** rodar o 011; ver no aparelho desempenho/legibilidade dos temas novos; link clicável para importar (precisaria de domínio + App Links).
+

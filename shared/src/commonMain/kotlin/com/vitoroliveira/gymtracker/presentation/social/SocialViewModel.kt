@@ -20,7 +20,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlin.time.Clock
 
-data class FeedItem(val post: FeedPost, val author: String, val isMine: Boolean, val reactions: ReactionSummary)
+data class FeedItem(
+    val post: FeedPost, val author: String, val isMine: Boolean, val reactions: ReactionSummary,
+    /** Foto de quem postou (null = mostra a inicial). */
+    val avatarUrl: String? = null
+)
 
 enum class Relation { NONE, FOLLOWING, REQUESTED }
 
@@ -56,6 +60,8 @@ data class SocialUiState(
     val standings: Map<String, List<Standing>> = emptyMap(),
     /** Título de desafio de cada perfil (por id), incluindo o meu. Vazio se a migração 010 não rodou. */
     val titles: Map<String, ProfileTitle> = emptyMap(),
+    /** Meu perfil público (foto e nome nos meus posts). */
+    val myProfile: SocialProfile? = null,
     val profileView: ProfileView? = null,
     val message: String? = null,
     val error: String? = null,
@@ -119,7 +125,9 @@ class SocialViewModel(
 
     private suspend fun loadPeople() {
         val me = repo.currentUserId()
-        val profiles = repo.people().filter { it.id != me }
+        val all = repo.people()
+        val profiles = all.filter { it.id != me }
+        update { copy(myProfile = all.firstOrNull { it.id == me }) }
         val follows = repo.follows()
         val items = profiles.map { p ->
             val mine = follows.firstOrNull { it.followerId == me && it.followedId == p.id }
@@ -146,18 +154,32 @@ class SocialViewModel(
         }
     }
 
+    /** Junta os títulos de mais perfis (ex.: participantes de um desafio que eu não sigo). Silencioso como [loadTitlesQuietly]. */
+    private suspend fun mergeTitlesQuietly(ids: List<String>) {
+        val missing = ids.filter { it !in _state.value.titles }
+        if (missing.isEmpty()) return
+        try {
+            val more = repo.titles(missing).associateBy { it.profileId }
+            update { copy(titles = titles + more) }
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+        }
+    }
+
     private suspend fun loadFeed() {
         val me = repo.currentUserId()
         val posts = repo.feed()
         val reactions = repo.reactions(posts.map { it.id })
         val names = _state.value.people.associate { it.profile.id to it.profile.displayName }
+        val avatars = _state.value.people.associate { it.profile.id to it.profile.avatarUrl }
         update {
             copy(feed = posts.map { p ->
                 FeedItem(
                     post = p,
                     author = if (p.profileId == me) "Você" else names[p.profileId] ?: "Alguém",
                     isMine = p.profileId == me,
-                    reactions = summarizeReactions(p.id, reactions, me)
+                    reactions = summarizeReactions(p.id, reactions, me),
+                    avatarUrl = if (p.profileId == me) _state.value.myProfile?.avatarUrl else avatars[p.profileId]
                 )
             })
         }
@@ -261,6 +283,7 @@ class SocialViewModel(
             try {
                 val s = repo.standings(id)
                 update { copy(standings = standings + (id to s)) }
+                mergeTitlesQuietly(s.map { it.profileId })
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 update { copy(error = e.toUserMessage("Erro ao carregar o placar")) }

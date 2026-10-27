@@ -7,7 +7,10 @@
 
 ## Ambiente de nuvem
 - O contêiner é efêmero: o que não foi commitado e enviado com push se perde quando a sessão termina ou o espaço em disco acaba.
-- Não há Windows/adb aqui; os comandos de `docs/CONTEXTO_SESSAO.md` sobre `gradlew.bat` e adb valem para o PC do Thiago. Na nuvem use `./gradlew`.
+- Não há Windows/adb aqui; os comandos de `docs/CONTEXTO_SESSAO.md` sobre `gradlew.bat` e adb valem para o PC do Thiago.
+- **O contêiner não compila o app** (sem Android SDK; `dl.google.com` bloqueado). Para compilar e testar, faça push: o GitHub Actions (`.github/workflows/android.yml`) gera o APK e roda os testes do `:shared`. Acompanhe com `gh api "repos/JJtankevans/GymTracker/actions/runs?branch=<branch>&per_page=1"` e leia os erros pelas anotações do job (`gh api repos/JJtankevans/GymTracker/check-runs/<job_id>/annotations`), porque os logs do Actions não abrem daqui. O APK fica no artefato `gymtracker-debug-apk` da execução.
+- Espere uma execução terminar antes do próximo push no mesmo branch (o workflow cancela a anterior).
+- SQL dá para testar com o Postgres 16 local (`/usr/lib/postgresql/16/bin`, rodando como usuário `postgres` num diretório em `/var/tmp`).
 
 ## Regra de fim de sessão (obrigatória)
 Antes de encerrar a sessão, e antes de qualquer limpeza de disco/cache que possa comprometer as mudanças:

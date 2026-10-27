@@ -102,7 +102,14 @@ fun HomeScreenContent(
                         Icon(Icons.Default.EmojiEvents, contentDescription = "Recordes")
                     }
                     IconButton(onClick = onNavigateToSocial) {
-                        Icon(Icons.Default.Groups, contentDescription = "Social")
+                        BadgedBox(badge = {
+                            if (uiState.pendingFollowRequests > 0) Badge { Text("${uiState.pendingFollowRequests}") }
+                        }) {
+                            Icon(
+                                Icons.Default.Groups,
+                                contentDescription = if (uiState.pendingFollowRequests > 0) "Social, ${uiState.pendingFollowRequests} pedidos para seguir" else "Social"
+                            )
+                        }
                     }
                     IconButton(onClick = onNavigateToProfile) {
                         Icon(Icons.Default.Person, contentDescription = "Perfil")
