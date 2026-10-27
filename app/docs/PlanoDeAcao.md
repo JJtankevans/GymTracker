@@ -1,3 +1,5 @@
+> **Documento histórico (plano original).** Não reflete o estado atual: o app só tem o alvo Android (os alvos iOS do `:shared` estão configurados, mas não há código iOS), ganhou módulo de relógio, camada social, temas, circuito e mais. Estado atual: `README.md` e `docs/CONTEXTO_SESSAO.md`.
+
 # 🏋️ GymTracker — Plano de Ação Completo
 ### Kotlin Multiplatform (Android & iOS) + Supabase
 

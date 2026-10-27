@@ -41,8 +41,52 @@ private class NoAuth : AuthRepository {
     override fun currentUserId(): String? = "u1"
 }
 
+/** Registra a ordem das etapas de "Sair da conta". */
+private class Steps {
+    val done = mutableListOf<String>()
+}
+
+private class StepAuth(private val steps: Steps, private val fail: Boolean = false) : AuthRepository {
+    override suspend fun signUp(email: String, password: String, username: String) {}
+    override suspend fun signIn(email: String, password: String) {}
+    override suspend fun signOut() { steps.done += "signOut"; if (fail) throw RuntimeException("Unable to resolve host") }
+    override suspend fun awaitSession() = true
+    override fun isLoggedIn() = true
+    override fun currentUserId(): String? = "u1"
+}
+
+private class StepLocalData(private val steps: Steps, private val failFlush: Boolean = false) :
+    com.vitoroliveira.gymtracker.domain.repository.LocalUserData {
+    override suspend fun flush() { steps.done += "flush"; if (failFlush) throw RuntimeException("Unable to resolve host") }
+    override fun clear() { steps.done += "clear" }
+}
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProfileViewModelTest {
+    @Test fun sairEnviaOPendenteEncerraASessaoEApagaOsDadosDoAparelho() {
+        val steps = Steps()
+        val vm = ProfileViewModel(MemProfiles(), StepAuth(steps), null, StepLocalData(steps))
+        vm.signOut()
+        assertEquals(listOf("flush", "signOut", "clear"), steps.done)
+        assertEquals(true, vm.uiState.value.isSignedOut)
+        assertFalse(vm.uiState.value.isSigningOut)
+    }
+
+    @Test fun semInternetSaiEApagaMesmoAssim() {
+        val steps = Steps()
+        val vm = ProfileViewModel(MemProfiles(), StepAuth(steps, fail = true), null, StepLocalData(steps, failFlush = true))
+        vm.signOut()
+        assertEquals(listOf("flush", "signOut", "clear"), steps.done)
+        assertEquals(true, vm.uiState.value.isSignedOut)
+    }
+
+    @Test fun sairDuasVezesNaoRepete() {
+        val steps = Steps()
+        val vm = ProfileViewModel(MemProfiles(), StepAuth(steps), null, StepLocalData(steps))
+        vm.signOut(); vm.signOut()
+        assertEquals(1, steps.done.count { it == "signOut" })
+    }
+
     @BeforeTest fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
     @AfterTest fun tearDown() = Dispatchers.resetMain()
 

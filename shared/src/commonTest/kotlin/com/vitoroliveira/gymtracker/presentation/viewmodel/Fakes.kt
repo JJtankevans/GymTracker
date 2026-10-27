@@ -66,7 +66,11 @@ class FakeWorkoutRepository : WorkoutRepository {
         history.replaceAll { if (it.id == workoutId) it.copy(notes = clean) else it }
     }
 
+    /** Quando definido, a gravação da série espera por ele (simula a rede lenta). */
+    var addSetGate: kotlinx.coroutines.CompletableDeferred<Unit>? = null
+
     override suspend fun addSet(workoutSet: WorkoutSet): WorkoutSet {
+        addSetGate?.await()
         maybeFail()
         return workoutSet.copy(id = "s${nextId++}").also { sets += it }
     }

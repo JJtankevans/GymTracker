@@ -130,7 +130,25 @@ class WorkoutViewModelTest {
         assertEquals(5, vm.uiState.value.completedSets.size)
         vm.addSet("e1", 10, 80.0)
         assertEquals(5, vm.uiState.value.completedSets.size)
-        assertNotNull(vm.uiState.value.errorMessage)
+        val msg = assertNotNull(vm.uiState.value.errorMessage)
+        // a mensagem diz qual exercício e qual é o limite
+        assertEquals("Você chegou ao limite de 5 séries em Supino (3 do plano + 2 extras).", msg)
+        assertEquals(5, maxSetsFor(supino))
+    }
+
+    @Test fun finalizarEsperaASerieQueAindaEstaGravando() {
+        val vm = vm()
+        vm.startWorkout(null)
+        val gate = kotlinx.coroutines.CompletableDeferred<Unit>()
+        workouts.addSetGate = gate
+        vm.addSet("e1", 10, 80.0)      // última série do circuito, ainda indo para o banco
+        vm.finishWorkout()             // logo em seguida o circuito termina
+        assertFalse(workouts.finished, "o treino foi fechado antes de a série ser gravada")
+
+        gate.complete(Unit)
+        assertTrue(workouts.finished)
+        assertEquals(1, workouts.sets.size)
+        assertEquals(1, assertNotNull(vm.uiState.value.summary).totalSets)
     }
 
     @Test fun detectaRecordeDeCarga() {

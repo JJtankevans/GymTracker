@@ -1,5 +1,8 @@
 package com.vitoroliveira.gymtracker.presentation.body
 
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -22,7 +25,51 @@ private class FakeBodyCloud(
     override suspend fun saveProfile(profile: BodyProfile) { check(); savedProfile = profile; this.profile = profile }
 }
 
+/** Nuvem que segura a busca dos pesos até [release]: simula a rede lenta durante a troca de conta. */
+private class SlowBodyCloud(private val inner: FakeBodyCloud) : BodyCloud by inner {
+    val release = CompletableDeferred<Unit>()
+    override suspend fun fetchWeights(): List<BodyWeightEntry> { release.await(); return inner.fetchWeights() }
+}
+
 class BodySyncTest {
+    @Test fun sairDaContaApagaOsDadosDoAparelhoEAProximaContaSoVeOsDela() = runTest {
+        val store = InMemoryBodyStore(
+            BodyData(
+                profile = BodyProfile(heightCm = 180),
+                weights = listOf(BodyWeightEntry(20, 80.0)),
+                measurements = listOf(BodyMeasurement(20, MeasureSite.WAIST, 85.0))
+            )
+        )
+        val cloud = FakeBodyCloud(weights = mutableMapOf(20 to 80.0))
+        val repo = BodyRepository(store, cloud)
+        repo.sync()
+
+        repo.clear()
+        assertEquals(BodyData(), repo.data.value)
+        assertEquals(BodyData(), store.load())
+
+        // outra conta entra: a nuvem dela tem só o dia 30 e nada do aparelho é enviado para ela
+        cloud.weights.clear(); cloud.weights[30] = 70.0; cloud.upserts.clear(); cloud.savedProfile = null; cloud.profile = BodyProfile(heightCm = 165)
+        repo.sync()
+        assertEquals(listOf(30), repo.data.value.weights.map { it.epochDay })
+        assertEquals(165, repo.data.value.profile.heightCm)
+        assertTrue(cloud.upserts.isEmpty())
+        assertEquals(null, cloud.savedProfile)
+    }
+
+    @Test fun sincronizacaoQueComecouAntesDeSairNaoGravaNadaDepois() = runTest {
+        val inner = FakeBodyCloud()
+        val cloud = SlowBodyCloud(inner)
+        val repo = BodyRepository(InMemoryBodyStore(BodyData(weights = listOf(BodyWeightEntry(20, 80.0)))), cloud)
+        val job = launch { repo.sync() }
+        runCurrent()            // a sincronização está esperando a nuvem
+        repo.clear()            // o usuário saiu da conta
+        cloud.release.complete(Unit)
+        job.join()
+        assertTrue(inner.upserts.isEmpty(), "o peso da conta anterior foi enviado: ${inner.upserts}")
+        assertEquals(BodyData(), repo.data.value)
+    }
+
     @Test fun mandaOQueSoExisteNoAparelhoETrazOQueSoExisteNaNuvem() = runTest {
         val cloud = FakeBodyCloud(weights = mutableMapOf(10 to 81.0))
         val repo = BodyRepository(InMemoryBodyStore(BodyData(weights = listOf(BodyWeightEntry(20, 80.0)))), cloud)

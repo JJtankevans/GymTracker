@@ -11,11 +11,13 @@ import com.vitoroliveira.gymtracker.data.model.ProfileTitle
 import com.vitoroliveira.gymtracker.domain.repository.SocialRepository
 import com.vitoroliveira.gymtracker.domain.AvatarRules
 import com.vitoroliveira.gymtracker.domain.repository.AuthRepository
+import com.vitoroliveira.gymtracker.domain.repository.LocalUserData
 import com.vitoroliveira.gymtracker.domain.repository.ProfileRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 data class ProfileUiState(
     val isLoading: Boolean = false,
@@ -26,13 +28,16 @@ data class ProfileUiState(
     /** Enviando ou removendo a foto: a tela mostra um indicador sobre o avatar e bloqueia novo toque. */
     val isUpdatingAvatar: Boolean = false,
     /** Meu título de desafio (honra ou falha), se houver. */
-    val title: ProfileTitle? = null
+    val title: ProfileTitle? = null,
+    /** Saindo da conta (enviando o que falta, encerrando a sessão e apagando os dados do aparelho). */
+    val isSigningOut: Boolean = false
 )
 
 class ProfileViewModel(
     private val profileRepository: ProfileRepository,
     private val authRepository: AuthRepository,
-    private val socialRepository: SocialRepository? = null
+    private val socialRepository: SocialRepository? = null,
+    private val localData: LocalUserData? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
@@ -161,11 +166,24 @@ class ProfileViewModel(
         }
     }
 
+    /**
+     * Sai da conta: (1) envia para a nuvem o que ainda só está no aparelho, enquanto a sessão vale (no máximo
+     * [FLUSH_TIMEOUT_MS], para não travar sem internet); (2) encerra a sessão; (3) apaga os dados do usuário no aparelho,
+     * para a próxima conta que entrar neste celular não herdá-los. Falha de rede não impede a saída.
+     */
     fun signOut() {
+        if (_uiState.value.isSigningOut || _uiState.value.isSignedOut) return
         viewModelScope.launch {
-            authRepository.signOut()
-            _uiState.value = _uiState.value.copy(isSignedOut = true)
+            _uiState.value = _uiState.value.copy(isSigningOut = true)
+            localData?.let { data -> quietly { withTimeoutOrNull(FLUSH_TIMEOUT_MS) { data.flush() } } }
+            quietly { authRepository.signOut() }
+            quietly { localData?.clear() }
+            _uiState.value = _uiState.value.copy(isSigningOut = false, isSignedOut = true)
         }
+    }
+
+    private suspend fun quietly(block: suspend () -> Unit) {
+        try { block() } catch (e: Exception) { if (e is CancellationException) throw e }
     }
 
     fun clearMessages() {
@@ -173,5 +191,9 @@ class ProfileViewModel(
             errorMessage = null,
             successMessage = null
         )
+    }
+
+    private companion object {
+        const val FLUSH_TIMEOUT_MS = 5_000L
     }
 }

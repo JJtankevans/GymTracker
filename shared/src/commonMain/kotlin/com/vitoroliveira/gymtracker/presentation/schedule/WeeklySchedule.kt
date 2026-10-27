@@ -30,6 +30,12 @@ class ScheduleRepository(private val store: ScheduleStore) {
         _plan.update { if (groupId == null) it - day else it + (day to groupId) }
         store.save(_plan.value)
     }
+
+    /** Apaga a agenda (ao sair da conta: os grupos são da conta que saiu). */
+    fun clear() {
+        _plan.value = emptyMap()
+        store.save(emptyMap())
+    }
 }
 
 /** Grupo planejado para o dia [isoDay] (1..7), só se ele ainda existe (grupo apagado = nada planejado). */

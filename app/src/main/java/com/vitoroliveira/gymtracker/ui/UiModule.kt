@@ -32,4 +32,7 @@ val uiModule = module {
     single<com.vitoroliveira.gymtracker.presentation.schedule.ScheduleStore> { com.vitoroliveira.gymtracker.ui.muscleGroup.PrefsScheduleStore(androidContext()) }
     single { com.vitoroliveira.gymtracker.presentation.schedule.ScheduleRepository(get()) }
     viewModel { com.vitoroliveira.gymtracker.presentation.schedule.ScheduleViewModel(get()) }
+    single<com.vitoroliveira.gymtracker.domain.repository.LocalUserData> {
+        LocalUserDataImpl(androidContext(), get(), get(), get(), get(), get())
+    }
 }

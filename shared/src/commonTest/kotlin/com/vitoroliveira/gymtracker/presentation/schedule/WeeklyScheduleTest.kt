@@ -14,6 +14,14 @@ class WeeklyScheduleTest {
         assertEquals(mapOf(3 to "pernas"), store.load())
     }
 
+    @Test fun limparApagaAAgendaDoAparelho() {
+        val store = InMemoryScheduleStore(mapOf(1 to "peito"))
+        val repo = ScheduleRepository(store)
+        repo.clear()
+        assertEquals(emptyMap(), repo.plan.value)
+        assertEquals(emptyMap(), store.load())
+    }
+
     @Test fun planejadoSoValeSeOGrupoAindaExiste() {
         val plan = mapOf(1 to "peito", 2 to "apagado")
         assertEquals("peito", plannedGroupFor(plan, 1, listOf("peito", "costas")))
