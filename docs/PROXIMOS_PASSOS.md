@@ -145,7 +145,8 @@ Pendente / ideias:
 ## Décima sexta rodada (27/10/2026, 4ª sessão na nuvem) — erros de média prioridade
 - PR #7 (erros 1 a 4) mergeado; branch novo `claude/correcoes-media-prioridade`, PR para o `master`; 260 testes no `:shared`.
 - **5:** o Thiago rodou a `009`. **6:** aviso "Confirme seu e-mail" + reenviar; explicado no `CONTEXTO_SESSAO.md` como o Supabase envia o e-mail (automático, SMTP próprio para usuários reais, Site URL). **8:** botão de série desligado enquanto grava; circuito enfileira. **9:** circuito preenche a última carga quando chega. **10:** migração `012` (fuso de Brasília), testada no Postgres local, pendente no Supabase. **11:** fim do treino troca a Home antiga por uma nova. **12:** "Tirar do grupo" separado de "Apagar de vez". **13:** recordes recalculados a cada série; confete só para recorde novo.
-- **Pendente:** rodar a `012`; validar no celular; decidir "Confirm email" + SMTP.
+- **Pendente:** validar no celular; decidir "Confirm email" + SMTP.
+- **Depois (5ª sessão, 27/10):** o Thiago rodou a `010`, a `011` e a `012` e cadastrou os secrets `SUPABASE_URL`/`SUPABASE_KEY` no GitHub; APK com login gerado pela execução 40512678834 (disparada no `master`). Falta decidir a chave de assinatura fixa para distribuir atualizações sem desinstalar.
 
 ---
 
