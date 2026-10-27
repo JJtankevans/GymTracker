@@ -56,6 +56,8 @@ fun appModule(supabaseClient: SupabaseClient) = module {
     viewModel { com.vitoroliveira.gymtracker.presentation.social.SocialViewModel(get()) }
     viewModel { com.vitoroliveira.gymtracker.presentation.achievements.AchievementsViewModel(get(), get(), get()) }
     viewModel { com.vitoroliveira.gymtracker.presentation.workout.ExportViewModel(get(), get(), get()) }
+    single<com.vitoroliveira.gymtracker.domain.repository.RoutineShareRepository> { com.vitoroliveira.gymtracker.data.repository.RoutineShareRepositoryImpl(get()) }
+    viewModel { com.vitoroliveira.gymtracker.presentation.share.RoutineShareViewModel(get(), get(), get()) }
     viewModel { (workoutId: String) -> WorkoutDetailViewModel(workoutId, get(), get()) }
     viewModel { (exerciseId: String) -> ExerciseDetailViewModel(exerciseId, get()) }
 }
