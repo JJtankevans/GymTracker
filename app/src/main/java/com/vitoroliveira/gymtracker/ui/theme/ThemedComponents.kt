@@ -39,7 +39,7 @@ fun Modifier.themedBackground(): Modifier {
         // Insano: o fundo anda 3x mais rápido (múltiplo inteiro, então o loop continua contínuo)
         drawThemeBackground(extras, bg, if (intensity == Intensity.WILD) (t * 3f) % 1f else t)
         val animatedDecor = extras.decor !in listOf(
-            Decor.NONE, Decor.PAPER, Decor.BLUEPRINT, Decor.STRIPES, Decor.DOTS, Decor.HALO
+            Decor.NONE, Decor.PAPER, Decor.BLUEPRINT, Decor.STRIPES, Decor.DOTS, Decor.HALO, Decor.DECO
         )
         // Calmo: um véu da cor do fundo deixa a decoração discreta
         if (intensity == Intensity.CALM && extras.decor != Decor.NONE) drawRect(bg.copy(alpha = 0.5f))

@@ -139,7 +139,8 @@ private fun shiftHue(c: Color, deg: Float): Color {
 /** Decorações animadas também pegam a paleta da música. */
 private fun AppThemeSpec.withAccentExtras(a: Color): AppThemeSpec {
     val reactive = when (extras.decor) {
-        Decor.AURORA, Decor.SYNTH_SUN, Decor.NEON_GRID, Decor.EMBERS, Decor.CONFETTI -> true
+        Decor.AURORA, Decor.SYNTH_SUN, Decor.NEON_GRID, Decor.EMBERS, Decor.CONFETTI,
+        Decor.SPIRAL, Decor.LAVA, Decor.CARNIVAL -> true
         else -> false
     }
     if (!reactive) return this

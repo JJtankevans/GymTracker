@@ -40,6 +40,16 @@ fun DrawScope.drawThemeBackground(extras: ThemeExtras, base: Color, t: Float) {
         Decor.STRIPES -> drawStripes(extras.decorColors.firstOrNull() ?: Color.Red)
         Decor.DOTS -> drawDots(extras.decorColors.firstOrNull() ?: Color.White)
         Decor.HALO -> drawHalo(extras.decorColors.firstOrNull() ?: Color.White)
+        Decor.MATRIX -> drawMatrixRain(extras.decorColors, t)
+        Decor.SPIRAL -> drawSpiral(extras.decorColors, t)
+        Decor.WARP -> drawWarp(extras.decorColors, t)
+        Decor.GLITCH -> drawGlitch(extras.decorColors, t)
+        Decor.LAVA -> drawLava(extras.decorColors, t)
+        Decor.ARCADE -> drawArcade(extras.decorColors, t)
+        Decor.CARNIVAL -> drawCarnival(extras.decorColors, t)
+        Decor.WAVES -> drawWaves(extras.decorColors, t)
+        Decor.FIREFLIES -> drawFireflies(extras.decorColors, t)
+        Decor.DECO -> drawDeco(extras.decorColors)
     }
 }
 

@@ -14,7 +14,8 @@ import androidx.compose.ui.unit.dp
 enum class ThemeCategory(val label: String, val blurb: String) {
     PRO("Profissionais", "Limpos e funcionais, pra treinar sem distração"),
     BOLD("Ousados", "Personalidade forte, sem medo de aparecer"),
-    ABSTRACT("Abstratos", "Experimentais, pra quem quer impacto")
+    ABSTRACT("Abstratos", "Experimentais, pra quem quer impacto"),
+    CRAZY("Loucos", "Sem freio nenhum. Treino no modo caos")
 }
 
 /** Estrutura da Home. Cada tema escolhe a sua: não é só cor, é composição. */
@@ -35,7 +36,17 @@ enum class Decor {
     BLUEPRINT,  // papel milimetrado técnico
     STRIPES,    // listras diagonais de corrida no canto
     DOTS,       // grade de pontinhos discreta
-    HALO        // luz suave vinda do topo
+    HALO,       // luz suave vinda do topo
+    MATRIX,     // chuva de letras verdes
+    SPIRAL,     // espiral hipnótica girando
+    WARP,       // estrelas em velocidade de dobra
+    GLITCH,     // falhas de imagem RGB
+    LAVA,       // lâmpada de lava
+    ARCADE,     // invasores de pixel marchando
+    CARNIVAL,   // confete e serpentina caindo
+    WAVES,      // ondas e bolhas (Oceano)
+    FIREFLIES,  // vaga-lumes no mato (Floresta)
+    DECO        // leque e moldura art déco (Ouro)
 }
 
 /**
