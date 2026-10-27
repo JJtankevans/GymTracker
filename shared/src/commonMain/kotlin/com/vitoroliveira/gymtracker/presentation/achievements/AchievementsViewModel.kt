@@ -38,16 +38,19 @@ class AchievementsViewModel(
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, errorMessage = null)
             try {
-                val dates = workouts.getHistory().mapNotNull { w ->
-                    w.startedAt?.let { runCatching { Instant.parse(it).toLocalDateTime(zone).date }.getOrNull() }
+                val sessions = workouts.getHistory().mapNotNull { w ->
+                    val start = w.startedAt?.let { runCatching { Instant.parse(it) }.getOrNull() } ?: return@mapNotNull null
+                    val end = w.finishedAt?.let { runCatching { Instant.parse(it) }.getOrNull() }
+                    SessionInfo(start.toLocalDateTime(zone), end?.let { (it - start).inWholeMinutes })
                 }
+                val dates = sessions.map { it.start.date }
                 // os extras abaixo são opcionais: se falharem, a família correspondente só não aparece
                 val goal = optional { profiles.getCurrentProfile().weeklyGoal } ?: 3
                 val volume = optional { social?.let { s -> s.profileStats(s.currentUserId())?.volumeKg } }
                 val records = optional { workouts.getRecordsSummary().size }
                 _state.value = AchievementsUiState(
                     isLoading = false,
-                    achievements = Achievements.compute(AchievementInput(dates, goal, volume, records))
+                    achievements = Achievements.compute(AchievementInput(dates, goal, volume, records, sessions))
                 )
             } catch (e: Exception) {
                 if (e is CancellationException) throw e

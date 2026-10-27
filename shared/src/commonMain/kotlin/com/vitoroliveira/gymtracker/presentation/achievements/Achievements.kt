@@ -2,7 +2,9 @@ package com.vitoroliveira.gymtracker.presentation.achievements
 
 import com.vitoroliveira.gymtracker.presentation.DashboardCalculator
 import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.plus
 
 /** Uma medalha. Cada família (treinos, sequência...) tem vários níveis, um [Achievement] por nível. */
@@ -19,7 +21,8 @@ data class Achievement(
 }
 
 enum class AchievementFamily(val label: String) {
-    WORKOUTS("Treinos"), STREAK("Dias seguidos"), WEEKS("Semanas com a meta"), VOLUME("Volume total"), RECORDS("Recordes")
+    WORKOUTS("Treinos"), STREAK("Dias seguidos"), WEEKS("Semanas com a meta"), VOLUME("Volume total"), RECORDS("Recordes"),
+    SPECIAL("Especiais")
 }
 
 /** O que a tela sabe do usuário. Null = dado indisponível (a família some em vez de mostrar 0 errado). */
@@ -27,8 +30,12 @@ data class AchievementInput(
     val workoutDates: List<LocalDate>,
     val weeklyGoal: Int,
     val totalVolumeKg: Double? = null,
-    val exercisesWithRecord: Int? = null
+    val exercisesWithRecord: Int? = null,
+    /** Início (hora local) e duração de cada treino, para as medalhas especiais. Vazio = família não aparece. */
+    val sessions: List<SessionInfo> = emptyList()
 )
+
+data class SessionInfo(val start: LocalDateTime, val minutes: Long?)
 
 object Achievements {
     private val workouts = listOf(1 to "Primeiro passo", 10 to "Frequentador", 50 to "Rato de academia", 100 to "Morador da academia", 250 to "Lenda viva")
@@ -54,6 +61,21 @@ object Achievements {
     fun weeksMeetingGoal(dates: List<LocalDate>, goal: Int): Int =
         dates.groupingBy { DashboardCalculator.weekStart(it) }.eachCount().count { it.value >= goal.coerceAtLeast(1) }
 
+    /** Medalhas avulsas, de um nível só: horário, duração e dia da semana dos treinos. */
+    fun specials(sessions: List<SessionInfo>): List<Achievement> {
+        fun special(id: String, title: String, description: String, target: Int, count: (SessionInfo) -> Boolean) =
+            Achievement("SPECIAL_$id", AchievementFamily.SPECIAL, title, description, sessions.count(count), target)
+        return listOf(
+            special("EARLY", "Madrugador", "Comece 5 treinos antes das 7h", 5) { it.start.hour < 7 },
+            special("NIGHT", "Coruja de ferro", "Comece 5 treinos depois das 21h", 5) { it.start.hour >= 21 },
+            special("LONG", "Maratonista", "Faça 3 treinos de 90 minutos ou mais", 3) { (it.minutes ?: 0) >= 90 },
+            special("MONDAY", "Segunda sem desculpa", "Treine em 10 segundas-feiras", 10) { it.start.dayOfWeek == DayOfWeek.MONDAY },
+            special("WEEKEND", "Fim de semana sagrado", "Treine 10 vezes no sábado ou domingo", 10) {
+                it.start.dayOfWeek == DayOfWeek.SATURDAY || it.start.dayOfWeek == DayOfWeek.SUNDAY
+            }
+        )
+    }
+
     fun compute(input: AchievementInput): List<Achievement> {
         fun family(f: AchievementFamily, tiers: List<Pair<Int, String>>, progress: Int, describe: (Int) -> String) =
             tiers.map { (target, title) -> Achievement("${f.name}_$target", f, title, describe(target), progress, target) }
@@ -74,6 +96,7 @@ object Achievements {
                     if (it == 1) "Tenha um recorde de carga registrado" else "Tenha recorde de carga em $it exercícios"
                 })
             }
+            if (input.sessions.isNotEmpty()) addAll(specials(input.sessions))
         }
     }
 }

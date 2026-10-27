@@ -78,4 +78,17 @@ class AchievementsTest {
         assertTrue(s.achievements.none { it.family == AchievementFamily.VOLUME }) // sem social = sem volume
         assertTrue(s.unlockedCount >= 3)
     }
+
+    @Test fun medalhasEspeciaisPorHorarioDuracaoEDia() {
+        fun at(day: Int, hour: Int, minutes: Long? = 60) = SessionInfo(kotlinx.datetime.LocalDateTime(2026, 10, day, hour, 0), minutes)
+        // 26/10/2026 é segunda
+        val sessions = listOf(at(26, 6), at(26, 22), at(24, 10, 95), at(25, 23, 120), at(27, 6, null))
+        val all = Achievements.specials(sessions).associateBy { it.id }
+        assertEquals(2, all.getValue("SPECIAL_EARLY").progress)
+        assertEquals(2, all.getValue("SPECIAL_NIGHT").progress)
+        assertEquals(2, all.getValue("SPECIAL_LONG").progress)
+        assertEquals(2, all.getValue("SPECIAL_MONDAY").progress)
+        assertEquals(2, all.getValue("SPECIAL_WEEKEND").progress)
+        assertTrue(Achievements.compute(AchievementInput(emptyList(), 3)).none { it.family == AchievementFamily.SPECIAL })
+    }
 }
