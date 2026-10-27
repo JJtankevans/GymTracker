@@ -119,3 +119,10 @@ Pendente / ideias:
 - **Primeira compilação real** do código das sessões de 21/10: compilou; 1 teste pegou um bug (aviso "já está na sua lista" apagado pela recarga; corrigido com `loadExercises(clearError = false)`).
 - **Melhorias (branch `claude/melhorias`):** fotos/títulos no feed e placar; detalhe do treino com resumo, anotação e compartilhar; compartilhar no fim do treino; calculadora de anilhas (detalhe e treino ativo) e tabela de 1RM; sessões do exercício; sugestão do próximo grupo + agenda da semana; sincronização do peso/dados do corpo com o Supabase; medidas corporais (local); séries por músculo na semana; aviso de descanso com tela bloqueada; conquistas; exportar CSV; selo de pedidos para seguir; Instant atualizado. Testes: 179 → 230.
 - **Pendente:** testar tudo no celular; medidas corporais na nuvem (precisaria de tabela nova); conquistas por desafio/títulos; deload automático; sincronizar o relógio.
+
+## Décima terceira rodada (27/10/2026, sessão na nuvem) — compartilhar treinos, temas Loucos e extras
+- **Compartilhar grupo por código** (`shared_routines` + `get_shared_routine`, migração `011`, pendente no Supabase): cópia do grupo (nome, cor, até 40 exercícios com séries/reps/observação); o amigo importa colando o código ou o convite inteiro; nome repetido ganha número; exercícios de mesmo nome são reaproveitados; falha no meio desfaz o grupo. Decisão: código em vez de link (sem domínio próprio para link clicável no WhatsApp).
+- **Temas:** categoria "Loucos" (Matrix, Hipnose, Hiperespaço, Glitch, Lâmpada de Lava, Arcade, Carnaval) e decorações novas em Oceano (ondas), Floresta (vaga-lumes) e Ouro (art déco). Total: 28 temas.
+- **Extras:** mapa de calor no Histórico, aquecimento na calculadora de anilhas, confete ao bater recorde, conquistas especiais (horário, duração, dia da semana).
+- **Pendente:** rodar o 011; ver no aparelho desempenho/legibilidade dos temas novos; link clicável para importar (precisaria de domínio + App Links).
+

@@ -320,4 +320,5 @@ ORDER BY profile_id, week_start;
 - Títulos de desafio: `challenges.fail_threshold` e `challenges.streak_goal` (opcionais) e função `profile_titles(uuid[])` em `docs/supabase/010_titulos_do_desafio.sql`.
 - Recordes pessoais em uma chamada: função `records_summary()` (SECURITY INVOKER) em `docs/supabase/008_records_summary.sql`; substitui consultar `vw_exercise_progression` exercício por exercício na tela de Recordes.
 - Foto de perfil: bucket público `user_profile_images` no Supabase Storage (arquivos em `<id do usuário>/<milissegundos>.jpg`; a URL pública fica em `profiles.avatar_url`); limites e RLS em `docs/supabase/007_foto_de_perfil_storage.sql`.
+- Compartilhar treino por código: tabela `shared_routines` (código de 8 caracteres gerado no banco, dono, nome, cor, `exercises` jsonb, `imports`) com RLS só do dono e função `get_shared_routine(p_code, p_count_import)` (SECURITY DEFINER, só `authenticated`) para buscar pelo código exato: `docs/supabase/011_compartilhar_treinos.sql`.
 - Exercício em vários grupos (`group_exercises`): `docs/supabase/006_exercicio_em_varios_grupos.sql`; índices `idx_group_exercises_exercise` e `idx_group_exercises_profile`.
