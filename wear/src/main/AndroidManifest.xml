@@ -2,7 +2,21 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-feature android:name="android.hardware.type.watch" />
+
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- aviso de fim do descanso e atalho do treino no mostrador (pedida ao começar o primeiro treino) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- alarme exato do fim do descanso, para vibrar na hora mesmo com a tela apagada -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <!-- batimentos (Health Services): BODY_SENSORS até o Wear OS 5; READ_HEART_RATE a partir do Wear OS 6 (API 36) -->
+    <uses-permission android:name="android.permission.BODY_SENSORS" android:maxSdkVersion="35" />
+    <uses-permission android:name="android.permission.health.READ_HEART_RATE" />
+
+    <queries>
+        <package android:name="com.google.android.wearable.healthservices" />
+    </queries>
 
     <application
         android:allowBackup="true"
@@ -11,16 +25,20 @@
         android:supportsRtl="true"
         android:theme="@android:style/Theme.DeviceDefault">
 
+        <!-- funciona sem o celular (o treino fica na fila e vai quando o celular aparecer) -->
         <meta-data android:name="com.google.android.wearable.standalone" android:value="true" />
 
         <activity
             android:name=".WearActivity"
             android:exported="true"
+            android:launchMode="singleTask"
             android:taskAffinity="">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <receiver android:name=".RestAlarmReceiver" android:exported="false" />
     </application>
 </manifest>

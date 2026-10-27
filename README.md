@@ -8,14 +8,14 @@ App Android de registro de treinos de academia, com camada social. Feito em Kotl
 - **Acompanhamento:** Histórico com mapa de calor, detalhe do treino com anotação, Recordes, detalhe do exercício (gráfico, 1RM, tabela de cargas, calculadora de anilhas com aquecimento), Evolução (4 levantamentos básicos, séries por músculo na semana, peso e medidas corporais), Conquistas e exportação CSV.
 - **Social:** perfil público/só seguidores/privado, seguir, feed de treinos com reações, grupos, desafios com placar, mensagens e títulos (Alpha, Chad...), compartilhar um grupo de treino por código.
 - **Aparência:** 28 temas em 4 categorias (Profissionais, Ousados, Abstratos, Loucos), vários com fundo animado, layouts de Home por tema e cor reativa à música que está tocando.
-- **Relógio (`:wear`):** app separado para Wear OS (descanso e registro de séries); ainda não sincroniza com o celular.
+- **Relógio (`:wear`):** app para Wear OS que recebe os grupos do celular, registra o treino exercício por exercício (carga sugerida, coroa, descanso com alarme, batimentos, tela sempre ligada) e manda o treino para o celular gravar no Supabase. Instalação e detalhes em `docs/RELOGIO.md`.
 
 ## Estrutura
 | Módulo | Conteúdo |
 |--------|----------|
-| `:shared` | KMP (só o alvo Android é usado): modelos, repositórios Supabase, casos de uso, ViewModels e regras puras. Testes em `shared/src/commonTest` (242 `@Test`). |
+| `:shared` | KMP (só o alvo Android é usado): modelos, repositórios Supabase, casos de uso, ViewModels e regras puras. Testes em `shared/src/commonTest` (272 `@Test`). |
 | `:app` | Telas Compose, temas, navegação, notificações, música, armazenamento local. Galerias de captura (Robolectric + Roborazzi) em `app/src/test`. |
-| `:wear` | App do relógio. |
+| `:wear` | App do relógio (usa o `:shared` para o protocolo com o celular e as regras do treino). |
 | `docs/` | Documentação (ver abaixo) e SQL do Supabase em `docs/supabase/`. |
 | `tools/` | `cortar_folha.py`: corta folhas de ilustrações em PNGs por exercício. |
 
