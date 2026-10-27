@@ -65,6 +65,7 @@ fun ExerciseScreen(
         },
         onUpdate = { exercise -> exerciseViewModel.updateExercise(exercise) },
         onDelete = { id -> exerciseViewModel.deleteExercise(id) },
+        onRemoveFromGroup = { exercise, groupId -> exerciseViewModel.removeFromGroup(exercise, groupId) },
         onClearMessages = { exerciseViewModel.clearMessages() },
         onCreateMany = { items, groupId -> exerciseViewModel.createMany(items, groupId) }
     )
@@ -83,7 +84,9 @@ fun ExerciseScreenContent(
     onUpdate: (Exercise) -> Unit,
     onDelete: (String) -> Unit,
     onClearMessages: () -> Unit,
-    onCreateMany: (List<CatalogExercise>, String?) -> Unit = { _, _ -> }
+    onCreateMany: (List<CatalogExercise>, String?) -> Unit = { _, _ -> },
+    /** Tira o exercício só do grupo filtrado (mantém o exercício e o histórico). */
+    onRemoveFromGroup: (Exercise, String) -> Unit = { _, _ -> }
 ) {
     var showCatalog by remember { mutableStateOf(false) }
     var showCreateDialog by remember { mutableStateOf(false) }
@@ -234,25 +237,44 @@ fun ExerciseScreenContent(
     }
 
     exerciseToDelete?.let { exercise ->
+        // dentro de um grupo, o mais comum é só tirar o exercício DESTE grupo; apagar de vez leva o histórico junto
+        val group = availableGroups.firstOrNull { it.id == uiState.selectedMuscleGroupId && it.id in exercise.groupIds }
+        val otherGroups = exercise.groupIds.size - 1
         AlertDialog(
             onDismissRequest = { exerciseToDelete = null },
-            title = { Text("Remover exercício") },
+            title = { Text(if (group != null) "Remover \"${exercise.name}\"" else "Apagar exercício") },
             text = {
-                Text("Deseja remover \"${exercise.name}\"? Isso também apagará o histórico de séries registradas para ele.")
+                Text(
+                    if (group != null)
+                        "\"Tirar do grupo\" só remove o exercício de \"${group.name}\"" +
+                            (if (otherGroups > 0) " (ele continua em mais $otherGroups ${if (otherGroups == 1) "grupo" else "grupos"})" else "") +
+                            " e mantém o histórico.\n\n\"Apagar de vez\" apaga o exercício de todos os grupos junto com todas as séries registradas dele."
+                    else
+                        "Apagar \"${exercise.name}\" tira o exercício de todos os grupos e apaga todas as séries registradas dele. Não dá para desfazer."
+                )
             },
             confirmButton = {
-                TextButton(
-                    onClick = {
+                if (group != null) {
+                    TextButton(onClick = {
+                        group.id?.let { onRemoveFromGroup(exercise, it) }
+                        exerciseToDelete = null
+                    }) { Text("Tirar do grupo") }
+                } else {
+                    TextButton(onClick = {
                         exercise.id?.let { onDelete(it) }
                         exerciseToDelete = null
-                    }
-                ) {
-                    Text("Remover", color = MaterialTheme.colorScheme.error)
+                    }) { Text("Apagar", color = MaterialTheme.colorScheme.error) }
                 }
             },
             dismissButton = {
-                TextButton(onClick = { exerciseToDelete = null }) {
-                    Text("Cancelar")
+                Row {
+                    if (group != null) {
+                        TextButton(onClick = {
+                            exercise.id?.let { onDelete(it) }
+                            exerciseToDelete = null
+                        }) { Text("Apagar de vez", color = MaterialTheme.colorScheme.error) }
+                    }
+                    TextButton(onClick = { exerciseToDelete = null }) { Text("Cancelar") }
                 }
             }
         )

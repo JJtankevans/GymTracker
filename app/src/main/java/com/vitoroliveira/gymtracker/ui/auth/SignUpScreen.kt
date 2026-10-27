@@ -38,7 +38,12 @@ fun SignUpScreen(
         onSignUp = { email, password, username ->
             viewModel.signUp(email, password, username)
         },
-        onClearError = { viewModel.clearError() }
+        onClearError = { viewModel.clearError() },
+        onResendConfirmation = { viewModel.resendConfirmation() },
+        onConfirmationDone = {
+            viewModel.dismissConfirmation()
+            onNavigateToLogin()
+        }
     )
 }
 
@@ -49,7 +54,10 @@ fun SignUpScreenContent(
     onNavigateToLogin: () -> Unit,
     onSignUpSuccess: () -> Unit,
     onSignUp: (String, String, String) -> Unit,
-    onClearError: () -> Unit
+    onClearError: () -> Unit,
+    onResendConfirmation: () -> Unit = {},
+    /** Fecha o aviso de confirmação de e-mail e volta para o login. */
+    onConfirmationDone: () -> Unit = {}
 ) {
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -61,11 +69,29 @@ fun SignUpScreenContent(
     }
 
     val snackbarHostState = remember { SnackbarHostState() }
-    LaunchedEffect(uiState.errorMessage) {
-        uiState.errorMessage?.let {
+    LaunchedEffect(uiState.errorMessage, uiState.infoMessage) {
+        (uiState.errorMessage ?: uiState.infoMessage)?.let {
             snackbarHostState.showSnackbar(it)
             onClearError()
         }
+    }
+
+    // "Confirm email" ligado no Supabase: a conta foi criada, mas só entra depois de clicar no link do e-mail
+    uiState.confirmationEmail?.let { address ->
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("Confirme seu e-mail") },
+            text = {
+                Text(
+                    "Enviamos um link de confirmação para $address. Abra o e-mail (confira também o spam), toque no link " +
+                        "e depois volte aqui e entre com seu e-mail e senha."
+                )
+            },
+            confirmButton = { TextButton(onClick = onConfirmationDone) { Text("Ir para o login") } },
+            dismissButton = {
+                TextButton(onClick = onResendConfirmation, enabled = !uiState.isLoading) { Text("Reenviar e-mail") }
+            }
+        )
     }
 
     ThemedScaffold(

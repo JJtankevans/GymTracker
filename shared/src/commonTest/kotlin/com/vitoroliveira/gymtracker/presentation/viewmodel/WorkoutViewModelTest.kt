@@ -210,4 +210,70 @@ class WorkoutViewModelTest {
         assertTrue("internet" in msg, msg)
         assertFalse("supabase" in msg)
     }
+
+    @Test fun toqueDuploNaoGravaASerieDuasVezes() {
+        val vm = vm()
+        vm.startWorkout(null)
+        val gate = kotlinx.coroutines.CompletableDeferred<Unit>()
+        workouts.addSetGate = gate
+        vm.addSet("e1", 10, 80.0)
+        assertTrue("e1" in vm.uiState.value.savingExerciseIds)   // a tela desliga o botão
+        vm.addSet("e1", 10, 80.0)                                 // segundo toque, antes de a primeira voltar
+        gate.complete(Unit)
+        assertEquals(1, workouts.sets.size)
+        assertTrue(vm.uiState.value.savingExerciseIds.isEmpty())
+    }
+
+    @Test fun circuitoEnfileiraAsSeriesENumeraCerto() {
+        val vm = vm()
+        vm.startWorkout(null)
+        val gate = kotlinx.coroutines.CompletableDeferred<Unit>()
+        workouts.addSetGate = gate
+        vm.addSet("e1", 10, 80.0, queueIfSaving = true)
+        vm.addSet("e1", 10, 80.0, queueIfSaving = true)
+        gate.complete(Unit)
+        assertEquals(listOf(1, 2), vm.uiState.value.completedSets.map { it.setNumber })
+    }
+
+    @Test fun recordeDigitadoPorEnganoEDesfeitoAoCorrigir() {
+        workouts.baselines = mapOf("e1" to ExerciseBaseline(lastWeightKg = 75.0, lastReps = 10, recordWeightKg = 80.0))
+        val vm = vm()
+        vm.startWorkout(null)
+        vm.addSet("e1", 10, 200.0)                              // 200 em vez de 20
+        assertTrue("e1" in vm.uiState.value.newRecordExerciseIds)
+        assertEquals(1, vm.uiState.value.recordBursts)
+
+        vm.updateSet(vm.uiState.value.completedSets.single().id!!, 10, 20.0)
+        assertTrue(vm.uiState.value.newRecordExerciseIds.isEmpty())
+        assertEquals(80.0, vm.uiState.value.baselines["e1"]?.recordWeightKg)   // volta o recorde de antes
+
+        vm.addSet("e1", 6, 82.5)                                // recorde de verdade ainda é detectado
+        assertTrue("e1" in vm.uiState.value.newRecordExerciseIds)
+        assertEquals(2, vm.uiState.value.recordBursts)
+        vm.finishWorkout()
+        assertEquals(listOf("Supino"), assertNotNull(vm.uiState.value.summary).newRecords)
+    }
+
+    @Test fun apagarASerieDoRecordeDesfazORecorde() {
+        workouts.baselines = mapOf("e1" to ExerciseBaseline(recordWeightKg = 80.0))
+        val vm = vm()
+        vm.startWorkout(null)
+        vm.addSet("e1", 10, 90.0)
+        vm.deleteSet(vm.uiState.value.completedSets.single().id!!)
+        assertTrue(vm.uiState.value.newRecordExerciseIds.isEmpty())
+        assertEquals(80.0, vm.uiState.value.baselines["e1"]?.recordWeightKg)
+    }
+
+    @Test fun editarParaCimaDetectaRecorde() {
+        workouts.baselines = mapOf("e1" to ExerciseBaseline(recordWeightKg = 80.0))
+        val vm = vm()
+        vm.startWorkout(null)
+        vm.addSet("e1", 10, 70.0)
+        assertTrue(vm.uiState.value.newRecordExerciseIds.isEmpty())
+        vm.updateSet(vm.uiState.value.completedSets.single().id!!, 10, 85.0)
+        assertTrue("e1" in vm.uiState.value.newRecordExerciseIds)
+        assertEquals(85.0, vm.uiState.value.baselines["e1"]?.recordWeightKg)
+        assertEquals(1, vm.uiState.value.recordBursts)
+    }
 }
+

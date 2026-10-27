@@ -35,6 +35,7 @@ private class MemProfiles(var profile: Profile = Profile(id = "u1", username = "
 private class NoAuth : AuthRepository {
     override suspend fun signUp(email: String, password: String, username: String) {}
     override suspend fun signIn(email: String, password: String) {}
+    override suspend fun resendSignUpConfirmation(email: String) {}
     override suspend fun signOut() {}
     override suspend fun awaitSession() = true
     override fun isLoggedIn() = true
@@ -49,6 +50,7 @@ private class Steps {
 private class StepAuth(private val steps: Steps, private val fail: Boolean = false) : AuthRepository {
     override suspend fun signUp(email: String, password: String, username: String) {}
     override suspend fun signIn(email: String, password: String) {}
+    override suspend fun resendSignUpConfirmation(email: String) {}
     override suspend fun signOut() { steps.done += "signOut"; if (fail) throw RuntimeException("Unable to resolve host") }
     override suspend fun awaitSession() = true
     override fun isLoggedIn() = true

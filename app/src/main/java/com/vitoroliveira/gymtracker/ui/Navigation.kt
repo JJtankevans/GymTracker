@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -81,6 +82,17 @@ internal fun routeArg(value: String?): String = Uri.encode(value?.takeIf { it.is
 
 /** Argumento da rota montado com [routeArg]; null quando o valor era ausente. */
 private fun Bundle?.routeText(key: String): String? = this?.getString(key)?.takeIf { it != NO_ROUTE_VALUE }
+
+/**
+ * Fim do treino/circuito: volta para a Home trocando a Home antiga (que ficou embaixo na pilha) por uma nova, que
+ * recarrega o painel com o treino que acabou. Antes a Home antiga continuava embaixo e o "voltar" abria outra Home.
+ */
+private fun NavController.backToFreshHome() {
+    navigate(Screen.Home.route) {
+        popUpTo(Screen.Home.route) { inclusive = true }
+        launchSingleTop = true
+    }
+}
 
 @Composable
 fun GymTrackerNavHost() {
@@ -243,7 +255,7 @@ fun GymTrackerNavHost() {
             com.vitoroliveira.gymtracker.ui.circuit.CircuitScreen(
                 muscleGroupId = gid, muscleGroupName = gname,
                 onExit = {
-                    navController.navigate(Screen.Home.route) { popUpTo(Screen.Circuit.route) { inclusive = true } }
+                    navController.backToFreshHome()
                 }
             )
         }
@@ -255,11 +267,7 @@ fun GymTrackerNavHost() {
             ActiveWorkoutScreen(
                 muscleGroupId = muscleGroupId,
                 muscleGroupName = muscleGroupName,
-                onWorkoutFinished = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.ActiveWorkout.route) { inclusive = true }
-                    }
-                },
+                onWorkoutFinished = { navController.backToFreshHome() },
                 onBack = { navController.popBackStack() }
             )
         }
