@@ -133,6 +133,15 @@ Pendente / ideias:
 - Documentação alinhada ao código: `README.md` novo, `CONTEXTO_SESSAO.md` reescrito (PRs #5 e #6 já mergeados no `master` em 27/10; catálogo 70; 28 temas; testes 242+15+1; a exportação CSV depende da 009), status em `SOCIAL_DESIGN.md` e `IMAGENS_EXERCICIOS.md`, aviso de documento histórico em `app/docs/PlanoDeAcao.md`, colunas posteriores e alerta de UTC em `app/docs/supabaseSchema.md`.
 - As notas detalhadas das sessões de 21 a 27/10 que estavam no `CONTEXTO_SESSAO.md` foram movidas para o anexo abaixo (texto original; só o nível dos títulos mudou).
 
+## Décima quinta rodada (27/10/2026, 3ª sessão na nuvem) — correção dos erros 1 a 4
+- Branch `claude/correcoes-erros-1-4`, PR para o `master`, CI verde (249 testes no `:shared`).
+- **1:** sair da conta apaga os dados do usuário guardados no aparelho, depois de tentar enviar o peso pendente (`LocalUserData` + `LocalUserDataImpl`; decisão do Thiago: apagar ao sair). Medidas corporais, que só existem no aparelho, se perdem ao sair.
+- **2:** nomes na rota codificados num lugar só (`routeArg`/`routeText`, `Uri.encode`).
+- **3:** limite de séries mantido (decisão do Thiago), com mensagem dizendo exercício e limite; circuito com Snackbar e limite na preparação.
+- **4:** `finishWorkout` espera as séries ainda em gravação.
+- Junto: sair sem internet não fecha o app (erro 7).
+- **Pendente:** validar no celular (roteiro em `CONTEXTO_SESSAO.md`) e mergear; medidas corporais na nuvem para não se perderem ao sair.
+
 ---
 
 # Anexo: notas detalhadas das sessões de 21 a 27/10/2026 (movidas do CONTEXTO_SESSAO.md em 27/10/2026; retrato daquele momento, ex.: os PRs citados como abertos já foram mergeados)

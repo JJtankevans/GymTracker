@@ -4,15 +4,27 @@ Leia isto primeiro. O histórico longo de decisões, rodada por rodada, está em
 
 **Onde registrar cada coisa:** estado atual e próximos passos → este arquivo; o que foi feito em cada rodada → `PROXIMOS_PASSOS.md`; erros encontrados e como corrigir → `ERROS_CONHECIDOS.md`; tabelas/SQL → `app/docs/supabaseSchema.md` + `docs/supabase/`; social → `SOCIAL_DESIGN.md`; imagens → `IMAGENS_EXERCICIOS.md`. Regras de fim de sessão (avisar, atualizar este arquivo, pedir autorização para commit) estão no `CLAUDE.md` da raiz.
 
+## Sessão de 27/10/2026 (3ª, nuvem): correção dos erros 1 a 4 (e 7) — COMPILADO E TESTADO NO CI, NÃO VISTO NO APARELHO
+- **Branch `claude/correcoes-erros-1-4`** (sai do `master`; inclui o commit da revisão de documentação da 2ª sessão) com PR aberto para o `master`. CI da execução 40505937212: APK gerado e todos os testes do `:shared` passando (agora 249 `@Test`).
+- **O que mudou** (detalhes na seção "Corrigidos" de `ERROS_CONHECIDOS.md`):
+  1. **Sair da conta apaga os dados do usuário no aparelho** (peso, perfil corporal, medidas, agenda, favoritos/recentes do catálogo, ritmo do circuito, músicas não enviadas, CSV exportado), depois de tentar enviar o peso pendente para a nuvem (até 5 s). Interface `LocalUserData` no `:shared`, implementação `ui/LocalUserDataImpl.kt`. O diálogo de sair avisa o que é apagado. **As medidas corporais se perdem ao sair** (ainda não têm tabela na nuvem). Tema e preferências do aparelho ficam.
+  2. **Rotas:** `routeArg()`/`routeText()` em `Navigation.kt` (`Uri.encode`, sem `URLDecoder`): "/", "?", "#" e "%" em nomes não fecham mais o app.
+  3. **Limite de séries mantido** (plano + 2), com mensagem dizendo exercício e limite; o circuito mostra os avisos (Snackbar) e não deixa planejar mais séries que o limite.
+  4. **Fim do treino espera as séries em gravação** (última série do circuito entra no resumo e no post).
+  7. Sair sem internet não fecha o app e apaga a sessão local (`clearSession`).
+- **Não testado no aparelho:** nada disso. Roteiro: (a) com a conta A, registrar peso, medida e agenda; sair; entrar com a conta B e ver que nada de A aparece (e que o peso de A volta ao entrar de novo com A); (b) sair com o celular em modo avião; (c) criar o grupo "Peito/Tríceps" e iniciar treino e circuito nele; exercício com "%" no nome e abrir o detalhe; (d) circuito: tentar passar do limite de séries na preparação e ver a mensagem; terminar um circuito e conferir no resumo/Histórico/feed que a última série está lá.
+- **Risco a olhar:** a correção 2 confia que o Navigation decodifica o argumento da rota (comportamento documentado do Navigation); se um nome aparecer com `%20` na tela, é isso.
+
 ## Sessão de 27/10/2026 (2ª, nuvem): revisão de código e documentação — NENHUM CÓDIGO DO APP ALTERADO
 - **Pedido:** analisar o projeto, alinhar a documentação ao código e listar os possíveis erros com a correção.
 - **Feito:** leitura de todo o `:shared`, das telas principais do `:app` e de todos os SQL. Resultado em **`docs/ERROS_CONHECIDOS.md`** (30 itens, cada um com onde está, o que acontece e como corrigir). `README.md` criado (o projeto não tinha). Este arquivo reescrito com o estado real; as notas longas das sessões anteriores foram para o anexo de `PROXIMOS_PASSOS.md`. Ajustados: `SOCIAL_DESIGN.md` (status), `IMAGENS_EXERCICIOS.md` (o script de corte está versionado), `app/docs/PlanoDeAcao.md` (aviso de documento histórico), `app/docs/supabaseSchema.md` (colunas posteriores e alerta de datas em UTC).
 - **Testado:** só no Postgres 16 local: `'now()'::timestamptz` é aceito (o `finishWorkout` grava a hora do servidor, ok) e `started_at::date` devolve o dia em UTC (treino às 22h30 de Brasília cai no dia seguinte; erro nº 10).
 - **Não testado:** nada foi compilado nem rodado no aparelho nesta sessão (não houve mudança de código). Os erros listados vêm da leitura do código; nenhum foi reproduzido no celular.
-- **Os 4 erros mais graves** (detalhes em `ERROS_CONHECIDOS.md`): (1) dados corporais (peso, altura, medidas) ficam no aparelho sem separar por conta e são enviados para a conta que estiver logada — com as duas contas de teste no mesmo celular pode já ter havido mistura; (2) grupo com `/` no nome (ex.: "Peito/Tríceps") fecha o app ao iniciar o treino ou o circuito; (3) no circuito, séries acima de "padrão + 2" são descartadas sem aviso; (4) no circuito, a última série pode ficar fora do resumo e do post no feed.
+- **Os 4 erros mais graves** (corrigidos na 3ª sessão, acima; detalhes em `ERROS_CONHECIDOS.md`): (1) dados corporais (peso, altura, medidas) ficam no aparelho sem separar por conta e são enviados para a conta que estiver logada — com as duas contas de teste no mesmo celular pode já ter havido mistura; (2) grupo com `/` no nome (ex.: "Peito/Tríceps") fecha o app ao iniciar o treino ou o circuito; (3) no circuito, séries acima de "padrão + 2" são descartadas sem aviso; (4) no circuito, a última série pode ficar fora do resumo e do post no feed.
 
 ## Estado atual
-- **Branch `master` tem tudo.** Os PRs #5 (`claude/instrucoes-sessao`: nome do grupo no histórico, bottom sheet, desafios, catálogo de 70) e #6 (`claude/melhorias`: as 15 melhorias de 26/10 + compartilhar treinos, temas Loucos e extras de 27/10) foram **mergeados em 27/10/2026** sem o teste no aparelho que estava previsto. O CI do `master` (commit `dffb4af`) passou: APK gerado e os 242 testes do `:shared`. Os dois branches podem ser apagados.
+- **PR aberto:** `claude/correcoes-erros-1-4` (erros 1 a 4 e 7 + documentação da revisão), CI verde, sem teste no aparelho.
+- **Branch `master` tem o resto.** Os PRs #5 (`claude/instrucoes-sessao`: nome do grupo no histórico, bottom sheet, desafios, catálogo de 70) e #6 (`claude/melhorias`: as 15 melhorias de 26/10 + compartilhar treinos, temas Loucos e extras de 27/10) foram **mergeados em 27/10/2026** sem o teste no aparelho que estava previsto. O CI do `master` (commit `dffb4af`) passou: APK gerado e os 242 testes do `:shared`. Os dois branches podem ser apagados.
 - **Migrações pendentes no Supabase** (o APK do `master` depende delas; ver a tabela em "Supabase"): `009`, `010`, `011` e talvez a `008`.
 
 **Testado no celular (Xiaomi, adb) e funcionando** (até 21/10): login/cadastro, Home, treino ativo, seletor de temas (eram 21), catálogo de exercícios (eram 56) com seleção múltipla e favoritos, treinos prontos, Recordes com dado real, Circuito (anel, descanso, botões), exclusão de treino no Histórico (toque longo), ilustrações por exercício, Social com duas contas (perfil público, seguir, feed, reações, grupo por código, desafio e placar, editar post, privacidade, pedido de seguir em perfil "Só seguidores"), exercício em vários grupos (006), foto de perfil (007).
@@ -30,7 +42,7 @@ Android (Jetpack Compose) + módulo KMP `:shared` (regras, ViewModels, repositó
 - Catálogo: **70 exercícios** (`shared/.../data/catalog/ExerciseCatalog.kt`, com apelidos para achar a imagem), **9 treinos prontos** (`WorkoutTemplates.kt`).
 - Imagens: **41 de 70** em `app/src/main/res/drawable-nodpi/ex_<nome>.png`; as 29 que faltam (15 antigas + 14 novas) estão em `docs/PROMPTS_IMAGENS_EXERCICIOS.md` (`python3 tools/cortar_folha.py --faltando` confere). Sem imagem, cai no ícone do equipamento.
 - Temas: **28** em 4 categorias (Profissionais, Ousados, Abstratos, Loucos), 5 famílias de fonte, 6 layouts de Home e 2 de treino ativo (`ui/theme/Themes.kt`).
-- Testes: **242** `@Test` no `:shared` (todos passando no CI em 27/10), **15** no `:app` (galerias Robolectric/Roborazzi, não rodam no CI) e **1** no `:wear`. Rodar: `./gradlew.bat :shared:testDebugUnitTest`; galerias: `./gradlew.bat :app:testDebugUnitTest -Proborazzi.test.record=true`.
+- Testes: **249** `@Test` no `:shared` no branch `claude/correcoes-erros-1-4` (242 no `master`; todos passando no CI em 27/10), **15** no `:app` (galerias Robolectric/Roborazzi, não rodam no CI) e **1** no `:wear`. Rodar: `./gradlew.bat :shared:testDebugUnitTest`; galerias: `./gradlew.bat :app:testDebugUnitTest -Proborazzi.test.record=true`.
 
 ## Supabase
 | Migração | O que faz | Situação | Sem ela |
@@ -57,7 +69,7 @@ A nuvem não compila (sem Android SDK), então `.github/workflows/android.yml` c
 - `thiagobr` (usuário @AqueleQueTrazALuz, aparece como "Você") e `v.oliveira042997` (@Deus). **Eu (Claude) não digito senha no app** (regra de segurança, vale mesmo para contas de teste em projeto Supabase real); o Thiago troca a conta no celular (Perfil > Sair da conta). As senhas NÃO ficam neste arquivo.
 - Estado do Social (21/10): a Deus está em "Só seguidores", com "compartilhar treinos/músicas" ligados, dona do grupo privado "Time Teste" (código `e3aab77a`) e do "Desafio Teste" (treinos feitos, 30 dias, mín. 1 min, aberto). A thiagobr tem um **pedido de seguir pendente** para a Deus, está no grupo e no desafio.
 - Dados de teste nas duas contas: posts, treinos curtos, grupo, desafio. No Histórico da conta Thiago há "Push 1min" (recorde 10 kg, útil para testes) e "Sem grupo 3h18min" (2 séries 12×0); um treino ativo vazio no grupo "teste" pode reaparecer como "Treino em andamento" ("Iniciar Novo" descarta).
-- **Atenção (erro nº 1):** como as duas contas usam o mesmo celular, os pesos/dados corporais de uma podem ter sido enviados para a outra. Conferir com `select profile_id, count(*), min(measured_on), max(measured_on) from body_weights group by 1;` antes de confiar nesses dados.
+- **Atenção (erro nº 1, corrigido daqui para a frente):** antes da correção, como as duas contas usam o mesmo celular, os pesos/dados corporais de uma podem ter sido enviados para a outra. Conferir com `select profile_id, count(*), min(measured_on), max(measured_on) from body_weights group by 1;` antes de confiar nesses dados.
 
 ## Como trabalhar neste PC
 - Windows, sem Python (usar sed/awk/PowerShell). Gradle: `./gradlew.bat :app:assembleDebug`. APK: `app/build/outputs/apk/debug/app-debug.apk`.
@@ -73,8 +85,8 @@ A nuvem não compila (sem Android SDK), então `.github/workflows/android.yml` c
 - Nome de exercício continua único por usuário, mas um exercício pode estar em vários grupos (006): quem adiciona exercício deve usar `ExerciseRepository.addToGroups` (reaproveita o existente) em vez de `insert` direto, senão estoura a restrição de nome. O treino pronto e a importação desfazem o grupo se falharem.
 - Catálogo marca "já adicionado" só o que já está no grupo filtrado (`ExerciseUiState.namesInScope`); sem filtro, olha todos.
 - `ExerciseRepository.update` deixa os vínculos exatamente em `Exercise.groupIds`: um `Exercise` montado à mão (sem `groupIds`) apagaria os vínculos. Sempre `copy` de um exercício vindo do repositório.
-- **Rotas de navegação:** texto livre (nome de grupo/exercício) na rota precisa ser codificado com `Uri.encode` e não pode ser decodificado de novo (erro nº 2). Melhor passar só ids.
-- **Dados locais não são por usuário** (peso, medidas, agenda, recentes, tema): qualquer coisa nova guardada no aparelho precisa considerar a troca de conta (erro nº 1).
+- **Rotas de navegação:** texto livre (nome de grupo/exercício) na rota passa por `routeArg()` e é lido com `routeText()` (`Navigation.kt`); nunca montar a rota com o texto cru nem decodificar de novo com `URLDecoder`.
+- **Dados locais não são por usuário** (peso, medidas, agenda, recentes): são apagados ao sair da conta por `LocalUserDataImpl`. Qualquer dado novo do usuário guardado no aparelho precisa entrar no `clear()` dela.
 - Layout: três `FilterChip` em `Row` quebram letra por letra; usar `FlowRow`. Números em `Row(SpaceBetween)` colam; usar `weight(1f)`.
 - Playfair precisa de `lnum`; fonte variável = um arquivo com pesos por eixo (`ThemeFonts.variable`).
 - Git Bash `sed` não lida com acentos (`y///`); para normalizar acentos use PowerShell. PowerShell lê scripts com acento mal sem BOM: usar `[char]0xED` etc.
@@ -83,7 +95,7 @@ A nuvem não compila (sem Android SDK), então `.github/workflows/android.yml` c
 
 ## Próximos passos (ordem sugerida)
 0. **Supabase:** rodar `009`, `010` e `011` (e a `008`, se não foi) no SQL Editor; são idempotentes e independentes. Conferir `body_weights` por conta (erro nº 1).
-1. **Corrigir os erros de alta prioridade** de `ERROS_CONHECIDOS.md` (1 a 4) e, de preferência, os de média que são rápidos (6, 7, 8, 9, 11). Cada correção com teste no `:shared` quando for lógica.
+1. **Revisar e validar no celular o PR dos erros 1 a 4** (roteiro na seção da 3ª sessão) e mergear. Depois, os de média prioridade que são rápidos em `ERROS_CONHECIDOS.md` (6, 8, 9, 11). Cada correção com teste no `:shared` quando for lógica.
 2. **Validar no celular** a lista "Nunca visto no aparelho" acima, começando pelo que tem mais risco: aviso de descanso com tela bloqueada, compartilhar/importar entre as duas contas, exportar CSV, temas Loucos (fluidez), bottom sheet.
 3. Terminar o Social: aceitar o pedido (logar na v.oliveira), conferir o perfil na thiagobr; equipes, música, sair do grupo/desafio, "Tentar de novo".
 4. Imagens: o Thiago gera as 29 que faltam (`docs/PROMPTS_IMAGENS_EXERCICIOS.md`; de preferência regerar tudo no mesmo estilo) e cortamos com `tools/cortar_folha.py`. Confirmar os apelidos "Fly" (voador) e "Fly Costas" (voador inverso).
@@ -96,7 +108,8 @@ A nuvem não compila (sem Android SDK), então `.github/workflows/android.yml` c
 Caminhos curtos: `shared/...` = `shared/src/commonMain/kotlin/com/vitoroliveira/gymtracker/`; `app/...` = `app/src/main/java/com/vitoroliveira/gymtracker/`.
 - **Injeção:** `shared/.../di/AppModule.kt` (repositórios e ViewModels comuns), `app/.../ui/UiModule.kt` (o que precisa de `Context`: temas, música, armazenamento local, circuito, corpo, agenda). Cliente Supabase: `di/SupabaseClient.kt`.
 - **Navegação:** `app/.../ui/Navigation.kt`; Home e barra: `ui/home/HomeScreen.kt`, `HomeLayouts.kt`.
-- **Treino ativo:** `presentation/viewmodel/WorkoutViewModel.kt`, `presentation/TimerManager.kt`; telas `ui/workout/ActiveWorkoutScreen.kt`, `FocusWorkout.kt`, `StartWorkoutSheet.kt` (sugestão/agenda/peso do dia), `RestNotifier.kt` (notificações do descanso), `RecordCelebration.kt` (confete).
+- **Sair da conta / dados locais:** `domain/repository/LocalUserData.kt`, `app/.../ui/LocalUserDataImpl.kt`, `ProfileViewModel.signOut`.
+- **Treino ativo:** `presentation/viewmodel/WorkoutViewModel.kt` (limite de séries: `maxSetsFor`), `presentation/TimerManager.kt`; telas `ui/workout/ActiveWorkoutScreen.kt`, `FocusWorkout.kt`, `StartWorkoutSheet.kt` (sugestão/agenda/peso do dia), `RestNotifier.kt` (notificações do descanso), `RecordCelebration.kt` (confete).
 - **Circuito:** motor `presentation/circuit/` (`CircuitEngine`, `SetTimingLearner`, `ReferenceTimes`), tela `ui/circuit/CircuitScreen.kt`.
 - **Grupos/exercícios:** `data/model/Exercise.kt` (`groupIds`), `GroupExerciseLink.kt`, `data/repository/ExerciseRepositoryImpl.kt`, `domain/usecase/AddExerciseToGroups.kt`, `CreateWorkoutFromTemplate.kt`; telas `ui/muscleGroup/MuscleGroupScreen.kt`, `TemplateSheet.kt`, `ScheduleUi.kt` (agenda), `ui/exercise/ExerciseScreen.kt` (`ExerciseDialog`), `ExerciseCatalogSheet.kt` (inclui `ExerciseArt`).
 - **Compartilhar treino:** `presentation/share/RoutineShareViewModel.kt`, `domain/usecase/ImportSharedRoutine.kt`, `data/repository/RoutineShareRepositoryImpl.kt`, UI `ui/muscleGroup/ShareUi.kt`.

@@ -11,29 +11,7 @@ Quando um item for corrigido, mova-o para a seção "Corrigidos" no fim, com a d
 
 ## Alta prioridade (mistura/perda de dados ou o app fecha)
 
-### 1. Dados corporais de uma conta vão parar em outra no mesmo celular
-- **Certeza:** confirmado no código.
-- **Onde:** `app/.../ui/body/PrefsBodyStore.kt` (um único arquivo `body_data` para o aparelho), `app/.../ui/UiModule.kt:29` (`BodyRepository` é `single`), `shared/.../presentation/body/BodyViewModel.kt:62-70` (`sync`).
-- **O que acontece:** peso, altura, ano de nascimento, sexo e medidas ficam em SharedPreferences sem separar por usuário e nada é limpo no "Sair da conta". Ao entrar com outra conta, a sincronização envia para a conta nova **todos os pesos do aparelho** que não existem na nuvem dela (linha 69) e grava o perfil corporal local por cima do dela (linha 70). Como `synced` fica `true` no singleton, depois de trocar de conta sem fechar o app nem há nova sincronização, mas cada peso novo vai para a conta logada. As contas de teste `thiagobr` e `v.oliveira042997` foram usadas no mesmo celular, então vale conferir se já houve mistura: `select profile_id, count(*), min(measured_on), max(measured_on) from body_weights group by 1;`.
-- **Como corrigir:** guardar os dados por usuário (chave `data_<userId>` no `PrefsBodyStore`, ou um arquivo por usuário) e trocar de "gaveta" quando o usuário muda; no `signOut` (`ProfileViewModel`/`AuthViewModel`) chamar um `BodyRepository.reset()` que zera `_data`, `synced` e o que estiver em memória. O mesmo vale, com menos impacto, para a agenda da semana (`PrefsScheduleStore`), os recentes/favoritos do catálogo e o tema.
-
-### 2. Nome de grupo com `/` (ex.: "Peito/Tríceps") fecha o app ao iniciar o treino
-- **Certeza:** confirmado no código (comportamento conhecido do Navigation Compose: rota sem destino lança `IllegalArgumentException`).
-- **Onde:** `app/.../ui/Navigation.kt:62` e `:67` (`Circuit.createRoute` e `ActiveWorkout.createRoute` não codificam o nome) e `:169`, `:186`, `:273` (`URLDecoder.decode`).
-- **O que acontece:** a rota vira `active_workout/<id>/Peito/Tríceps`, com uma barra a mais, e não casa com `active_workout/{muscleGroupId}/{muscleGroupName}` → o app fecha. `?` e `#` no nome cortam o nome. Nas outras rotas o nome passa por `URLEncoder`, mas o Navigation já decodifica o argumento, e o `URLDecoder.decode` da segunda decodificação lança exceção se o nome tiver `%` (ex.: "Supino 100%") e troca `+` por espaço.
-- **Como corrigir:** passar só os ids na rota e buscar o nome no ViewModel (melhor), ou usar `android.net.Uri.encode(nome)` em **todas** as `createRoute` e remover os `URLDecoder.decode` (o Navigation entrega o texto já decodificado). Teste: grupo "Peito/Tríceps", exercício "Rosca 21 + 21", exercício "100%".
-
-### 3. Circuito: séries acima de "séries padrão + 2" somem sem aviso
-- **Certeza:** confirmado no código.
-- **Onde:** `shared/.../presentation/viewmodel/WorkoutViewModel.kt:217` (limite `defaultSets + 2`) e `app/.../ui/circuit/CircuitScreen.kt:212` (o circuito deixa escolher até 10 séries).
-- **O que acontece:** no circuito com, por exemplo, 6 séries de um exercício com padrão 3, a 6ª série é recusada por `addSet` com "Limite de séries atingido". A tela do circuito não tem Snackbar, então o usuário não vê o erro e a série não é gravada.
-- **Como corrigir:** subir o limite (ex.: 20, ou só validar no máximo absoluto) ou aceitar um parâmetro `ignoreLimit` vindo do circuito; e mostrar `errorMessage` na `CircuitScreen` (Snackbar como no treino ativo).
-
-### 4. Circuito: a última série pode ficar fora do resumo e do post no feed
-- **Certeza:** confirmado no código (condição de corrida; depende da rede).
-- **Onde:** `app/.../ui/circuit/CircuitScreen.kt:71-73`.
-- **O que acontece:** o evento `SetCommitted` da última série chama `addSet` (uma coroutine com INSERT) e logo em seguida `Finished` chama `finishWorkout` (outra coroutine com UPDATE). Se o UPDATE terminar primeiro, o resumo é montado sem a última série, e o gatilho do banco (`trg_workout_to_post`) calcula as estatísticas do post sem ela.
-- **Como corrigir:** no `WorkoutViewModel`, guardar os `Job`s de `addSet` pendentes e fazer `finishWorkout` esperar (`pending.joinAll()`) antes de chamar o repositório; ou serializar as gravações com um `Mutex`.
+Os quatro itens desta seção (1 a 4) foram corrigidos em 27/10/2026; ver "Corrigidos" no fim.
 
 ---
 
@@ -52,9 +30,7 @@ Quando um item for corrigido, mova-o para a seção "Corrigidos" no fim, com a d
 - **Como corrigir:** depois de `signUp`, usar `authRepository.isLoggedIn()`; se for `false`, mostrar "Enviamos um e-mail de confirmação" e voltar para o Login.
 
 ### 7. "Sair da conta" sem internet pode fechar o app
-- **Certeza:** provável (depende de o `supabase.auth.signOut()` lançar exceção sem rede).
-- **Onde:** `ProfileViewModel.signOut` e `AuthViewModel.signOut` (sem `try/catch` dentro de `viewModelScope.launch`; exceção não tratada em coroutine fecha o app no Android).
-- **Como corrigir:** `try { authRepository.signOut() } catch (e: Exception) { if (e is CancellationException) throw e }` e seguir para o Login mesmo assim (a sessão local deve ser apagada).
+Corrigido junto com o nº 1 em 27/10/2026; ver "Corrigidos".
 
 ### 8. Toque duplo em "Registrar série" grava a série duas vezes
 - **Certeza:** confirmado no código.
@@ -121,4 +97,26 @@ Quando um item for corrigido, mova-o para a seção "Corrigidos" no fim, com a d
 ---
 
 ## Corrigidos
-(nenhum ainda)
+
+Corrigidos em 27/10/2026, branch `claude/correcoes-erros-1-4`. Compilados e testados no CI (testes novos no `:shared`); **ainda não vistos no aparelho**.
+
+### 1. Dados corporais de uma conta iam parar em outra no mesmo celular
+- **Era:** peso, perfil corporal e medidas ficavam no aparelho sem separar por conta, nada era limpo ao sair, e a sincronização enviava esses dados para a próxima conta que entrasse.
+- **Correção:** interface `domain/repository/LocalUserData` (`flush()` e `clear()`), implementada no app por `ui/LocalUserDataImpl.kt`. `ProfileViewModel.signOut` agora: (1) envia o peso/perfil corporal pendente para a nuvem enquanto a sessão vale (até 5 s; sem internet segue em frente); (2) encerra a sessão; (3) apaga do aparelho peso, perfil corporal e medidas (`BodyRepository.clear`), agenda (`ScheduleRepository.clear`), favoritos e recentes do catálogo (`CatalogPrefs.clear`), ritmo aprendido do circuito, músicas anotadas e não enviadas (`WorkoutTrackRecorder.discard`) e o CSV exportado no cache. Tema e preferências do aparelho ficam. `BodyRepository` ganhou uma "geração": uma sincronização da conta anterior que ainda estava em andamento para de gravar depois da troca. O diálogo "Sair da conta" avisa o que é apagado.
+- **Atenção:** as **medidas corporais** ainda não têm tabela na nuvem, então se perdem ao sair da conta. Os dados já misturados antes desta correção continuam no banco: conferir com `select profile_id, count(*), min(measured_on), max(measured_on) from body_weights group by 1;`.
+- **Testes:** `BodySyncTest` (limpar e próxima conta só vê os dela; sincronização interrompida pela troca não envia nada), `WeeklyScheduleTest` (limpar a agenda), `ProfileViewModelTest` (ordem enviar → sair → apagar; sem internet sai e apaga mesmo assim; toque duplo não repete).
+
+### 2. Nome de grupo com `/` fechava o app ao iniciar o treino
+- **Correção:** em `ui/Navigation.kt`, todo texto livre na rota passa por `routeArg()` (`Uri.encode`, com `"null"` para valor ausente) e é lido por `routeText()`, já decodificado pelo Navigation; os `URLEncoder`/`URLDecoder` saíram. Vale para treino ativo, circuito, exercícios do grupo, detalhe do exercício e detalhe do treino. O treino livre continua aparecendo como "Treino Livre".
+- **Sem teste automático** (navegação só roda no aparelho). Testar: grupo "Peito/Tríceps", exercício "Rosca 21 + 21", exercício "Supino 100%".
+
+### 3. Circuito: séries acima do limite sumiam sem aviso
+- **Correção (limite mantido, como pedido):** o limite continua "séries do plano + 2" (`maxSetsFor`, `EXTRA_SETS_ALLOWED` em `WorkoutViewModel.kt`) e a mensagem agora diz o exercício e o limite: "Você chegou ao limite de 5 séries em Supino (3 do plano + 2 extras)." (`setLimitMessage`). O circuito ganhou Snackbar para os avisos do treino, e na preparação o "+" das séries para no limite e mostra a mesma mensagem.
+- **Teste:** `WorkoutViewModelTest.respeitaLimiteDeSeries` confere o texto.
+
+### 4. Circuito: a última série podia ficar fora do resumo e do post no feed
+- **Correção:** `WorkoutViewModel` guarda as gravações de série em andamento (`pendingSaves`) e `finishWorkout` espera todas (`joinAll`) antes de fechar o treino no banco, então o resumo e o gatilho do feed já veem a última série.
+- **Teste:** `WorkoutViewModelTest.finalizarEsperaASerieQueAindaEstaGravando`.
+
+### 7. "Sair da conta" sem internet podia fechar o app
+- **Correção:** `ProfileViewModel.signOut` trata as falhas de cada etapa, e `AuthRepositoryImpl.signOut` apaga a sessão salva no aparelho (`clearSession`) quando o pedido de logout ao servidor falha; assim a tela de abertura não entra de novo na conta.
