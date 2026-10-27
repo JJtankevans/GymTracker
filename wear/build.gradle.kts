@@ -52,6 +52,7 @@ dependencies {
     implementation(libs.wear.core)              // modo ambiente (tela sempre ligada)
     implementation(libs.wear.ongoing)           // atalho do treino no mostrador
     implementation(libs.health.services.client) // batimentos
+    implementation(libs.guava.listenablefuture) // tipo devolvido por unregisterMeasureCallbackAsync
     implementation(libs.play.services.wearable) // Data Layer com o celular
     debugImplementation(libs.androidx.compose.ui.tooling)
     testImplementation(libs.junit)

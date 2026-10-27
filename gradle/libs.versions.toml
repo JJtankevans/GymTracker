@@ -112,6 +112,7 @@ wear-compose-navigation   = { module = "androidx.wear.compose:compose-navigation
 wear-core                 = { module = "androidx.wear:wear",                         version.ref = "wear-core" }
 wear-ongoing              = { module = "androidx.wear:wear-ongoing",                 version.ref = "wear-ongoing" }
 health-services-client    = { module = "androidx.health:health-services-client",    version.ref = "health-services" }
+guava-listenablefuture    = { module = "com.google.guava:listenablefuture",          version = "1.0" }
 play-services-wearable    = { module = "com.google.android.gms:play-services-wearable", version.ref = "play-services-wearable" }
 kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "kotlinx-coroutines" }
 androidx-compose-material-icons-core = { module = "androidx.compose.material:material-icons-core" }
