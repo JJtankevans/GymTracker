@@ -57,4 +57,17 @@ class GymMathTest {
     @Test fun tabelaVaziaSem1RM() {
         assertTrue(repMaxTable(0.0).isEmpty())
     }
+
+    @Test fun aquecimentoAteACargaDeTrabalho() {
+        assertEquals(
+            listOf(WarmupSet(20.0, 10), WarmupSet(40.0, 8), WarmupSet(60.0, 5), WarmupSet(80.0, 3)),
+            warmupSets(100.0)
+        )
+        // leve: 40% e 60% caem abaixo da barra e são pulados
+        assertEquals(listOf(WarmupSet(20.0, 10), WarmupSet(25.0, 3)), warmupSets(30.0))
+        // máquina (sem barra)
+        assertEquals(listOf(WarmupSet(20.0, 8), WarmupSet(30.0, 5), WarmupSet(40.0, 3)), warmupSets(50.0, barKg = 0.0))
+        assertTrue(warmupSets(20.0).isEmpty())
+        assertTrue(warmupSets(22.5).isEmpty())
+    }
 }

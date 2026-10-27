@@ -54,3 +54,23 @@ fun repMaxTable(oneRmKg: Double, reps: List<Int> = listOf(1, 2, 3, 4, 5, 6, 8, 1
         RepMaxRow(r, rounded, ((raw / oneRmKg) * 100).roundToLong().toInt())
     }
 }
+
+/** Uma série de aquecimento sugerida. */
+data class WarmupSet(val weightKg: Double, val reps: Int)
+
+/**
+ * Aquecimento clássico até a carga de trabalho: barra vazia ×10, ~40% ×8, ~60% ×5, ~80% ×3.
+ * Cargas arredondadas para [stepKg], nunca abaixo da barra e sempre abaixo da carga de trabalho;
+ * repetidas são puladas. Carga perto da barra (ou máquina sem barra e carga leve) = sem aquecimento.
+ */
+fun warmupSets(workKg: Double, barKg: Double = 20.0, stepKg: Double = 2.5): List<WarmupSet> {
+    if (workKg <= barKg + stepKg || workKg <= 0) return emptyList()
+    val out = mutableListOf<WarmupSet>()
+    if (barKg > 0) out += WarmupSet(barKg, 10)
+    for ((pct, reps) in listOf(0.4 to 8, 0.6 to 5, 0.8 to 3)) {
+        val w = maxOf(barKg, (workKg * pct / stepKg).roundToLong() * stepKg)
+        if (w <= 0 || w >= workKg || out.any { it.weightKg == w }) continue
+        out += WarmupSet(w, reps)
+    }
+    return out
+}

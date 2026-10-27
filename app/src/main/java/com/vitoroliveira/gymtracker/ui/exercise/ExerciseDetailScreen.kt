@@ -221,6 +221,28 @@ fun PlateCalculatorSheet(initialKg: Double?, onDismiss: () -> Unit) {
                     )
                 }
             }
+            val warmup = target?.let { com.vitoroliveira.gymtracker.presentation.workout.warmupSets(it, bar) }.orEmpty()
+            if (warmup.isNotEmpty()) {
+                HorizontalDivider()
+                Text("Aquecimento sugerido", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                warmup.forEachIndexed { i, w ->
+                    val side = PlateCalculator.plates(w.weightKg, bar).perSide
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Text("${i + 1}.", Modifier.width(24.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("${formatKg(w.weightKg)} kg × ${w.reps}", fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                        Text(
+                            if (side.isEmpty()) "só a barra" else side.joinToString(" + ") { formatKg(it) } + " /lado",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                Text(
+                    "Descanse ~1 min entre as séries de aquecimento; elas não precisam ser anotadas.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
