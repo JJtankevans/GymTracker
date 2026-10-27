@@ -177,6 +177,31 @@ class ExerciseViewModel(
         }
     }
 
+    /**
+     * Tira o exercício só deste grupo: ele continua nos outros grupos (ou solto na lista "Todos") e o histórico fica.
+     * Diferente de [deleteExercise], que apaga o exercício de todos os grupos junto com todas as séries.
+     */
+    fun removeFromGroup(exercise: Exercise, groupId: String) {
+        if (groupId !in exercise.groupIds) return
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            try {
+                // copy do exercício vindo do repositório: update grava os vínculos exatamente como em groupIds
+                repository.update(exercise.copy(groupIds = exercise.groupIds - groupId))
+                loadExercises()
+                _uiState.value = _uiState.value.copy(
+                    successMessage = "'${exercise.name}' saiu do grupo; o histórico continua"
+                )
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = e.toUserMessage("Erro ao tirar o exercício do grupo")
+                )
+            }
+        }
+    }
+
     fun deleteExercise(id: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)

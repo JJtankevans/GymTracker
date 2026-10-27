@@ -199,4 +199,17 @@ class CatalogViewModelsTest {
         assertNull(vm.uiState.value.successMessage)
         assertTrue(!vm.uiState.value.isLoading)
     }
+
+    @Test fun tirarDoGrupoMantemOExercicioNosOutrosGrupos() {
+        val repo = MemExercises()
+        repo.rows += Exercise(id = "e1", name = "Cadeira Extensora", groupIds = listOf("pernas", "quadriceps"))
+        val vm = ExerciseViewModel(repo)
+        vm.filterByMuscleGroup("pernas")
+
+        vm.removeFromGroup(vm.uiState.value.exercises.single(), "pernas")
+
+        assertEquals(listOf("quadriceps"), repo.rows.single().groupIds)   // não foi apagado, só saiu de "pernas"
+        assertTrue(vm.uiState.value.exercises.isEmpty())                  // a lista filtrada por "pernas" já não tem
+        assertEquals("'Cadeira Extensora' saiu do grupo; o histórico continua", vm.uiState.value.successMessage)
+    }
 }

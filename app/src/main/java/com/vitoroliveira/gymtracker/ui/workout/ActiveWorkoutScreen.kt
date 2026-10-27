@@ -176,7 +176,7 @@ fun ActiveWorkoutScreen(
             topSlot = { com.vitoroliveira.gymtracker.ui.music.MiniPlayer() }
         )
         // explosão de confete ao bater recorde de carga
-        RecordCelebration(uiState.newRecordExerciseIds.size)
+        RecordCelebration(uiState.recordBursts)
     }
 }
 
@@ -315,6 +315,7 @@ fun ActiveWorkoutScreenContent(
                         isFinished = isFinished,
                         baseline = exercise.id?.let { uiState.baselines[it] },
                         hasNewRecord = exercise.id in uiState.newRecordExerciseIds,
+                        isSaving = exercise.id in uiState.savingExerciseIds,
                         onAddSet = { reps, weight -> exercise.id?.let { onAddSet(it, reps, weight) } },
                         onEditSet = { editingSet = it },
                         onStartTimer = onStartTimer,
@@ -468,7 +469,9 @@ fun ExerciseWorkoutCard(
     onToggleFinished: () -> Unit,
     baseline: ExerciseBaseline? = null,
     hasNewRecord: Boolean = false,
-    onEditSet: (WorkoutSet) -> Unit = {}
+    onEditSet: (WorkoutSet) -> Unit = {},
+    /** Série deste exercício sendo gravada: o botão fica desligado até terminar (toque duplo não duplica). */
+    isSaving: Boolean = false
 ) {
     var reps by remember { mutableStateOf(exercise.defaultReps.toString()) }
     var weight by remember { mutableStateOf("") }
@@ -642,6 +645,7 @@ fun ExerciseWorkoutCard(
                     if (repsInt == null) return@Button
                     onAddSet(repsInt, weightDouble)
                 },
+                enabled = !isSaving,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(Icons.Default.Add, contentDescription = null)

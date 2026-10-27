@@ -21,6 +21,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
@@ -59,9 +61,13 @@ data class WorkoutUiState(
     val activeWorkoutToRecover: Workout? = null,
     /** Última vez / recorde por exercício (id → baseline). */
     val baselines: Map<String, ExerciseBaseline> = emptyMap(),
-    /** Exercícios em que o usuário já bateu recorde neste treino. */
+    /** Exercícios em que o usuário já bateu recorde neste treino (recalculado a cada série registrada, editada ou apagada). */
     val newRecordExerciseIds: Set<String> = emptySet(),
-    val summary: WorkoutSummary? = null
+    val summary: WorkoutSummary? = null,
+    /** Exercícios com série sendo gravada agora: o botão "Registrar série" fica desligado (evita série duplicada no toque duplo). */
+    val savingExerciseIds: Set<String> = emptySet(),
+    /** Sobe 1 cada vez que uma série registrada ou editada AGORA bate um recorde novo: dispara o confete (retomar o treino não dispara). */
+    val recordBursts: Int = 0
 )
 
 class WorkoutViewModel(
@@ -81,6 +87,12 @@ class WorkoutViewModel(
     private var tickerJob: Job? = null
     /** Séries ainda sendo gravadas: o fim do treino espera por elas (senão a última série do circuito ficava de fora). */
     private val pendingSaves = mutableListOf<Job>()
+    /** Gravações em andamento por exercício (o circuito pode enfileirar mais de uma do mesmo exercício). */
+    private val savingCount = mutableMapOf<String, Int>()
+    /** Uma série gravada por vez: o número da série é calculado já com as anteriores salvas. */
+    private val saveMutex = Mutex()
+    /** Recorde de carga de cada exercício ANTES deste treino (do histórico): base para recalcular os recordes do treino. */
+    private var recordsBefore: Map<String, Double?> = emptyMap()
 
     init {
         viewModelScope.launch {
@@ -168,12 +180,15 @@ class WorkoutViewModel(
             summary = null,
             isWorkoutFinished = false
         )
+        recordsBefore = emptyMap()
         startTicker(workout.startedAt)
         // Histórico é um "extra": carrega depois, sem travar a tela.
         val workoutId = workout.id ?: return
         viewModelScope.launch {
             val baselines = loadBaselines(workoutId, exercises)
-            _uiState.value = _uiState.value.copy(baselines = baselines)
+            recordsBefore = baselines.mapValues { it.value.recordWeightKg }
+            // treino retomado: séries de antes que já eram recorde aparecem como recorde (sem confete)
+            _uiState.value = withRecords(_uiState.value.copy(baselines = baselines))
         }
     }
 
@@ -210,7 +225,12 @@ class WorkoutViewModel(
 
     // ───────────────────────── Séries ─────────────────────────
 
-    fun addSet(exerciseId: String, reps: Int, weightKg: Double) {
+    /**
+     * Registra uma série. Enquanto a série do mesmo exercício está sendo gravada, um novo toque é ignorado (toque duplo
+     * gravava a série duas vezes); o circuito passa [queueIfSaving] = true porque as séries dele chegam em sequência e
+     * nenhuma pode se perder.
+     */
+    fun addSet(exerciseId: String, reps: Int, weightKg: Double, queueIfSaving: Boolean = false) {
         val workoutId = _uiState.value.activeWorkout?.id ?: return
 
         validateSet(reps, weightKg)?.let {
@@ -224,42 +244,42 @@ class WorkoutViewModel(
             return
         }
 
-        val existing = _uiState.value.completedSets.filter { it.exerciseId == exerciseId }
-        // maior número + 1 (e não "quantidade + 1"): continua certo depois de apagar uma série do meio
-        val setNumber = (existing.maxOfOrNull { it.setNumber } ?: 0) + 1
+        if (!queueIfSaving && exerciseId in _uiState.value.savingExerciseIds) return
 
-        if (existing.size >= maxSetsFor(exercise)) {
+        // conta também as que ainda estão sendo gravadas
+        val done = _uiState.value.completedSets.count { it.exerciseId == exerciseId } + (savingCount[exerciseId] ?: 0)
+        if (done >= maxSetsFor(exercise)) {
             _uiState.value = _uiState.value.copy(errorMessage = setLimitMessage(exercise))
             return
         }
 
-        val newSet = WorkoutSet(
-            workoutId = workoutId,
-            exerciseId = exerciseId,
-            setNumber = setNumber,
-            reps = reps,
-            weightKg = weightKg
-        )
-
+        markSaving(exerciseId, +1)
         pendingSaves.removeAll { it.isCompleted }
         pendingSaves += viewModelScope.launch {
             try {
-                val saved = workoutRepository.addSet(newSet)
-                val state = _uiState.value
-                val record = state.baselines[exerciseId]?.recordWeightKg
-                // Só é "recorde" se já havia histórico (senão toda primeira vez seria recorde).
-                val isRecord = record != null && record > 0.0 && weightKg > record
-                _uiState.value = state.copy(
-                    completedSets = state.completedSets + saved,
-                    errorMessage = null,
-                    newRecordExerciseIds = if (isRecord) state.newRecordExerciseIds + exerciseId else state.newRecordExerciseIds,
-                    baselines = if (isRecord) state.baselines + (exerciseId to state.baselines.getValue(exerciseId).copy(recordWeightKg = weightKg)) else state.baselines
-                )
+                saveMutex.withLock {
+                    val existing = _uiState.value.completedSets.filter { it.exerciseId == exerciseId }
+                    // maior número + 1 (e não "quantidade + 1"): continua certo depois de apagar uma série do meio
+                    val setNumber = (existing.maxOfOrNull { it.setNumber } ?: 0) + 1
+                    val saved = workoutRepository.addSet(
+                        WorkoutSet(workoutId = workoutId, exerciseId = exerciseId, setNumber = setNumber, reps = reps, weightKg = weightKg)
+                    )
+                    val before = _uiState.value
+                    publishWithRecords(before, before.copy(completedSets = before.completedSets + saved, errorMessage = null))
+                }
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 _uiState.value = _uiState.value.copy(errorMessage = e.toUserMessage("Erro ao registrar série"))
+            } finally {
+                markSaving(exerciseId, -1)
             }
         }
+    }
+
+    private fun markSaving(exerciseId: String, delta: Int) {
+        val n = (savingCount[exerciseId] ?: 0) + delta
+        if (n > 0) savingCount[exerciseId] = n else savingCount.remove(exerciseId)
+        _uiState.value = _uiState.value.copy(savingExerciseIds = savingCount.keys.toSet())
     }
 
     fun updateSet(setId: String, reps: Int, weightKg: Double) {
@@ -270,10 +290,12 @@ class WorkoutViewModel(
         viewModelScope.launch {
             try {
                 val saved = workoutRepository.updateSet(setId, reps, weightKg)
-                _uiState.value = _uiState.value.copy(
-                    completedSets = _uiState.value.completedSets.map { if (it.id == setId) saved else it },
+                val before = _uiState.value
+                // editar a série que bateu o recorde (ex.: 200 kg digitado por engano) desfaz o recorde; editar para cima detecta
+                publishWithRecords(before, before.copy(
+                    completedSets = before.completedSets.map { if (it.id == setId) saved else it },
                     errorMessage = null
-                )
+                ))
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 _uiState.value = _uiState.value.copy(errorMessage = e.toUserMessage("Erro ao editar série"))
@@ -285,15 +307,37 @@ class WorkoutViewModel(
         viewModelScope.launch {
             try {
                 workoutRepository.deleteSet(setId)
-                _uiState.value = _uiState.value.copy(
-                    completedSets = _uiState.value.completedSets.filterNot { it.id == setId },
+                val state = _uiState.value
+                _uiState.value = withRecords(state.copy(
+                    completedSets = state.completedSets.filterNot { it.id == setId },
                     errorMessage = null
-                )
+                ))
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 _uiState.value = _uiState.value.copy(errorMessage = e.toUserMessage("Erro ao apagar série"))
             }
         }
+    }
+
+    /** Publica [next] com os recordes recalculados; se apareceu recorde em exercício novo, conta mais um confete. */
+    private fun publishWithRecords(before: WorkoutUiState, next: WorkoutUiState) {
+        val after = withRecords(next)
+        val gained = (after.newRecordExerciseIds - before.newRecordExerciseIds).isNotEmpty()
+        _uiState.value = if (gained) after.copy(recordBursts = before.recordBursts + 1) else after
+    }
+
+    /**
+     * Recordes do treino a partir das séries atuais: é recorde quando a maior carga do exercício no treino passa do recorde
+     * de antes do treino (só se já havia histórico; senão toda primeira vez seria recorde). O "Recorde: X kg" mostrado
+     * (baselines) acompanha: a carga do treino se for recorde, senão o recorde de antes.
+     */
+    private fun withRecords(s: WorkoutUiState): WorkoutUiState {
+        val best = s.completedSets.groupBy { it.exerciseId }.mapValues { (_, sets) -> sets.maxOf { it.weightKg } }
+        val ids = best.filter { (id, kg) -> recordsBefore[id]?.let { it > 0.0 && kg > it } == true }.keys
+        val baselines = s.baselines.mapValues { (id, b) ->
+            b.copy(recordWeightKg = if (id in ids) best.getValue(id) else recordsBefore[id] ?: b.recordWeightKg)
+        }
+        return s.copy(newRecordExerciseIds = ids, baselines = baselines)
     }
 
     /** Peso 0 é válido (exercício com o peso do corpo, ex.: barra fixa). */

@@ -140,6 +140,8 @@ fun FocusWorkoutBody(
                         onAddSet(e.id ?: return@Button, reps, kg)
                         onStartTimer(rest)
                     },
+                    // série sendo gravada: toque duplo não registra duas vezes
+                    enabled = e.id !in uiState.savingExerciseIds,
                     modifier = Modifier.fillMaxWidth().height(84.dp), shape = MaterialTheme.shapes.large
                 ) {
                     Icon(Icons.Default.Add, null); Spacer(Modifier.width(8.dp))

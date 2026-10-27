@@ -80,7 +80,8 @@ fun CircuitScreen(
                     cues.speak("Série ${s.setNumber} de ${s.setsTotal}. ${s.exerciseName}. ${s.reps} repetições, ${formatKg(s.weightKg)} quilos.")
                 }
                 is CircuitEvent.SetAutoEnded -> { cues.buzz(150, 100, 150); cues.beep() }
-                is CircuitEvent.SetCommitted -> workoutVm.addSet(ev.set.step.exerciseId, ev.set.step.reps, ev.set.step.weightKg)
+                // queueIfSaving: as séries do circuito chegam em sequência e nenhuma pode ser ignorada
+                is CircuitEvent.SetCommitted -> workoutVm.addSet(ev.set.step.exerciseId, ev.set.step.reps, ev.set.step.weightKg, queueIfSaving = true)
                 is CircuitEvent.RestEnded -> {}
                 CircuitEvent.Finished -> { cues.speak("Circuito concluído."); workoutVm.finishWorkout() }
             }
@@ -150,7 +151,8 @@ private fun RecoverDialog(onResume: () -> Unit, onDiscard: () -> Unit) {
 
 // ───────────────────────── preparação ─────────────────────────
 
-private data class Row(val e: Exercise, val sets: Int, val reps: Int, val kg: Double)
+/** [kgEdited]: o usuário mexeu na carga; a última carga que chega depois não sobrescreve. */
+private data class Row(val e: Exercise, val sets: Int, val reps: Int, val kg: Double, val kgEdited: Boolean = false)
 
 @Composable
 internal fun CircuitSetup(
@@ -167,6 +169,14 @@ internal fun CircuitSetup(
     val rows = remember(exercises) {
         mutableStateListOf<Row>().apply {
             exercises.forEach { add(Row(it, it.defaultSets, it.defaultReps, lastWeights[it.id] ?: 0.0)) }
+        }
+    }
+    // a "última vez" de cada exercício chega do servidor depois que a tela já montou: preenche quem o usuário não mexeu
+    LaunchedEffect(lastWeights) {
+        rows.indices.forEach { i ->
+            val r = rows[i]
+            val last = lastWeights[r.e.id]
+            if (!r.kgEdited && last != null && last != r.kg) rows[i] = r.copy(kg = last)
         }
     }
 
@@ -230,7 +240,7 @@ internal fun CircuitSetup(
                             else rows[i] = r.copy(sets = r.sets + 1)
                         })
                         Mini("reps", "${r.reps}", { rows[i] = r.copy(reps = (r.reps - 1).coerceAtLeast(1)) }, { rows[i] = r.copy(reps = (r.reps + 1).coerceAtMost(50)) })
-                        Mini("kg", formatKg(r.kg), { rows[i] = r.copy(kg = (r.kg - 2.5).coerceAtLeast(0.0)) }, { rows[i] = r.copy(kg = r.kg + 2.5) })
+                        Mini("kg", formatKg(r.kg), { rows[i] = r.copy(kg = (r.kg - 2.5).coerceAtLeast(0.0), kgEdited = true) }, { rows[i] = r.copy(kg = r.kg + 2.5, kgEdited = true) })
                     }
                 }
             }

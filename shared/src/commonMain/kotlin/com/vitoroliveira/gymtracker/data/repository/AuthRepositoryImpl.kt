@@ -4,6 +4,7 @@ package com.vitoroliveira.gymtracker.data.repository
 
 import com.vitoroliveira.gymtracker.domain.repository.AuthRepository
 import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.auth.OtpType
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
 import kotlin.coroutines.cancellation.CancellationException
@@ -22,6 +23,10 @@ class AuthRepositoryImpl(
                 put("username", JsonPrimitive(username))
             }
         }
+    }
+
+    override suspend fun resendSignUpConfirmation(email: String) {
+        supabase.auth.resendEmail(OtpType.Email.SIGNUP, email)
     }
 
     override suspend fun signIn(email: String, password: String) {
