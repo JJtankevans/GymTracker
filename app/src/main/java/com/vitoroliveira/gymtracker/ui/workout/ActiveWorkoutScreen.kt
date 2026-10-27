@@ -147,33 +147,37 @@ fun ActiveWorkoutScreen(
     }
     DisposableEffect(Unit) { onDispose { restNotifier.cancel() } }
 
-    ActiveWorkoutScreenContent(
-        muscleGroupName = muscleGroupName,
-        uiState = uiState,
-        elapsedSeconds = elapsed,
-        onAddSet = { exerciseId, reps, weight -> viewModel.addSet(exerciseId, reps, weight) },
-        onUpdateSet = { id, reps, weight -> viewModel.updateSet(id, reps, weight) },
-        onDeleteSet = { viewModel.deleteSet(it) },
-        onStartTimer = { viewModel.startTimer(it) },
-        onPauseTimer = { viewModel.pauseTimer() },
-        onResumeTimer = { viewModel.resumeTimer() },
-        onCancelTimer = { viewModel.cancelTimer() },
-        onFinishWorkout = { viewModel.finishWorkout() },
-        onClearError = { viewModel.clearError() },
-        onResumeWorkout = { viewModel.resumeWorkout(it) },
-        onDiscardWorkout = { viewModel.discardAndStartNew(muscleGroupId) },
-        onToggleExerciseFinished = { viewModel.toggleExerciseFinished(it) },
-        onSummaryDone = onWorkoutFinished,
-        onShareSummary = {
-            val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                type = "text/plain"
-                putExtra(android.content.Intent.EXTRA_TEXT, viewModel.shareText(muscleGroupName))
-            }
-            context.startActivity(android.content.Intent.createChooser(send, "Compartilhar treino"))
-        },
-        onBack = onBack,
-        topSlot = { com.vitoroliveira.gymtracker.ui.music.MiniPlayer() }
-    )
+    androidx.compose.foundation.layout.Box {
+        ActiveWorkoutScreenContent(
+            muscleGroupName = muscleGroupName,
+            uiState = uiState,
+            elapsedSeconds = elapsed,
+            onAddSet = { exerciseId, reps, weight -> viewModel.addSet(exerciseId, reps, weight) },
+            onUpdateSet = { id, reps, weight -> viewModel.updateSet(id, reps, weight) },
+            onDeleteSet = { viewModel.deleteSet(it) },
+            onStartTimer = { viewModel.startTimer(it) },
+            onPauseTimer = { viewModel.pauseTimer() },
+            onResumeTimer = { viewModel.resumeTimer() },
+            onCancelTimer = { viewModel.cancelTimer() },
+            onFinishWorkout = { viewModel.finishWorkout() },
+            onClearError = { viewModel.clearError() },
+            onResumeWorkout = { viewModel.resumeWorkout(it) },
+            onDiscardWorkout = { viewModel.discardAndStartNew(muscleGroupId) },
+            onToggleExerciseFinished = { viewModel.toggleExerciseFinished(it) },
+            onSummaryDone = onWorkoutFinished,
+            onShareSummary = {
+                val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(android.content.Intent.EXTRA_TEXT, viewModel.shareText(muscleGroupName))
+                }
+                context.startActivity(android.content.Intent.createChooser(send, "Compartilhar treino"))
+            },
+            onBack = onBack,
+            topSlot = { com.vitoroliveira.gymtracker.ui.music.MiniPlayer() }
+        )
+        // explosão de confete ao bater recorde de carga
+        RecordCelebration(uiState.newRecordExerciseIds.size)
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
