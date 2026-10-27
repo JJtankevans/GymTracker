@@ -17,7 +17,7 @@ Os quatro itens desta seção (1 a 4) foram corrigidos em 27/10/2026; ver "Corri
 
 ## Média prioridade
 
-Os itens desta seção (5 a 13) foram resolvidos em 27/10/2026; ver "Corrigidos" no fim. O 10 depende de rodar a migração `012` no Supabase.
+Os itens desta seção (5 a 13) foram resolvidos em 27/10/2026; ver "Corrigidos" no fim. A migração `012` do nº 10 já foi rodada.
 
 ---
 
@@ -53,7 +53,7 @@ Os itens desta seção (5 a 13) foram resolvidos em 27/10/2026; ver "Corrigidos"
 ## Corrigidos
 
 ### Média prioridade (27/10/2026, branch `claude/correcoes-media-prioridade`)
-Compilados e testados no CI (testes novos no `:shared`); **ainda não vistos no aparelho**. O nº 10 é SQL e precisa ser rodado no Supabase.
+Compilados e testados no CI (testes novos no `:shared`); **ainda não vistos no aparelho**. O nº 10 é SQL (migração 012, já rodada no Supabase).
 
 #### 5. CSV de exportação falhava sem a migração 009
 - **Resolvido sem mudar código:** o Thiago rodou a `009` no Supabase em 27/10/2026.
@@ -72,7 +72,7 @@ Compilados e testados no CI (testes novos no `:shared`); **ainda não vistos no 
 - **Sem teste automático** (é tela). Testar: abrir o circuito de um grupo com histórico e ver a última carga em cada exercício.
 
 #### 10. Datas do servidor em UTC: treino depois das 21h (Brasília) contava no dia seguinte
-- **Correção:** migração **`docs/supabase/012_datas_no_fuso_de_brasilia.sql` (PENDENTE: rodar no SQL Editor)**: `vw_exercise_progression`, `records_summary()` e `profile_stats()` passam a usar `(started_at at time zone 'America/Sao_Paulo')::date`, com as mesmas colunas (o app não muda). Idempotente.
+- **Correção:** migração `docs/supabase/012_datas_no_fuso_de_brasilia.sql` (**rodada pelo Thiago em 27/10/2026**): `vw_exercise_progression`, `records_summary()` e `profile_stats()` passam a usar `(started_at at time zone 'America/Sao_Paulo')::date`, com as mesmas colunas (o app não muda). Idempotente.
 - **Testado no Postgres 16 local:** treinos às 22h30 de 27/10 e 7h de 28/10 (Brasília) eram uma "sessão" só em 28/10 antes; depois da 012 são duas sessões (27 e 28), recorde em 28/10 com o anterior em 27/10, 2 dias ativos; isolamento entre usuários e `security_invoker` mantidos, `anon` sem acesso, rodar 2 vezes não dá erro.
 
 #### 11. Voltar na Home depois de terminar um treino abria outra Home

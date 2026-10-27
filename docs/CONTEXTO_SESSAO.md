@@ -4,14 +4,20 @@ Leia isto primeiro. O histórico longo de decisões, rodada por rodada, está em
 
 **Onde registrar cada coisa:** estado atual e próximos passos → este arquivo; o que foi feito em cada rodada → `PROXIMOS_PASSOS.md`; erros encontrados e como corrigir → `ERROS_CONHECIDOS.md`; tabelas/SQL → `app/docs/supabaseSchema.md` + `docs/supabase/`; social → `SOCIAL_DESIGN.md`; imagens → `IMAGENS_EXERCICIOS.md`. Regras de fim de sessão (avisar, atualizar este arquivo, pedir autorização para commit) estão no `CLAUDE.md` da raiz.
 
+## Atualização de 27/10/2026 (5ª, nuvem): migrações aplicadas, secrets do CI e APK para distribuir
+- **Migrações:** o Thiago rodou a `010`, a `011` e a `012` no Supabase (a `009` já tinha sido rodada). Nada mais pendente, exceto confirmar a `008` (a `012` recria a `records_summary()` da 008, então ela já existe no banco).
+- **Secrets do GitHub Actions:** o Thiago cadastrou `SUPABASE_URL` e `SUPABASE_KEY` (repository secrets). A execução 40512678834 (disparada no `master`, commit `daf09a3`, com os PRs #7 e #8) passou **sem** o aviso de chaves não configuradas: o APK do artefato `gymtracker-debug-apk` (expira em 26/11/2026) já faz login.
+- **Disparar um build sem commit:** `gh api -X POST repos/JJtankevans/GymTracker/actions/workflows/android.yml/dispatches -f ref=master` funciona daqui; baixar o artefato não (o download é bloqueado pela rede da nuvem: o Thiago baixa pelo GitHub).
+- **Para distribuir a outras pessoas (pendente de decisão):** cada APK sai assinado com uma chave de debug diferente (o runner do GitHub cria uma nova a cada execução), então atualizar exige desinstalar antes. Solução: chave de assinatura fixa guardada nos secrets e o workflow assinando com ela. E, se "Confirm email" estiver ligado, configurar SMTP próprio antes (seção "Confirmação de e-mail").
+
 ## Sessão de 27/10/2026 (4ª, nuvem): correção dos erros de média prioridade (5 a 13) — COMPILADO E TESTADO NO CI, NÃO VISTO NO APARELHO
-- **Branch `claude/correcoes-media-prioridade`** (sai do `master` já com o PR #7 mergeado), com PR aberto para o `master`. CI da execução 40508191130: APK gerado e os 260 `@Test` do `:shared` passando (+11). **Aviso do CI: os secrets `SUPABASE_URL`/`SUPABASE_KEY` não estão configurados no repositório**, então o APK do Actions abre mas o login não funciona; cadastrar em Settings → Secrets and variables → Actions (ver "APK pelo GitHub Actions").
+- **Branch `claude/correcoes-media-prioridade`** (sai do `master` já com o PR #7 mergeado), virou o PR #8, **mergeado no `master` em 27/10/2026**. CI da execução 40508191130: APK gerado e os 260 `@Test` do `:shared` passando (+11). Nessa execução os secrets do Supabase ainda não estavam configurados (resolvido na 5ª sessão).
 - **O que mudou** (detalhes na seção "Corrigidos" de `ERROS_CONHECIDOS.md`):
   - 5: nada no código — o Thiago rodou a `009`.
   - 6: cadastro sem sessão (confirmação de e-mail ligada) mostra "Confirme seu e-mail" com "Ir para o login" e "Reenviar e-mail". Como o Supabase envia esse e-mail: seção "Confirmação de e-mail" abaixo.
   - 8: botão "Registrar série" desligado enquanto a série grava; o circuito enfileira as séries.
   - 9: preparação do circuito preenche a última carga quando ela chega.
-  - 10: **migração `012_datas_no_fuso_de_brasilia.sql` — PENDENTE no Supabase** (testada no Postgres local).
+  - 10: migração `012_datas_no_fuso_de_brasilia.sql` (testada no Postgres local; rodada pelo Thiago na 5ª sessão).
   - 11: fim do treino/circuito troca a Home antiga por uma nova.
   - 12: na lista de um grupo, "Tirar do grupo" (mantém exercício e histórico) separado de "Apagar de vez".
   - 13: recordes recalculados a cada série registrada/editada/apagada; confete só para recorde novo.
@@ -36,16 +42,16 @@ Leia isto primeiro. O histórico longo de decisões, rodada por rodada, está em
 - **Os 4 erros mais graves** (corrigidos na 3ª sessão, acima; detalhes em `ERROS_CONHECIDOS.md`): (1) dados corporais (peso, altura, medidas) ficam no aparelho sem separar por conta e são enviados para a conta que estiver logada — com as duas contas de teste no mesmo celular pode já ter havido mistura; (2) grupo com `/` no nome (ex.: "Peito/Tríceps") fecha o app ao iniciar o treino ou o circuito; (3) no circuito, séries acima de "padrão + 2" são descartadas sem aviso; (4) no circuito, a última série pode ficar fora do resumo e do post no feed.
 
 ## Estado atual
-- **PR aberto:** `claude/correcoes-media-prioridade` (erros 5 a 13), sem teste no aparelho. O PR #7 (erros 1 a 4 e 7) já está no `master`, também sem teste no aparelho.
+- **Sem PR aberto.** Os PRs #7 (erros 1 a 4 e 7) e #8 (erros 5 a 13) estão no `master`, ainda sem teste no aparelho.
 - **Branch `master` tem o resto.** Os PRs #5 (`claude/instrucoes-sessao`: nome do grupo no histórico, bottom sheet, desafios, catálogo de 70) e #6 (`claude/melhorias`: as 15 melhorias de 26/10 + compartilhar treinos, temas Loucos e extras de 27/10) foram **mergeados em 27/10/2026** sem o teste no aparelho que estava previsto. O CI do `master` (commit `dffb4af`) passou: APK gerado e os 242 testes do `:shared`. Os dois branches podem ser apagados.
-- **Migrações pendentes no Supabase** (ver a tabela em "Supabase"): `010`, `011`, `012` e talvez a `008`.
+- **Supabase em dia:** todas as migrações até a `012` aplicadas (ver a tabela em "Supabase").
 
 **Testado no celular (Xiaomi, adb) e funcionando** (até 21/10): login/cadastro, Home, treino ativo, seletor de temas (eram 21), catálogo de exercícios (eram 56) com seleção múltipla e favoritos, treinos prontos, Recordes com dado real, Circuito (anel, descanso, botões), exclusão de treino no Histórico (toque longo), ilustrações por exercício, Social com duas contas (perfil público, seguir, feed, reações, grupo por código, desafio e placar, editar post, privacidade, pedido de seguir em perfil "Só seguidores"), exercício em vários grupos (006), foto de perfil (007).
 
 **Nunca visto no aparelho** (compila e os testes do `:shared` passam, mas ninguém viu funcionando):
-- 21/10: nome do grupo no Histórico depois de apagar o grupo (precisa da 009); bottom sheet "Iniciar treino" arrastando para cima/baixo, com teclado aberto e muitos grupos; desafio com "Falhas permitidas" e "Dias seguidos" (precisa da 010), fotos no placar, mensagens (layouts alerta/faixa/carimbo), título no perfil; imagens por apelido ("Agachamento Hack", "Rosca Scot") e os 14 exercícios novos do catálogo; tempo da tela de Recordes depois da 008.
-- 26/10: aviso de fim do descanso com a tela bloqueada (e o pedido de permissão de notificação); compartilhar treino (texto) e exportar CSV (precisa da 009); sincronização do peso em dois celulares/reinstalação; agenda da semana e "Sugerido" no sheet; calculadora de anilhas e tabela de 1RM; conquistas; medidas corporais; séries por músculo na semana; fotos e títulos no feed e no placar; anotação do treino.
-- 27/10: compartilhar/importar grupo por código entre duas contas (precisa da 011); os 7 temas Loucos e as decorações novas de Oceano/Floresta/Ouro (fluidez e legibilidade; Matrix desenha ~300 letras por quadro); mapa de calor no Histórico; aquecimento na calculadora; confete ao bater recorde; conquistas especiais.
+- 21/10: nome do grupo no Histórico depois de apagar o grupo (a 009 já foi rodada); bottom sheet "Iniciar treino" arrastando para cima/baixo, com teclado aberto e muitos grupos; desafio com "Falhas permitidas" e "Dias seguidos" (a 010 já foi rodada), fotos no placar, mensagens (layouts alerta/faixa/carimbo), título no perfil; imagens por apelido ("Agachamento Hack", "Rosca Scot") e os 14 exercícios novos do catálogo; tempo da tela de Recordes depois da 008.
+- 26/10: aviso de fim do descanso com a tela bloqueada (e o pedido de permissão de notificação); compartilhar treino (texto) e exportar CSV; sincronização do peso em dois celulares/reinstalação; agenda da semana e "Sugerido" no sheet; calculadora de anilhas e tabela de 1RM; conquistas; medidas corporais; séries por músculo na semana; fotos e títulos no feed e no placar; anotação do treino.
+- 27/10: compartilhar/importar grupo por código entre duas contas (a 011 já foi rodada); os 7 temas Loucos e as decorações novas de Oceano/Floresta/Ouro (fluidez e legibilidade; Matrix desenha ~300 letras por quadro); mapa de calor no Histórico; aquecimento na calculadora; confete ao bater recorde; conquistas especiais.
 - Mais antigos: aceitar o pedido de seguir (logar na v.oliveira, Pessoas > pedidos) e ver perfil/posts/números da Deus na thiagobr; desafio em equipes; privacidade de música; sair de grupo/desafio; tela de erro "Tentar de novo" (Recordes e Social); apagar um treino que tem séries; "Descartar e sair" ao encerrar o Circuito sem série (só teste unitário).
 
 ## O app em 5 linhas
@@ -65,11 +71,11 @@ Android (Jetpack Compose) + módulo KMP `:shared` (regras, ViewModels, repositó
 | `005` | perfis "Só seguidores" aparecem na busca | aplicada | — |
 | `006` | exercício em vários grupos (`group_exercises`) | aplicada | — |
 | `007` | foto de perfil (Storage) | aplicada | — |
-| `008` | `records_summary()` (Recordes em 1 chamada) | **sem confirmação** | Recordes usa o caminho antigo (mais lento), sem erro |
+| `008` | `records_summary()` (Recordes em 1 chamada) | sem confirmação, mas a `012` (aplicada) recria a mesma função | — |
 | `009` | `workouts.muscle_group_name` + gatilho | aplicada (27/10/2026) | — |
-| `010` | títulos de desafio | **pendente** | sem títulos (sem erro); criar desafio com "Falhas"/"Dias seguidos" preenchidos falha |
-| `011` | compartilhar treino por código | **pendente** | compartilhar/importar dá erro |
-| `012` | dia do treino no fuso de Brasília (progressão, recordes, dias ativos) | **pendente** | treino depois das 21h conta no dia seguinte (sem erro) |
+| `010` | títulos de desafio | aplicada (27/10/2026) | — |
+| `011` | compartilhar treino por código | aplicada (27/10/2026) | — |
+| `012` | dia do treino no fuso de Brasília (progressão, recordes, dias ativos) | aplicada (27/10/2026) | — |
 - Consultas só de leitura: `consulta_exercicios_de_todos_os_usuarios.sql`, `consulta_uso_do_storage.sql`. `test_social.sql` é para banco de teste.
 - O conector Supabase da sessão não enxerga esse projeto; só dá para sondar por REST com a chave publicável. Não dá para conferir RLS por aqui.
 - `local.properties` (fora do git) precisa de `SUPABASE_URL` e `SUPABASE_KEY` (chave `sb_publishable_...`).
@@ -85,7 +91,7 @@ Android (Jetpack Compose) + módulo KMP `:shared` (regras, ViewModels, repositó
 - **Não conferido daqui:** se o projeto `ygbrrypyydxnuskrobeu` está com "Confirm email" ligado (o conector do Supabase não acessa esse projeto).
 
 ## APK pelo GitHub Actions
-A nuvem não compila (sem Android SDK), então `.github/workflows/android.yml` compila nos servidores do GitHub a cada push/PR: gera o **APK debug** (artefato `gymtracker-debug-apk`; no celular, baixe pelo navegador do GitHub e instale permitindo "fontes desconhecidas") e roda `:shared:testDebugUnitTest` (relatório no artefato `relatorio-testes-shared`). Precisa dos **secrets** `SUPABASE_URL` e `SUPABASE_KEY` em Settings → Secrets and variables → Actions; sem eles o app abre, mas o login avisa que as chaves não foram configuradas. Os logs do Actions não abrem da nuvem: o workflow escreve o erro como **anotação** (`gh api repos/JJtankevans/GymTracker/check-runs/<job_id>/annotations`). Runner fixo em `ubuntu-24.04` (no Ubuntu 26 a instalação do SDK falhou). O APK é assinado com a chave de debug do runner: se o celular recusar instalar por cima, desinstale o app antigo antes (os dados de treino ficam no Supabase; peso e medidas ficam no aparelho e o peso tem cópia na nuvem).
+A nuvem não compila (sem Android SDK), então `.github/workflows/android.yml` compila nos servidores do GitHub a cada push/PR: gera o **APK debug** (artefato `gymtracker-debug-apk`; no celular, baixe pelo navegador do GitHub e instale permitindo "fontes desconhecidas") e roda `:shared:testDebugUnitTest` (relatório no artefato `relatorio-testes-shared`). Usa os **secrets** `SUPABASE_URL` e `SUPABASE_KEY` (Settings → Secrets and variables → Actions; **cadastrados em 27/10/2026**); sem eles o app abre, mas o login avisa que as chaves não foram configuradas. Os logs do Actions não abrem da nuvem: o workflow escreve o erro como **anotação** (`gh api repos/JJtankevans/GymTracker/check-runs/<job_id>/annotations`). Runner fixo em `ubuntu-24.04` (no Ubuntu 26 a instalação do SDK falhou). O APK é assinado com a chave de debug do runner: se o celular recusar instalar por cima, desinstale o app antigo antes (os dados de treino ficam no Supabase; peso e medidas ficam no aparelho e o peso tem cópia na nuvem).
 
 ## Contas de teste (no celular real, banco real)
 - `thiagobr` (usuário @AqueleQueTrazALuz, aparece como "Você") e `v.oliveira042997` (@Deus). **Eu (Claude) não digito senha no app** (regra de segurança, vale mesmo para contas de teste em projeto Supabase real); o Thiago troca a conta no celular (Perfil > Sair da conta). As senhas NÃO ficam neste arquivo.
@@ -116,8 +122,8 @@ A nuvem não compila (sem Android SDK), então `.github/workflows/android.yml` c
 - Ambiente de nuvem (claude.ai/code): sem Android SDK e sem `dl.google.com`; quem compila é o GitHub Actions. Dá para testar SQL com o Postgres 16 em `/usr/lib/postgresql/16/bin` (iniciar como usuário `postgres` num diretório próprio, ex. `/var/tmp`). O contêiner é descartado: commit + push antes de encerrar.
 
 ## Próximos passos (ordem sugerida)
-0. **Supabase:** rodar `010`, `011` e `012` (e a `008`, se não foi; a `012` também recria a `records_summary()`) no SQL Editor; são idempotentes. Conferir `body_weights` por conta (erro nº 1). Decidir sobre "Confirm email" e SMTP próprio (seção acima).
-1. **Validar no celular** as correções dos erros 1 a 4 (roteiro na 3ª sessão, já no `master`) e revisar/mergear o PR dos erros 5 a 13 (roteiro na 4ª sessão). Depois, os de baixa prioridade em `ERROS_CONHECIDOS.md`. Cada correção com teste no `:shared` quando for lógica.
+0. **Antes de distribuir o APK:** decidir sobre "Confirm email" e SMTP próprio (seção acima) e sobre a chave de assinatura fixa (5ª sessão). Conferir `body_weights` por conta (erro nº 1).
+1. **Validar no celular** (APK da execução 40512678834) as correções dos erros 1 a 4 e 5 a 13 (roteiros na 3ª e 4ª sessões), incluindo as datas de Recordes depois da 012, compartilhar/importar (011) e títulos de desafio (010). Depois, os de baixa prioridade em `ERROS_CONHECIDOS.md`. Cada correção com teste no `:shared` quando for lógica.
 2. **Validar no celular** a lista "Nunca visto no aparelho" acima, começando pelo que tem mais risco: aviso de descanso com tela bloqueada, compartilhar/importar entre as duas contas, exportar CSV, temas Loucos (fluidez), bottom sheet.
 3. Terminar o Social: aceitar o pedido (logar na v.oliveira), conferir o perfil na thiagobr; equipes, música, sair do grupo/desafio, "Tentar de novo".
 4. Imagens: o Thiago gera as 29 que faltam (`docs/PROMPTS_IMAGENS_EXERCICIOS.md`; de preferência regerar tudo no mesmo estilo) e cortamos com `tools/cortar_folha.py`. Confirmar os apelidos "Fly" (voador) e "Fly Costas" (voador inverso).
