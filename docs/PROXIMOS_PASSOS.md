@@ -142,6 +142,11 @@ Pendente / ideias:
 - Junto: sair sem internet não fecha o app (erro 7).
 - **Pendente:** validar no celular (roteiro em `CONTEXTO_SESSAO.md`) e mergear; medidas corporais na nuvem para não se perderem ao sair.
 
+## Décima sexta rodada (27/10/2026, 4ª sessão na nuvem) — erros de média prioridade
+- PR #7 (erros 1 a 4) mergeado; branch novo `claude/correcoes-media-prioridade`, PR para o `master`; 260 testes no `:shared`.
+- **5:** o Thiago rodou a `009`. **6:** aviso "Confirme seu e-mail" + reenviar; explicado no `CONTEXTO_SESSAO.md` como o Supabase envia o e-mail (automático, SMTP próprio para usuários reais, Site URL). **8:** botão de série desligado enquanto grava; circuito enfileira. **9:** circuito preenche a última carga quando chega. **10:** migração `012` (fuso de Brasília), testada no Postgres local, pendente no Supabase. **11:** fim do treino troca a Home antiga por uma nova. **12:** "Tirar do grupo" separado de "Apagar de vez". **13:** recordes recalculados a cada série; confete só para recorde novo.
+- **Pendente:** rodar a `012`; validar no celular; decidir "Confirm email" + SMTP.
+
 ---
 
 # Anexo: notas detalhadas das sessões de 21 a 27/10/2026 (movidas do CONTEXTO_SESSAO.md em 27/10/2026; retrato daquele momento, ex.: os PRs citados como abertos já foram mergeados)

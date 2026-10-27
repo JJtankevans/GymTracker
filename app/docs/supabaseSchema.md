@@ -313,7 +313,7 @@ ORDER BY profile_id, week_start;
 ---
 
 ## Atualizações posteriores ao schema original
-> **Atenção (27/10/2026):** `started_at::DATE` (na view acima, em `records_summary()` e em `profile_stats()`) converte no fuso da sessão do banco, que no Supabase é UTC: treino depois das 21h de Brasília conta no dia seguinte. Correção proposta em `docs/ERROS_CONHECIDOS.md` (nº 10).
+> **Atenção (27/10/2026):** `started_at::DATE` (na view acima, em `records_summary()` e em `profile_stats()`) converte no fuso da sessão do banco, que no Supabase é UTC: treino depois das 21h de Brasília conta no dia seguinte. Corrigido pela migração `docs/supabase/012_datas_no_fuso_de_brasilia.sql` (usa `(started_at at time zone 'America/Sao_Paulo')::date` nas três; mesmas colunas).
 
 Colunas acrescentadas depois do schema acima (o app lê/grava todas): `workouts.finished_exercise_ids` (001), `workouts.muscle_group_name` (009); `profiles.bio`, `visibility`, `share_workouts`, `share_music` (002); `profiles.height_cm`, `birth_year`, `sex`, `ask_weight_each_workout` (003); `challenges.fail_threshold`, `streak_goal` (010). Tabelas novas: `follows`, `groups`, `group_members`, `challenges`, `challenge_participants`, `feed_posts`, `post_reactions`, `workout_tracks` (002), `body_weights` (003), `group_exercises` (006), `shared_routines` (011).
 
