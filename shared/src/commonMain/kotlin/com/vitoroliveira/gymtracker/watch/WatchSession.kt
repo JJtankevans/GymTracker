@@ -119,11 +119,11 @@ fun formatVolume(kg: Double): String =
 
 /**
  * Dica de progressão: se da última vez fez todas as repetições planejadas, sugere subir a carga
- * (2,5 kg até 40 kg, depois 5 kg). null quando não há o que sugerir.
+ * (+2,5 kg até 40 kg, +5 kg acima disso). null quando não há o que sugerir.
  */
 fun progressionHint(ex: WatchExercise): Double? {
     val kg = ex.lastKg ?: return null
     val reps = ex.lastReps ?: return null
     if (kg <= 0.0 || reps < ex.reps) return null
-    return kg + if (kg < 40.0) 2.5 else 5.0
+    return kg + if (kg <= 40.0) 2.5 else 5.0
 }
