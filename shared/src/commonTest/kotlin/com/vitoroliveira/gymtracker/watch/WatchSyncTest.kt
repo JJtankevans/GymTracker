@@ -52,6 +52,24 @@ class WatchSyncTest {
     }
 
     @Test
+    fun weekStreakAndSuggestionGoToTheWatch() {
+        val groups = listOf(MuscleGroup("g1", name = "A"), MuscleGroup("g2", name = "B"))
+        val exercises = listOf(Exercise("e1", name = "X", groupIds = listOf("g1")), Exercise("e2", name = "Y", groupIds = listOf("g2")))
+        val today = kotlinx.datetime.LocalDate(2026, 10, 28)                 // quarta
+        val dates = listOf(
+            kotlinx.datetime.LocalDate(2026, 10, 26), kotlinx.datetime.LocalDate(2026, 10, 27),   // seg e ter
+            kotlinx.datetime.LocalDate(2026, 10, 20)                                            // semana passada
+        )
+        val r = buildWatchRoutines(groups, exercises, emptyList(), emptyList(), 0L, dates, today, weeklyGoal = 4, suggestedGroupId = "g2")
+        assertEquals(2, r.weekDone)
+        assertEquals(4, r.weekGoal)
+        assertEquals(2, r.streakDays)
+        assertEquals("g2", r.suggestedGroupId)
+        assertEquals("g2", r.routines.first().groupId)    // a sugerida vem primeiro
+        assertNull(buildWatchRoutines(groups, exercises, emptyList(), emptyList(), 0L, suggestedGroupId = "sumiu").suggestedGroupId)
+    }
+
+    @Test
     fun groupWithoutExercisesIsHidden() {
         val r = buildWatchRoutines(listOf(MuscleGroup("g1", name = "Vazio")), emptyList(), emptyList(), emptyList(), 0L)
         assertTrue(r.routines.isEmpty())
@@ -105,6 +123,17 @@ class WatchSyncTest {
         s = s.undoLastSet()
         assertEquals(0, s.currentIndex)
         assertEquals(1, s.setsDone("e1"))
+    }
+
+    @Test
+    fun bestLiftUsesEstimatedOneRepMax() {
+        val s = WatchSession.start("w1", routine, 0L)
+            .addSet(10, 40.0, 1L).session      // 40 × (1 + 10/30) = 53,3
+            .addSet(3, 47.5, 2L).session       // 47,5 × 1,1 = 52,25
+        val (ex, rm) = assertNotNull(s.bestLift())
+        assertEquals("e1", ex.id)
+        assertEquals(53.33, rm, 0.01)
+        assertNull(WatchSession.quick("q", 10, 20.0, 0L).addSet(10, 20.0, 1L).session.bestLift())
     }
 
     @Test

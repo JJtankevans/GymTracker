@@ -88,7 +88,8 @@ fun ProfileScreen(
         onPickPhoto = { photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
         onRemovePhoto = { viewModel.removeAvatar() },
         isExporting = export.isExporting,
-        onExport = exportVm::export
+        onExport = exportVm::export,
+        watchSlot = { com.vitoroliveira.gymtracker.wear.WatchSyncCard() }
     )
 }
 
@@ -106,7 +107,9 @@ fun ProfileScreenContent(
     onPickPhoto: () -> Unit = {},
     onRemovePhoto: () -> Unit = {},
     isExporting: Boolean = false,
-    onExport: () -> Unit = {}
+    onExport: () -> Unit = {},
+    /** Cartão do relógio (fica vazio nas prévias e capturas, que não têm Data Layer). */
+    watchSlot: @Composable () -> Unit = {}
 ) {
     var weeklyGoal by remember(uiState.profile) {
         mutableStateOf(uiState.profile?.weeklyGoal ?: 3)
@@ -305,6 +308,10 @@ fun ProfileScreenContent(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(if (isExporting) "Exportando..." else "Exportar meus treinos (CSV)")
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                watchSlot()
 
                 Spacer(modifier = Modifier.height(16.dp))
 

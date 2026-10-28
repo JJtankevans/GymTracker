@@ -1,5 +1,6 @@
 package com.vitoroliveira.gymtracker.watch
 
+import com.vitoroliveira.gymtracker.presentation.body.estimateOneRepMax
 import kotlinx.serialization.Serializable
 import kotlin.math.roundToInt
 
@@ -81,6 +82,15 @@ data class WatchSession(
             if (!isDone(exercises[i])) return i
         }
         return from
+    }
+
+    /** Melhor série do treino pelo 1RM estimado (Epley, até 12 repetições): exercício e 1RM. null no treino rápido/sem carga. */
+    fun bestLift(): Pair<WatchExercise, Double>? {
+        if (isQuick) return null
+        val byId = exercises.associateBy { it.id }
+        return sets.filter { it.weightKg > 0.0 && it.exerciseId in byId }
+            .map { byId.getValue(it.exerciseId) to estimateOneRepMax(it.weightKg, it.reps.coerceAtMost(12)) }
+            .maxByOrNull { it.second }
     }
 
     fun withHeartRate(bpm: Int): WatchSession =

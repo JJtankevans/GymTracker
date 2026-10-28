@@ -51,6 +51,8 @@ dependencies {
     implementation(libs.wear.compose.navigation)
     implementation(libs.wear.core)              // modo ambiente (tela sempre ligada)
     implementation(libs.wear.ongoing)           // atalho do treino no mostrador
+    implementation(libs.wear.tiles)             // tile "Treinar" no carrossel
+    implementation(libs.wear.protolayout)
     implementation(libs.health.services.client) // batimentos
     // ListenableFuture (devolvido por unregisterMeasureCallbackAsync): o artefato "listenablefuture" que chega
     // pelas dependências é a versão vazia 9999.0, então é preciso a Guava inteira

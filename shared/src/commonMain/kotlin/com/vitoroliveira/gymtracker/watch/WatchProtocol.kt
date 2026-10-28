@@ -4,6 +4,8 @@ import com.vitoroliveira.gymtracker.data.model.Exercise
 import com.vitoroliveira.gymtracker.data.model.MuscleGroup
 import com.vitoroliveira.gymtracker.data.model.RecentSet
 import com.vitoroliveira.gymtracker.data.model.RecordSummary
+import com.vitoroliveira.gymtracker.presentation.DashboardCalculator
+import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlin.time.Instant
@@ -56,7 +58,14 @@ data class WatchRoutines(
     val loggedIn: Boolean = true,
     /** Quando o celular montou as rotinas (epoch ms). */
     val generatedAt: Long = 0L,
-    val routines: List<WatchRoutine> = emptyList()
+    val routines: List<WatchRoutine> = emptyList(),
+    /** Treinos nesta semana (segunda a domingo) e a meta semanal do perfil (0 = sem meta conhecida). */
+    val weekDone: Int = 0,
+    val weekGoal: Int = 0,
+    /** Dias seguidos com treino (como na Home do celular). */
+    val streakDays: Int = 0,
+    /** Grupo sugerido para hoje (rotação ABC, o mesmo "Sugerido" do celular). */
+    val suggestedGroupId: String? = null
 )
 
 @Serializable
@@ -117,7 +126,12 @@ fun buildWatchRoutines(
     exercises: List<Exercise>,
     recentSets: List<RecentSet>,
     records: List<RecordSummary>,
-    nowMs: Long
+    nowMs: Long,
+    /** Dias (no fuso do usuário) dos treinos terminados, para a semana e a sequência. */
+    workoutDates: List<LocalDate> = emptyList(),
+    today: LocalDate? = null,
+    weeklyGoal: Int = 0,
+    suggestedGroupId: String? = null
 ): WatchRoutines {
     val best = records.associate { it.exerciseId to it.bestWeightKg }
     val last = lastLoads(recentSets)
@@ -137,7 +151,15 @@ fun buildWatchRoutines(
     }
     val all = exercises.sortedBy { it.name.lowercase() }.mapNotNull { it.toWatch() }
     val withAll = if (all.isEmpty()) routines else routines + WatchRoutine(null, "Todos os exercícios", "#9E9E9E", all)
-    return WatchRoutines(loggedIn = true, generatedAt = nowMs, routines = withAll)
+    // a sugerida vai primeiro na lista do relógio
+    val ordered = suggestedGroupId?.let { id -> withAll.sortedByDescending { it.groupId == id } } ?: withAll
+    return WatchRoutines(
+        loggedIn = true, generatedAt = nowMs, routines = ordered,
+        weekDone = today?.let { DashboardCalculator.weeklyCount(workoutDates, it) } ?: 0,
+        weekGoal = weeklyGoal.coerceAtLeast(0),
+        streakDays = today?.let { DashboardCalculator.streak(workoutDates, it) } ?: 0,
+        suggestedGroupId = suggestedGroupId?.takeIf { id -> ordered.any { it.groupId == id } }
+    )
 }
 
 /** Para cada exercício: (maior carga, repetições dessa série) no treino mais recente em que ele apareceu. */

@@ -101,6 +101,7 @@ private object Routes {
     const val SWITCH = "trocar/{i}"
     const val FINISH = "terminar"
     const val DISCARD = "descartar"
+    const val PLATES = "anilhas"
 }
 
 @Composable
@@ -115,6 +116,10 @@ fun WatchApp(c: WatchController) {
         )
     ) {
         val nav = rememberSwipeDismissableNavController()
+        // botão "Treinar" do tile: começa o treino do grupo e abre a tela dele
+        LaunchedEffect(c.pendingStart) {
+            if (c.pendingStart != null && c.consumePendingStart()) nav.navigate(Routes.WORKOUT) { popUpTo(Routes.HOME) }
+        }
         Box(Modifier.fillMaxSize().background(Color.Black)) {
             SwipeDismissableNavHost(navController = nav, startDestination = Routes.HOME) {
                 composable(Routes.HOME) {
@@ -135,6 +140,7 @@ fun WatchApp(c: WatchController) {
                 composable(Routes.WORKOUT) {
                     WorkoutScreen(
                         c, accent,
+                        onPlates = { nav.navigate(Routes.PLATES) },
                         onFinish = { nav.navigate(Routes.FINISH) },
                         onDiscard = { nav.navigate(Routes.DISCARD) },
                         onGone = { nav.popBackStack(Routes.HOME, inclusive = false) }
@@ -175,6 +181,7 @@ fun WatchApp(c: WatchController) {
                     SummaryScreen(c, accent) { nav.popBackStack(Routes.HOME, inclusive = false) }
                 }
                 composable(Routes.SETTINGS) { SettingsScreen(c, accent) }
+                composable(Routes.PLATES) { PlatesScreen(c.draftKg, accent) }
             }
             if (c.ambient) AmbientScreen(c)
         }
@@ -216,6 +223,7 @@ private fun HomeScreen(
                 Text("GYMTRACKER", color = accent, fontWeight = FontWeight.Black, letterSpacing = 2.sp, fontSize = 13.sp)
             }
         }
+        routines?.takeIf { it.loggedIn && (it.weekGoal > 0 || it.streakDays > 1) }?.let { r -> item { WeekHeader(r.weekDone, r.weekGoal, r.streakDays, accent) } }
         c.session?.let { s ->
             item {
                 Chip(
@@ -242,7 +250,11 @@ private fun HomeScreen(
                     onClick = { onRoutine(i, r) },
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text(r.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                    secondaryLabel = { Text("${r.exercises.size} exercício" + if (r.exercises.size == 1) "" else "s", color = Muted) },
+                    secondaryLabel = {
+                        val n = "${r.exercises.size} exercício" + if (r.exercises.size == 1) "" else "s"
+                        if (r.groupId != null && r.groupId == routines?.suggestedGroupId) Text("Sugerido hoje · $n", color = accent, maxLines = 1)
+                        else Text(n, color = Muted)
+                    },
                     icon = {
                         Box(
                             Modifier.size(22.dp).clip(CircleShape)
@@ -465,5 +477,89 @@ private fun AmbientScreen(c: WatchController) {
                 }
             }
         }
+    }
+}
+
+// ───────────────────────── semana (início) ─────────────────────────
+
+@Composable
+private fun WeekHeader(done: Int, goal: Int, streak: Int, accent: Color) {
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
+    ) {
+        if (goal > 0) {
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.size(40.dp)) {
+                androidx.wear.compose.material.CircularProgressIndicator(
+                    progress = (done.toFloat() / goal).coerceIn(0f, 1f),
+                    modifier = Modifier.fillMaxSize(),
+                    startAngle = 270f, endAngle = 270f + 359.9f, strokeWidth = 4.dp,
+                    indicatorColor = accent, trackColor = accent.copy(alpha = 0.18f)
+                )
+                Text("$done/$goal", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            }
+            Spacer(Modifier.size(8.dp))
+        }
+        Column {
+            if (goal > 0) Text(if (done >= goal) "Meta da semana batida!" else "treinos na semana", fontSize = 11.sp, color = if (done >= goal) accent else Muted)
+            if (streak > 1) Text("$streak dias seguidos", fontSize = 11.sp, color = Gold, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+// ───────────────────────── anilhas ─────────────────────────
+
+/** Cores olímpicas das anilhas (25 vermelha, 20 azul, 15 amarela, 10 verde, 5 branca, menores cinza). */
+private fun plateColor(kg: Double): Color = when {
+    kg >= 25.0 -> Color(0xFFE53935)
+    kg >= 20.0 -> Color(0xFF1E88E5)
+    kg >= 15.0 -> Color(0xFFFDD835)
+    kg >= 10.0 -> Color(0xFF43A047)
+    kg >= 5.0 -> Color(0xFFF5F5F5)
+    kg >= 2.5 -> Color(0xFF424242)
+    else -> Color(0xFF9E9E9E)
+}
+
+/** Anilhas de cada lado da barra para a carga da série em edição (toque na barra para trocar 20/15/10 kg). */
+@Composable
+private fun PlatesScreen(targetKg: Double, accent: Color) {
+    var barIdx by androidx.compose.runtime.remember { androidx.compose.runtime.mutableIntStateOf(0) }
+    val bar = com.vitoroliveira.gymtracker.presentation.workout.PlateCalculator.bars[barIdx]
+    val result = com.vitoroliveira.gymtracker.presentation.workout.PlateCalculator.plates(targetKg, bar)
+    Column(
+        Modifier.fillMaxSize().padding(horizontal = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text("ANILHAS", fontSize = 10.sp, letterSpacing = 2.sp, color = Muted)
+        Text("${formatKg(targetKg)} kg", fontSize = 26.sp, fontWeight = FontWeight.Black, color = accent)
+        Spacer(Modifier.height(6.dp))
+        // desenho: metade da barra com as anilhas de um lado, da maior (perto do centro) para a menor
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+            Box(Modifier.size(width = 26.dp, height = 6.dp).background(Color(0xFFB0B0B0)))
+            Box(Modifier.size(width = 4.dp, height = 16.dp).background(Color(0xFF8A8A8A)))
+            result.perSide.forEach { p ->
+                val h = (22 + (p / 25.0) * 46).toInt().dp
+                Box(Modifier.padding(horizontal = 1.dp).size(width = 9.dp, height = h).clip(androidx.compose.foundation.shape.RoundedCornerShape(2.dp)).background(plateColor(p)))
+            }
+            Box(Modifier.size(width = 18.dp, height = 6.dp).background(Color(0xFFB0B0B0)))
+        }
+        Spacer(Modifier.height(6.dp))
+        Text(
+            when {
+                result.belowBar -> "Menos que a barra"
+                result.perSide.isEmpty() -> "Só a barra"
+                else -> "cada lado: " + result.perSide.joinToString(" + ") { formatKg(it) }
+            },
+            fontSize = 12.sp, textAlign = TextAlign.Center, maxLines = 2
+        )
+        if (result.missingKg > 0.0) Text("faltam ${formatKg(result.missingKg)} kg", fontSize = 10.sp, color = Gold)
+        Spacer(Modifier.height(6.dp))
+        androidx.wear.compose.material.CompactChip(
+            onClick = { barIdx = (barIdx + 1) % com.vitoroliveira.gymtracker.presentation.workout.PlateCalculator.bars.size },
+            label = { Text("barra ${formatKg(bar)} kg") },
+            colors = ChipDefaults.secondaryChipColors()
+        )
     }
 }

@@ -28,7 +28,24 @@ class WearActivity : ComponentActivity() {
             scope = lifecycleScope
         )
         lifecycle.addObserver(AmbientLifecycleObserver(this, ambientCallback))
+        handleStart(intent)
         setContent { WatchApp(controller) }
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        handleStart(intent)
+    }
+
+    /** O botão "Treinar" do tile manda o grupo sugerido; a tela inicial começa o treino dele. */
+    private fun handleStart(intent: android.content.Intent?) {
+        val group = intent?.getStringExtra(EXTRA_START_GROUP) ?: return
+        intent.removeExtra(EXTRA_START_GROUP)
+        controller.requestStart(group)
+    }
+
+    companion object {
+        const val EXTRA_START_GROUP = "iniciarGrupo"
     }
 
     override fun onResume() {

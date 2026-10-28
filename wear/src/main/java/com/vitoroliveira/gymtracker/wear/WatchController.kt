@@ -28,7 +28,10 @@ data class FinishSummary(
     val avgHeartRate: Int?,
     val maxHeartRate: Int?,
     val records: Int,
-    val workoutId: String?
+    val workoutId: String?,
+    /** Melhor série pelo 1RM estimado: nome do exercício e 1RM (null no treino rápido). */
+    val bestLiftName: String? = null,
+    val bestLiftKg: Double? = null
 )
 
 /** Situação da conversa com o celular, para a tela inicial. */
@@ -128,6 +131,7 @@ class WatchController(
         if (current != null && r.generatedAt < current.generatedAt) return
         routines = r
         store.routines = r
+        WorkoutTileService.refresh(app)
         if (current == null || r.generatedAt > current.generatedAt) {
             routinesAt = System.currentTimeMillis()
             store.routinesReceivedAt = routinesAt
@@ -209,10 +213,12 @@ class WatchController(
         val s = session ?: return
         val now = System.currentTimeMillis()
         val workout = s.toWorkout(now)
+        val best = s.bestLift()
         lastFinish = FinishSummary(
             s.title, now - s.startedAt, s.totalSets, s.volumeKg,
             s.doneExercises, if (s.isQuick) 0 else s.exercises.size,
-            s.avgHeartRate, s.maxHeartRate, s.records, workout?.id
+            s.avgHeartRate, s.maxHeartRate, s.records, workout?.id,
+            bestLiftName = best?.first?.name, bestLiftKg = best?.second
         )
         if (workout != null) saveOutbox(outbox.add(workout))
         close()
@@ -241,8 +247,28 @@ class WatchController(
     }
 
     private fun saveSession(s: WatchSession?) {
+        val changedTile = (session == null) != (s == null) || session?.totalSets != s?.totalSets
         session = s
         store.session = s
+        if (changedTile) WorkoutTileService.refresh(app)
+    }
+
+    // ───────────── atalho do tile ─────────────
+
+    /** Grupo que o tile pediu para iniciar ("" = treino rápido); a tela inicial consome e limpa. */
+    var pendingStart by mutableStateOf<String?>(null); private set
+
+    fun requestStart(groupId: String?) { pendingStart = groupId }
+
+    /** Inicia o que o tile pediu. true = começou um treino novo (a tela navega para ele). */
+    fun consumePendingStart(): Boolean {
+        val id = pendingStart ?: return false
+        pendingStart = null
+        if (session != null) return false            // já tem treino: o tile só abre o app
+        if (id.isEmpty()) { startQuick(); return true }
+        val routine = routines?.routines?.firstOrNull { it.groupId == id } ?: return false
+        startRoutine(routine)
+        return true
     }
 
     private fun loadDraft() {

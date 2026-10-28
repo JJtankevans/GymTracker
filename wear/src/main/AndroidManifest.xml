@@ -40,5 +40,19 @@
         </activity>
 
         <receiver android:name=".RestAlarmReceiver" android:exported="false" />
+
+        <!-- tile: semana, sugestão do dia e botão que já abre o treino -->
+        <service
+            android:name=".WorkoutTileService"
+            android:exported="true"
+            android:label="GymTracker"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@drawable/ic_launcher_foreground" />
+        </service>
     </application>
 </manifest>

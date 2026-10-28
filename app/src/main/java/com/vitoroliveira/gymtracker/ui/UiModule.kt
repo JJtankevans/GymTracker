@@ -26,6 +26,9 @@ val uiModule = module {
     single<com.vitoroliveira.gymtracker.presentation.schedule.ScheduleStore> { com.vitoroliveira.gymtracker.ui.muscleGroup.PrefsScheduleStore(androidContext()) }
     single { com.vitoroliveira.gymtracker.presentation.schedule.ScheduleRepository(get()) }
     viewModel { com.vitoroliveira.gymtracker.presentation.schedule.ScheduleViewModel(get()) }
+    // relógio: monta as rotinas e conversa pela Data Layer
+    factory { com.vitoroliveira.gymtracker.domain.usecase.BuildWatchRoutines(get(), get(), get(), get(), get()) }
+    single { com.vitoroliveira.gymtracker.wear.WatchBridge(androidContext(), get(), get(), get(), get(), get()) }
     single<com.vitoroliveira.gymtracker.domain.repository.LocalUserData> {
         LocalUserDataImpl(androidContext(), get(), get(), get(), get())
     }

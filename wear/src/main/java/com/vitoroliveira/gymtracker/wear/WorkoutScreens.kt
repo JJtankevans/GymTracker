@@ -78,7 +78,7 @@ private const val PAGE_STATS = 2
 
 /** Treino em andamento: ← lista de exercícios · série/descanso (meio) · tempo e números →. */
 @Composable
-fun WorkoutScreen(c: WatchController, accent: Color, onFinish: () -> Unit, onDiscard: () -> Unit, onGone: () -> Unit) {
+fun WorkoutScreen(c: WatchController, accent: Color, onPlates: () -> Unit, onFinish: () -> Unit, onDiscard: () -> Unit, onGone: () -> Unit) {
     val session = c.session
     if (session == null) {
         LaunchedEffect(Unit) { onGone() }
@@ -95,7 +95,7 @@ fun WorkoutScreen(c: WatchController, accent: Color, onFinish: () -> Unit, onDis
                     c.select(i)
                     scope.launch { pager.animateScrollToPage(PAGE_SET) }
                 }
-                PAGE_SET -> if (c.rest != null) RestPage(c, session, accent) else SetPage(c, session, accent, active = pager.currentPage == PAGE_SET)
+                PAGE_SET -> if (c.rest != null) RestPage(c, session, accent) else SetPage(c, session, accent, active = pager.currentPage == PAGE_SET, onPlates = onPlates)
                 else -> StatsPage(c, session, accent, onFinish)
             }
         }
@@ -128,7 +128,7 @@ private fun AskPermissionsOnce(c: WatchController) {
 // ───────────────────────── série ─────────────────────────
 
 @Composable
-private fun SetPage(c: WatchController, s: WatchSession, accent: Color, active: Boolean) {
+private fun SetPage(c: WatchController, s: WatchSession, accent: Color, active: Boolean, onPlates: () -> Unit) {
     val ex = s.current
     var field by remember { mutableIntStateOf(1) }          // 0 = repetições, 1 = carga
     var acc by remember { mutableFloatStateOf(0f) }
@@ -172,7 +172,15 @@ private fun SetPage(c: WatchController, s: WatchSession, accent: Color, active: 
         Spacer(Modifier.height(4.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
             RoundButton("−") { if (field == 0) c.changeReps(-1) else c.changeKg(-1) }
-            Text(if (field == 0) "reps" else "± ${formatKg(c.kgStep.toDouble())} kg", fontSize = 10.sp, color = Muted, modifier = Modifier.width(52.dp), textAlign = TextAlign.Center)
+            // com a carga selecionada, o meio vira atalho para as anilhas
+            Text(
+                if (field == 0) "reps" else "anilhas",
+                fontSize = 10.sp, color = if (field == 0) Muted else accent, textAlign = TextAlign.Center,
+                fontWeight = if (field == 0) FontWeight.Normal else FontWeight.Bold,
+                modifier = Modifier.width(52.dp).clip(RoundedCornerShape(10.dp))
+                    .then(if (field == 1 && c.draftKg >= 20.0) Modifier.clickable(onClick = onPlates) else Modifier)
+                    .padding(vertical = 4.dp)
+            )
             RoundButton("+") { if (field == 0) c.changeReps(1) else c.changeKg(1) }
         }
         LastTimeHint(s, ex)
@@ -448,6 +456,17 @@ fun SummaryScreen(c: WatchController, accent: Color, onDone: () -> Unit) {
                     f.avgHeartRate?.let { Stat("$it", "bpm médio", Danger) }
                     f.maxHeartRate?.let { Stat("$it", "bpm máx") }
                     if (f.records > 0) Stat("${f.records}", if (f.records == 1) "recorde" else "recordes", Gold)
+                }
+            }
+        }
+        if (f.bestLiftName != null && f.bestLiftKg != null) {
+            item {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                    Text("MELHOR SÉRIE", fontSize = 9.sp, letterSpacing = 1.sp, color = Muted)
+                    Text(
+                        "${f.bestLiftName} · 1RM ~${formatKg(f.bestLiftKg)} kg",
+                        fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 2, textAlign = TextAlign.Center
+                    )
                 }
             }
         }
