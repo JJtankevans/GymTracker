@@ -22,6 +22,8 @@ private const val TAU = (2 * PI).toFloat()
  * animações usam múltiplos inteiros de [t], então o loop é contínuo.
  */
 fun DrawScope.drawThemeBackground(extras: ThemeExtras, base: Color, t: Float) {
+    // tamanho zero (antes do layout): gradiente radial com raio 0 lança exceção no Android
+    if (size.width < 2f || size.height < 2f) return
     if (extras.backgroundGradient.size >= 2) {
         drawRect(Brush.verticalGradient(extras.backgroundGradient))
     } else {
