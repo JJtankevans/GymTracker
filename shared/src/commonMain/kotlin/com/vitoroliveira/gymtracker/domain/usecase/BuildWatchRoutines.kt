@@ -11,6 +11,7 @@ import com.vitoroliveira.gymtracker.watch.WatchRecent
 import com.vitoroliveira.gymtracker.watch.WatchRoutines
 import com.vitoroliveira.gymtracker.watch.buildWatchRoutines
 import com.vitoroliveira.gymtracker.watch.epochMsToIso
+import com.vitoroliveira.gymtracker.watch.estimatedMaxHr
 import kotlinx.coroutines.CancellationException
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -30,7 +31,9 @@ class BuildWatchRoutines(
     private val workouts: WorkoutRepository,
     private val profiles: ProfileRepository,
     private val clock: Clock = Clock.System,
-    private val zone: TimeZone = TimeZone.currentSystemDefault()
+    private val zone: TimeZone = TimeZone.currentSystemDefault(),
+    /** Ano de nascimento de "Meus dados" (fica no aparelho), para a FC máxima das zonas no relógio. */
+    private val birthYear: () -> Int? = { null }
 ) {
     suspend operator fun invoke(): WatchRoutines {
         val now = clock.now()
@@ -61,7 +64,8 @@ class BuildWatchRoutines(
             gs, ex, recent, records, nowMs,
             workoutDates = dates, today = clock.todayIn(zone), weeklyGoal = goal,
             suggestedGroupId = suggestNextGroup(gs, history),
-            recent = lastWorkouts
+            recent = lastWorkouts,
+            maxHeartRate = optional { birthYear() }?.let { estimatedMaxHr(clock.todayIn(zone).year - it) } ?: 0
         )
     }
 

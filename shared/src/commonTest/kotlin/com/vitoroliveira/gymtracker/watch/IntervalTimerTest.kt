@@ -67,3 +67,33 @@ class WatchRecordsTest {
         assertEquals(listOf("Terra", "Supino", "Crucifixo"), r.records().map { it.name })
     }
 }
+
+class HeartZonesTest {
+    @Test
+    fun fcMaximaPelaIdade() {
+        assertEquals(187, estimatedMaxHr(30)) // 208 - 21
+        assertEquals(DEFAULT_MAX_HR, estimatedMaxHr(null))
+        assertEquals(DEFAULT_MAX_HR, estimatedMaxHr(3))
+    }
+
+    @Test
+    fun zonasPorPorcentagem() {
+        assertEquals(HrZone.REST, HrZone.of(90, 200))
+        assertEquals(HrZone.Z1, HrZone.of(100, 200))
+        assertEquals(HrZone.Z2, HrZone.of(139, 200))
+        assertEquals(HrZone.Z3, HrZone.of(140, 200))
+        assertEquals(HrZone.Z4, HrZone.of(170, 200))
+        assertEquals(HrZone.Z5, HrZone.of(185, 200))
+        assertEquals(HrZone.Z5, HrZone.of(230, 200))
+    }
+
+    @Test
+    fun sessaoContaAmostrasPorZona() {
+        var s = WatchSession.quick("q", 10, 20.0, 0L)
+        listOf(120, 125, 150, 155, 158, 20).forEach { s = s.withHeartRate(it, 200) } // 20 é descartado
+        assertEquals(listOf(0, 0, 2, 3, 0, 0), s.hrZones)
+        assertEquals(HrZone.Z3, s.hrZones.dominantZone())
+        assertEquals(null, emptyList<Int>().dominantZone())
+        assertEquals(listOf(0, 1, 0, 0, 0, 0), emptyList<Int>().addZoneSample(HrZone.Z1))
+    }
+}

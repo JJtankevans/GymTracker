@@ -67,7 +67,9 @@ data class WatchRoutines(
     /** Grupo sugerido para hoje (rotação ABC, o mesmo "Sugerido" do celular). */
     val suggestedGroupId: String? = null,
     /** Últimos treinos terminados (mais recente primeiro), para a tela inicial do relógio. */
-    val recent: List<WatchRecent> = emptyList()
+    val recent: List<WatchRecent> = emptyList(),
+    /** FC máxima estimada pela idade de "Meus dados" (0 = sem idade; o relógio usa [DEFAULT_MAX_HR]). */
+    val maxHeartRate: Int = 0
 )
 
 /** Um treino recente resumido para o relógio. [day] = "28/10". */
@@ -138,7 +140,8 @@ fun buildWatchRoutines(
     today: LocalDate? = null,
     weeklyGoal: Int = 0,
     suggestedGroupId: String? = null,
-    recent: List<WatchRecent> = emptyList()
+    recent: List<WatchRecent> = emptyList(),
+    maxHeartRate: Int = 0
 ): WatchRoutines {
     val best = records.associate { it.exerciseId to it.bestWeightKg }
     val last = lastLoads(recentSets)
@@ -166,7 +169,8 @@ fun buildWatchRoutines(
         weekGoal = weeklyGoal.coerceAtLeast(0),
         streakDays = today?.let { DashboardCalculator.streak(workoutDates, it) } ?: 0,
         suggestedGroupId = suggestedGroupId?.takeIf { id -> ordered.any { it.groupId == id } },
-        recent = recent.take(5)
+        recent = recent.take(5),
+        maxHeartRate = maxHeartRate.coerceAtLeast(0)
     )
 }
 

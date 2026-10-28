@@ -43,6 +43,7 @@ import androidx.wear.compose.material.CompactChip
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.ListHeader
 import androidx.wear.compose.material.Text
+import com.vitoroliveira.gymtracker.watch.HrZone
 import com.vitoroliveira.gymtracker.watch.IntervalPhase
 import com.vitoroliveira.gymtracker.watch.IntervalPlan
 import com.vitoroliveira.gymtracker.watch.IntervalPresets
@@ -229,7 +230,14 @@ fun IntervalRunScreen(c: WatchController, accent: Color, onClose: () -> Unit) {
                 Text(duration(st.remainingMs + 999), fontSize = 46.sp, fontWeight = FontWeight.Black, color = if (run.paused) Muted else Color.White)
                 Text("rodada ${st.round} de ${run.plan.rounds}", color = Muted, fontSize = 12.sp)
             }
-            c.heartRate?.let { HeartChip(it) }
+            c.heartRate?.let { bpm ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    HeartChip(bpm)
+                    c.heartZone?.takeIf { it != HrZone.REST }?.let { z ->
+                        Text("  zona ${z.number}", color = zoneColor(z), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
             Spacer(Modifier.height(6.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 if (st.phase == IntervalPhase.DONE) {

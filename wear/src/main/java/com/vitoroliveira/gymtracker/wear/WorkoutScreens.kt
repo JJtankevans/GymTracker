@@ -64,7 +64,9 @@ import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.ListHeader
 import androidx.wear.compose.material.PageIndicatorState
 import androidx.wear.compose.material.Text
+import com.vitoroliveira.gymtracker.watch.HrZone
 import com.vitoroliveira.gymtracker.watch.WatchExercise
+import com.vitoroliveira.gymtracker.watch.dominantZone
 import com.vitoroliveira.gymtracker.watch.WatchSession
 import com.vitoroliveira.gymtracker.watch.formatKg
 import com.vitoroliveira.gymtracker.watch.formatVolume
@@ -428,6 +430,12 @@ private fun StatsPage(c: WatchController, s: WatchSession, accent: Color, onFini
             Stat(s.maxHeartRate?.toString() ?: "—", "bpm máx")
             if (s.records > 0) Stat("${s.records}", "recordes", Gold)
         }
+        c.heartZone?.let { z ->
+            Text(
+                if (z == HrZone.REST) "abaixo das zonas" else "zona ${z.number} · ${z.label}",
+                fontSize = 11.sp, fontWeight = FontWeight.Bold, color = zoneColor(z)
+            )
+        }
         Spacer(Modifier.height(8.dp))
         Button(
             onClick = onFinish,
@@ -480,6 +488,9 @@ fun SummaryScreen(c: WatchController, accent: Color, onDone: () -> Unit) {
                 }
             }
         }
+        if (f.zones.drop(1).sum() > 0) {
+            item { ZonesBar(f.zones) }
+        }
         if (f.bestLiftName != null && f.bestLiftKg != null) {
             item {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
@@ -514,6 +525,38 @@ fun SummaryScreen(c: WatchController, accent: Color, onDone: () -> Unit) {
                 icon = { Icon(Icons.Filled.Check, contentDescription = null) },
                 colors = ChipDefaults.primaryChipColors()
             )
+        }
+    }
+}
+
+// ───────────────────────── zonas de batimento ─────────────────────────
+
+internal fun zoneColor(z: HrZone): Color = when (z) {
+    HrZone.REST -> Muted
+    HrZone.Z1 -> Color(0xFF9BB0C8)
+    HrZone.Z2 -> Color(0xFF22A7FF)
+    HrZone.Z3 -> Color(0xFF3DDC84)
+    HrZone.Z4 -> Color(0xFFFFA62B)
+    HrZone.Z5 -> Color(0xFFFF4D4D)
+}
+
+/** Barra com o tempo em cada zona (1 a 5) e a zona onde ficou mais tempo. */
+@Composable
+private fun ZonesBar(zones: List<Int>) {
+    val effort = HrZone.entries.drop(1)
+    val total = effort.sumOf { zones.getOrElse(it.ordinal) { 0 } }.coerceAtLeast(1)
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp)) {
+        Text("ZONAS DE BATIMENTO", fontSize = 9.sp, letterSpacing = 1.sp, color = Muted)
+        Spacer(Modifier.height(4.dp))
+        Row(Modifier.fillMaxWidth().height(10.dp).clip(RoundedCornerShape(5.dp))) {
+            effort.forEach { z ->
+                val n = zones.getOrElse(z.ordinal) { 0 }
+                if (n > 0) Box(Modifier.weight(n.toFloat()).fillMaxSize().background(zoneColor(z)))
+            }
+        }
+        zones.dominantZone()?.let { z ->
+            val pct = zones.getOrElse(z.ordinal) { 0 } * 100 / total
+            Text("Mais tempo: zona ${z.number} (${z.label}) · $pct%", fontSize = 10.sp, color = zoneColor(z), textAlign = TextAlign.Center)
         }
     }
 }

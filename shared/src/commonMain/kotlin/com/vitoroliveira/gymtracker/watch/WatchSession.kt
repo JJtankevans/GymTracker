@@ -25,7 +25,9 @@ data class WatchSession(
     val hrCount: Int = 0,
     val hrMax: Int = 0,
     /** Recordes batidos neste treino. */
-    val records: Int = 0
+    val records: Int = 0,
+    /** Amostras de batimento por zona (índice = [HrZone.ordinal]; ~1 por segundo). */
+    val hrZones: List<Int> = emptyList()
 ) {
     val isQuick: Boolean get() = exercises.all { it.id == QUICK_EXERCISE_ID }
     val current: WatchExercise get() = exercises[currentIndex.coerceIn(0, exercises.lastIndex)]
@@ -101,8 +103,12 @@ data class WatchSession(
             .maxByOrNull { it.second }
     }
 
-    fun withHeartRate(bpm: Int): WatchSession =
-        if (bpm !in 30..240) this else copy(hrSum = hrSum + bpm, hrCount = hrCount + 1, hrMax = maxOf(hrMax, bpm))
+    fun withHeartRate(bpm: Int, maxHr: Int = DEFAULT_MAX_HR): WatchSession =
+        if (bpm !in 30..240) this
+        else copy(
+            hrSum = hrSum + bpm, hrCount = hrCount + 1, hrMax = maxOf(hrMax, bpm),
+            hrZones = hrZones.addZoneSample(HrZone.of(bpm, maxHr))
+        )
 
     /** O que vai para o celular; null se não há série de exercício de verdade (treino rápido ou vazio). */
     fun toWorkout(finishedAt: Long): WatchWorkout? {

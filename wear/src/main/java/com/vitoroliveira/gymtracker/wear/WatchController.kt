@@ -8,6 +8,8 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.vitoroliveira.gymtracker.watch.DEFAULT_MAX_HR
+import com.vitoroliveira.gymtracker.watch.HrZone
 import com.vitoroliveira.gymtracker.watch.IntervalPlan
 import com.vitoroliveira.gymtracker.watch.WatchOutbox
 import com.vitoroliveira.gymtracker.watch.WatchRoutine
@@ -32,7 +34,9 @@ data class FinishSummary(
     val workoutId: String?,
     /** Melhor série pelo 1RM estimado: nome do exercício e 1RM (null no treino rápido). */
     val bestLiftName: String? = null,
-    val bestLiftKg: Double? = null
+    val bestLiftKg: Double? = null,
+    /** Amostras (~segundos) por zona de batimento; vazio sem batimentos. */
+    val zones: List<Int> = emptyList()
 )
 
 /** Timer de intervalos rodando. [pausedElapsed] != null = pausado com esse tanto já decorrido. */
@@ -246,7 +250,8 @@ class WatchController(
             s.title, now - s.startedAt, s.totalSets, s.volumeKg,
             s.doneExercises, if (s.isQuick) 0 else s.exercises.size,
             s.avgHeartRate, s.maxHeartRate, s.records, workout?.id,
-            bestLiftName = best?.first?.name, bestLiftKg = best?.second
+            bestLiftName = best?.first?.name, bestLiftKg = best?.second,
+            zones = s.hrZones
         )
         if (workout != null) saveOutbox(outbox.add(workout))
         close()
@@ -375,6 +380,12 @@ class WatchController(
 
     val shouldAskPermissions: Boolean get() = !store.askedPermissions
 
+    /** FC máxima para as zonas: a que o celular calculou pela idade, ou a padrão. */
+    val maxHr: Int get() = routines?.maxHeartRate?.takeIf { it > 0 } ?: DEFAULT_MAX_HR
+
+    /** Zona do batimento agora (null sem batimento). */
+    val heartZone: HrZone? get() = heartRate?.let { HrZone.of(it, maxHr) }
+
     private fun updateHeartRate() {
         val on = heartRateOn && (session != null || intervalRun?.done == false) && resumed && !ambient && app.hasHeartRatePermission()
         if (on) heart.start(::onHeartRate) else heart.stop()
@@ -384,7 +395,7 @@ class WatchController(
     private fun onHeartRate(bpm: Int) {
         heartRate = bpm
         val s = session ?: return
-        session = s.withHeartRate(bpm)
+        session = s.withHeartRate(bpm, maxHr)
         if (++hrSamples % 20 == 0) store.session = session   // grava de vez em quando (chega ~1 por segundo)
     }
 
