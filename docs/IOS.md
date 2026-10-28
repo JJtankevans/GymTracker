@@ -29,7 +29,7 @@ O Thiago pediu "a versão iOS" para distribuir a outras pessoas. Este arquivo di
 
 ## Situação do build (28/10/2026, fim da noite)
 - `:shared` compila para iPhone e **todos os testes passam no simulador de iOS**.
-- O **app de iPhone compila** (precisa do **Xcode 26**: o Compose Multiplatform 1.11 usa APIs do iOS 26, ex.: `UIViewLayoutRegion`; o workflow escolhe o Xcode 26 do runner), **instala e abre no simulador e continua aberto depois de 35 s**. A captura tem conteúdo (cerca de 11% da tela clara sobre o fundo escuro, o que bate com a tela de login). O OCR serve para confirmar o texto; o resultado aparece nos avisos da execução.
+- O **app de iPhone compila** (precisa do **Xcode 26**: o Compose Multiplatform 1.11 usa APIs do iOS 26, ex.: `UIViewLayoutRegion`; o workflow escolhe o Xcode 26 do runner), **instala e abre no simulador e continua aberto depois de 35 s**. **A tela de login aparece**: o OCR da captura leu "GYMTRACKER · Entrar · E-mail · Senha · ENTRAR · Criar uma conta" (execução 40633914088). O resultado do OCR fica nos avisos de cada execução.
 - Abas: Início, Histórico, Recordes e Perfil, mais o treino ativo.
 
 ## Não testado
