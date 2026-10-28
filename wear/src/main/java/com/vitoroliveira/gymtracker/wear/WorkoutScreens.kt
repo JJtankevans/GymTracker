@@ -91,6 +91,9 @@ fun WorkoutScreen(c: WatchController, accent: Color, onPlates: () -> Unit, onAdd
     val pager = rememberPagerState(initialPage = PAGE_SET) { 3 }
     Box(Modifier.fillMaxSize()) {
         HorizontalPager(pager, Modifier.fillMaxSize()) { page ->
+            // a coroa vai para a página visível (lista de exercícios rola; na série, muda reps/kg)
+            @Suppress("DEPRECATION")
+            androidx.wear.compose.foundation.HierarchicalFocusCoordinator(requiresFocus = { pager.currentPage == page }) {
             when (page) {
                 PAGE_EXERCISES -> ExercisesPage(c, session, accent, onFinish, onDiscard, onAddExercise) { i ->
                     c.select(i)
@@ -98,6 +101,7 @@ fun WorkoutScreen(c: WatchController, accent: Color, onPlates: () -> Unit, onAdd
                 }
                 PAGE_SET -> if (c.rest != null) RestPage(c, session, accent) else SetPage(c, session, accent, active = pager.currentPage == PAGE_SET, onPlates = onPlates)
                 else -> StatsPage(c, session, accent, onFinish)
+            }
             }
         }
         val indicator = remember(pager) {
