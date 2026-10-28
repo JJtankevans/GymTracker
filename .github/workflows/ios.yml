@@ -35,6 +35,7 @@ jobs:
         run: |
           echo "ANDROID_HOME=$ANDROID_HOME"
           printf 'sdk.dir=%s\n' "$ANDROID_HOME" > local.properties
+          chmod +x ./gradlew
 
       - name: Compilar o :shared para iOS
         run: |
