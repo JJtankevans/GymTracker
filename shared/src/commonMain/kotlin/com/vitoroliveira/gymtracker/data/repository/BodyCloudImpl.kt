@@ -52,9 +52,11 @@ class BodyCloudImpl(private val supabase: SupabaseClient) : BodyCloud {
     override suspend fun upsertWeight(entry: BodyWeightEntry) {
         val me = userId()
         val day = dateOf(entry.epochDay)
-        // um por dia (unique profile_id + measured_on): apaga o do dia e grava o novo
-        supabase.postgrest["body_weights"].delete { filter { eq("measured_on", day) } }
-        supabase.postgrest["body_weights"].insert(NewWeightRow(me, day, roundWeight(entry.kg)))
+        // um por dia (unique profile_id + measured_on): upsert numa chamada só (antes era apaga + insere, e uma
+        // falha no meio deixava o dia sem peso na nuvem)
+        supabase.postgrest["body_weights"].upsert(NewWeightRow(me, day, roundWeight(entry.kg))) {
+            onConflict = "profile_id,measured_on"
+        }
     }
 
     override suspend fun deleteWeight(epochDay: Int) {

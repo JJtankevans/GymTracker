@@ -142,6 +142,11 @@ enum class ReactionKind(val key: String, val emoji: String, val label: String) {
 
 data class ReactionSummary(val counts: Map<ReactionKind, Int>, val mine: Set<ReactionKind>) {
     fun count(kind: ReactionKind) = counts[kind] ?: 0
+
+    /** Liga/desliga a minha reação [kind] e ajusta a contagem (atualização otimista do feed). */
+    fun toggled(kind: ReactionKind): ReactionSummary =
+        if (kind in mine) ReactionSummary(counts + (kind to (count(kind) - 1).coerceAtLeast(0)), mine - kind)
+        else ReactionSummary(counts + (kind to count(kind) + 1), mine + kind)
 }
 
 fun summarizeReactions(postId: String, all: List<PostReaction>, me: String?): ReactionSummary {

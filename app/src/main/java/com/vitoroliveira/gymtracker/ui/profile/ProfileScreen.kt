@@ -235,7 +235,7 @@ fun ProfileScreenContent(
 
                 Slider(
                     value = weeklyGoal.toFloat(),
-                    onValueChange = { weeklyGoal = it.toInt() },
+                    onValueChange = { weeklyGoal = kotlin.math.round(it).toInt() },
                     valueRange = 1f..7f,
                     steps = 5,
                     modifier = Modifier.fillMaxWidth()

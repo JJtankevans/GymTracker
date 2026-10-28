@@ -222,12 +222,27 @@ class SocialViewModel(
 
     // ── feed ──
 
-    /** Liga/desliga a reação do usuário. Atualiza a lista na hora e desfaz se o servidor recusar. */
+    /** Reações gravando agora ("post|tipo"): um segundo toque antes do servidor responder é ignorado. */
+    private val reacting = mutableSetOf<String>()
+
+    /** Liga/desliga a reação do usuário. Atualiza a lista na hora e volta ao que o servidor tem se ele recusar. */
     fun toggleReaction(postId: String, kind: ReactionKind) {
         val item = _state.value.feed.firstOrNull { it.post.id == postId } ?: return
+        val key = "$postId|${kind.key}"
+        if (!reacting.add(key)) return
         val had = kind in item.reactions.mine
-        act("Erro ao reagir", then = { loadFeed() }) {
-            if (had) repo.removeReaction(postId, kind.key) else repo.addReaction(postId, kind.key)
+        update { copy(feed = feed.map { if (it.post.id == postId) it.copy(reactions = it.reactions.toggled(kind)) else it }) }
+        viewModelScope.launch {
+            try {
+                if (had) repo.removeReaction(postId, kind.key) else repo.addReaction(postId, kind.key)
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                // 23505 = a reação já existia (toque duplo em outro aparelho): o estado final é o mesmo, sem erro
+                if (e.message?.contains("23505") != true) update { copy(error = e.toUserMessage("Erro ao reagir")) }
+                runCatching { loadFeed() }
+            } finally {
+                reacting.remove(key)
+            }
         }
     }
 

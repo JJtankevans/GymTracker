@@ -53,6 +53,8 @@ class ExerciseCatalogTest {
 
     @Test fun mesmoNomeIgnoraAcento() =
         assertTrue(ExerciseCatalog.isSameName("Elevação Pélvica", "elevacao pelvica"))
+        assertTrue(ExerciseCatalog.isSameName("Crossover Pegada Ñandú", "crossover pegada nandu"))   // ñ e ú
+        assertTrue(ExerciseCatalog.isSameName("Glúteo Müller", "gluteo muller"))                   // ü (erro nº 22)
 
     @Test fun apelidoAchaOExercicioDoCatalogoSemMisturarNomes() {
         assertEquals("Hack Squat", ExerciseCatalog.find("Agachamento Hack")?.name)

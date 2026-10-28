@@ -170,9 +170,10 @@ object ExerciseCatalog {
     /** Já existe um exercício com esse nome (ignorando caixa e acento)? */
     fun isSameName(a: String, b: String) = a.normalized() == b.normalized()
 
-    private fun String.normalized(): String = lowercase().trim()
-        .replace('á', 'a').replace('à', 'a').replace('â', 'a').replace('ã', 'a')
-        .replace('é', 'e').replace('ê', 'e').replace('í', 'i')
-        .replace('ó', 'o').replace('ô', 'o').replace('õ', 'o')
-        .replace('ú', 'u').replace('ç', 'c')
+    /** Mesma tabela de acentos do [slug] (antes faltavam è, ü, ñ, î...). */
+    private fun String.normalized(): String {
+        val from = "áàâãäéèêëíìîïóòôõöúùûüçñ"
+        val to = "aaaaaeeeeiiiiooooouuuucn"
+        return lowercase().trim().map { ch -> from.indexOf(ch).let { if (it >= 0) to[it] else ch } }.joinToString("")
+    }
 }

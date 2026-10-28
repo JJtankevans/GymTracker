@@ -146,9 +146,20 @@ fun ActiveWorkoutScreen(
     }
     DisposableEffect(Unit) { onDispose { restNotifier.cancel() } }
 
+    // Treino retomado de outro grupo: o nome vem do treino, não da rota (erro nº 20)
+    val groupsRepo: com.vitoroliveira.gymtracker.domain.repository.MuscleGroupRepository = org.koin.compose.koinInject()
+    val activeGroupId = uiState.activeWorkout?.muscleGroupId
+    val routeMismatch = uiState.activeWorkout != null && activeGroupId != muscleGroupId
+    var resolvedName by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(activeGroupId, routeMismatch) {
+        resolvedName = if (!routeMismatch || activeGroupId == null) null
+        else runCatching { groupsRepo.getAll().firstOrNull { it.id == activeGroupId }?.name }.getOrNull()
+    }
+    val groupName = if (routeMismatch) resolvedName ?: uiState.activeWorkout?.muscleGroupName else muscleGroupName
+
     androidx.compose.foundation.layout.Box {
         ActiveWorkoutScreenContent(
-            muscleGroupName = muscleGroupName,
+            muscleGroupName = groupName,
             uiState = uiState,
             elapsedSeconds = elapsed,
             onAddSet = { exerciseId, reps, weight -> viewModel.addSet(exerciseId, reps, weight) },
@@ -167,7 +178,7 @@ fun ActiveWorkoutScreen(
             onShareSummary = {
                 val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
                     type = "text/plain"
-                    putExtra(android.content.Intent.EXTRA_TEXT, viewModel.shareText(muscleGroupName))
+                    putExtra(android.content.Intent.EXTRA_TEXT, viewModel.shareText(groupName))
                 }
                 context.startActivity(android.content.Intent.createChooser(send, "Compartilhar treino"))
             },
@@ -366,14 +377,17 @@ fun ActiveWorkoutScreenContent(
 
     if (uiState.activeWorkoutToRecover != null) {
         AlertDialog(
-            onDismissRequest = { },
+            onDismissRequest = onBack,      // voltar fecha o diálogo e sai da tela, sem mexer no treino aberto
             title = { Text("Treino em andamento") },
             text = { Text("Você tem um treino iniciado anteriormente. Deseja continuar ou iniciar um novo?") },
             confirmButton = {
                 Button(onClick = { onResumeWorkout(uiState.activeWorkoutToRecover!!) }) { Text("Continuar") }
             },
             dismissButton = {
-                TextButton(onClick = onDiscardWorkout) { Text("Iniciar Novo") }
+                Row {
+                    TextButton(onClick = onBack) { Text("Voltar") }
+                    TextButton(onClick = onDiscardWorkout) { Text("Iniciar Novo") }
+                }
             }
         )
     }

@@ -103,7 +103,8 @@ fun CircuitScreen(
             when {
                 w.activeWorkoutToRecover != null -> RecoverDialog(
                     onResume = { workoutVm.resumeWorkout(w.activeWorkoutToRecover!!) },
-                    onDiscard = { workoutVm.discardAndStartNew(muscleGroupId) }
+                    onDiscard = { workoutVm.discardAndStartNew(muscleGroupId) },
+                    onBack = onExit
                 )
                 w.activeWorkout == null -> Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
                 c.phase == CircuitPhase.IDLE -> CircuitSetup(
@@ -137,13 +138,18 @@ fun CircuitScreen(
 }
 
 @Composable
-private fun RecoverDialog(onResume: () -> Unit, onDiscard: () -> Unit) {
+private fun RecoverDialog(onResume: () -> Unit, onDiscard: () -> Unit, onBack: () -> Unit) {
     AlertDialog(
-        onDismissRequest = {},
+        onDismissRequest = onBack,      // voltar sai do circuito sem mexer no treino aberto
         title = { Text("Treino em andamento") },
         text = { Text("Você já tem um treino aberto. Quer continuar com ele ou começar outro?") },
         confirmButton = { TextButton(onResume) { Text("Continuar") } },
-        dismissButton = { TextButton(onDiscard) { Text("Descartar e começar novo") } }
+        dismissButton = {
+            androidx.compose.foundation.layout.Row {
+                TextButton(onBack) { Text("Voltar") }
+                TextButton(onDiscard) { Text("Descartar e começar novo") }
+            }
+        }
     )
 }
 
