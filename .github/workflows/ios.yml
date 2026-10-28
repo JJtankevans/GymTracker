@@ -29,6 +29,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # o Compose Multiplatform 1.11 usa APIs do iOS 26 (ex.: UIViewLayoutRegion): precisa do SDK do Xcode 26
+      - name: Xcode mais novo
+        run: |
+          ls -d /Applications/Xcode*.app
+          XC=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -n 1)
+          if [ -n "$XC" ]; then sudo xcode-select -s "$XC"; fi
+          xcodebuild -version
+          echo "::notice title=Xcode::$(xcodebuild -version | head -n 1) / SDKs: $(xcodebuild -showsdks | grep -o 'iphonesimulator[0-9.]*' | tr '\n' ' ')"
+
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
