@@ -19,7 +19,8 @@ class LocalUserDataImpl(
     private val catalog: CatalogPrefs,
     private val timing: TimingStore
 ) : LocalUserData {
-    private val cacheDir = context.applicationContext.cacheDir
+    private val appContext = context.applicationContext
+    private val cacheDir = appContext.cacheDir
 
     /** Peso, perfil corporal e medidas pendentes vão para a nuvem antes de sair (medidas: migração 014). */
     override suspend fun flush() = body.sync(force = true)
@@ -29,6 +30,7 @@ class LocalUserDataImpl(
         schedule.clear()
         catalog.clear()
         timing.save(emptyMap())
+        com.vitoroliveira.gymtracker.ui.social.SocialAlertsWorker.clearSeen(appContext)
         // CSV exportado tem o histórico inteiro
         File(cacheDir, "exports").deleteRecursively()
     }

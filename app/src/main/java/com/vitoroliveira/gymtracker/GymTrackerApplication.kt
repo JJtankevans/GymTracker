@@ -21,5 +21,7 @@ class GymTrackerApplication : Application() {
             androidContext(this@GymTrackerApplication)
             modules(appModule(supabaseClient), uiModule)
         }
+        // avisos do Social (pedido para seguir, fim de desafio) a cada ~6 h, sem servidor de push
+        com.vitoroliveira.gymtracker.ui.social.SocialAlertsWorker.schedule(this)
     }
 }

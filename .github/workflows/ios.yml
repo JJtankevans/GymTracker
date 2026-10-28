@@ -99,13 +99,13 @@ jobs:
           xcrun simctl bootstatus "$UDID" -b
           xcrun simctl install "$UDID" iosApp/build/Debug-iphonesimulator/GymTracker.app
           xcrun simctl launch "$UDID" com.vitoroliveira.gymtracker
-          sleep 25
+          sleep 35
           xcrun simctl io "$UDID" screenshot iphone-tela-inicial.png
-          swift iosApp/ocr.swift iphone-tela-inicial.png > ocr.txt 2>&1 || true
+          swift iosApp/ocr.swift iphone-tela-inicial.png 2>/dev/null > ocr.txt || true
           echo "::notice title=Tela do app de iPhone (texto lido por OCR)::$(head -n 25 ocr.txt | sed ':a;N;$!ba;s/\n/ | /g')"
           # o app ainda está vivo? (se fechou sozinho, o launchctl não lista)
           if xcrun simctl spawn "$UDID" launchctl list | grep -q gymtracker; then
-            echo "::notice title=App de iPhone::continua aberto depois de 25 s"
+            echo "::notice title=App de iPhone::continua aberto depois de 35 s"
           else
             echo "::warning title=App de iPhone::não está mais rodando (pode ter fechado sozinho)"
           fi

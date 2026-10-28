@@ -30,6 +30,7 @@ kotlinx-serialization   = "1.8.1"
 androidx-core-ktx            = "1.16.0"
 androidx-activity-compose    = "1.10.1"
 androidx-lifecycle           = "2.9.1"
+androidx-work                = "2.10.0"
 
 # Compose BOM (Android)
 compose-bom             = "2025.06.00"
@@ -100,6 +101,7 @@ androidx-activity-compose    = { module = "androidx.activity:activity-compose", 
 androidx-lifecycle-runtime   = { module = "androidx.lifecycle:lifecycle-runtime-ktx",        version.ref = "androidx-lifecycle" }
 androidx-lifecycle-viewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel-compose",  version.ref = "androidx-lifecycle" }
 androidx-navigation-compose  = { module = "androidx.navigation:navigation-compose",          version.ref = "androidx-navigation" }
+androidx-work-runtime        = { module = "androidx.work:work-runtime-ktx",                  version.ref = "androidx-work" }
 
 # --- Compose BOM (Android) ---
 androidx-compose-bom                = { module = "androidx.compose:compose-bom",              version.ref = "compose-bom" }

@@ -166,6 +166,7 @@ Pendente / ideias:
 - **Medidas na nuvem:** migração 014 + sincronização no `BodyRepository` (testes novos).
 - **Catálogo:** 93 exercícios (Cardio, Mobilidade, +11 de força).
 - **iOS:** `ios.yml` compila o `:shared` para iPhone e roda os testes no simulador (verde); `docs/IOS.md` com o plano (Compose Multiplatform).
+- **Depois do PR #12 aberto (mesma noite):** resumo do mês no Histórico; liga da semana no Social (migração 015); avisos locais do Social (WorkManager); app de iPhone mínimo em Compose Multiplatform (`composeApp/` + `iosApp/`); OCR das telas do relógio e galeria dos 40 temas no CI.
 - **Não testado no aparelho:** nada.
 
 # Anexo: notas detalhadas das sessões de 21 a 27/10/2026 (movidas do CONTEXTO_SESSAO.md em 27/10/2026; retrato daquele momento, ex.: os PRs citados como abertos já foram mergeados)
