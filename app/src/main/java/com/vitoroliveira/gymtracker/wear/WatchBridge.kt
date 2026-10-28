@@ -61,6 +61,32 @@ class WatchBridge(
         }
     }
 
+    /** Aviso no celular de que o treino feito no relógio entrou no Histórico. */
+    private fun notifySaved(title: String, sets: Int) {
+        if (android.os.Build.VERSION.SDK_INT >= 33 &&
+            androidx.core.content.ContextCompat.checkSelfPermission(app, android.Manifest.permission.POST_NOTIFICATIONS) !=
+            android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) return
+        app.getSystemService(android.app.NotificationManager::class.java)?.createNotificationChannel(
+            android.app.NotificationChannel("relogio", "Treinos do relógio", android.app.NotificationManager.IMPORTANCE_LOW)
+        )
+        val open = android.app.PendingIntent.getActivity(
+            app, 71, android.content.Intent(app, com.vitoroliveira.gymtracker.MainActivity::class.java),
+            android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT
+        )
+        val n = androidx.core.app.NotificationCompat.Builder(app, "relogio")
+            .setSmallIcon(com.vitoroliveira.gymtracker.R.drawable.ic_launcher_foreground)
+            .setContentTitle("Treino do relógio salvo")
+            .setContentText("$title · $sets ${if (sets == 1) "série" else "séries"} no Histórico")
+            .setAutoCancel(true)
+            .setContentIntent(open)
+            .build()
+        try {
+            androidx.core.app.NotificationManagerCompat.from(app).notify(400, n)
+        } catch (_: SecurityException) {
+        }
+    }
+
     /** Publica grupos, exercícios, última carga, semana e sugestão para o relógio. */
     suspend fun publishRoutines() {
         val routines = build()
@@ -92,8 +118,9 @@ class WatchBridge(
         if (!auth.awaitSession()) return false        // sem conta no celular: espera até alguém entrar
         val groupIds = groups.getAll().mapNotNull { it.id }.toSet()
         val exerciseIds = exercises.getAll().mapNotNull { it.id }.toSet()
-        ImportWatchWorkout(workouts)(workout, groupIds, exerciseIds)
+        val result = ImportWatchWorkout(workouts)(workout, groupIds, exerciseIds)
         data.deleteDataItems(uri).await()
+        if (result == ImportWatchWorkout.Result.SAVED) notifySaved(workout.title, workout.sets.size)
         uri.host?.let { node ->
             runCatching {
                 Wearable.getMessageClient(app).sendMessage(node, WatchPaths.WORKOUT_SAVED, workout.id.toByteArray(Charsets.UTF_8)).await()

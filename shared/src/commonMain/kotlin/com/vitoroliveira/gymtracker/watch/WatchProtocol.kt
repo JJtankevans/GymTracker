@@ -65,8 +65,14 @@ data class WatchRoutines(
     /** Dias seguidos com treino (como na Home do celular). */
     val streakDays: Int = 0,
     /** Grupo sugerido para hoje (rotação ABC, o mesmo "Sugerido" do celular). */
-    val suggestedGroupId: String? = null
+    val suggestedGroupId: String? = null,
+    /** Últimos treinos terminados (mais recente primeiro), para a tela inicial do relógio. */
+    val recent: List<WatchRecent> = emptyList()
 )
+
+/** Um treino recente resumido para o relógio. [day] = "28/10". */
+@Serializable
+data class WatchRecent(val day: String, val name: String, val minutes: Int? = null)
 
 @Serializable
 data class WatchSet(
@@ -131,7 +137,8 @@ fun buildWatchRoutines(
     workoutDates: List<LocalDate> = emptyList(),
     today: LocalDate? = null,
     weeklyGoal: Int = 0,
-    suggestedGroupId: String? = null
+    suggestedGroupId: String? = null,
+    recent: List<WatchRecent> = emptyList()
 ): WatchRoutines {
     val best = records.associate { it.exerciseId to it.bestWeightKg }
     val last = lastLoads(recentSets)
@@ -158,7 +165,8 @@ fun buildWatchRoutines(
         weekDone = today?.let { DashboardCalculator.weeklyCount(workoutDates, it) } ?: 0,
         weekGoal = weeklyGoal.coerceAtLeast(0),
         streakDays = today?.let { DashboardCalculator.streak(workoutDates, it) } ?: 0,
-        suggestedGroupId = suggestedGroupId?.takeIf { id -> ordered.any { it.groupId == id } }
+        suggestedGroupId = suggestedGroupId?.takeIf { id -> ordered.any { it.groupId == id } },
+        recent = recent.take(5)
     )
 }
 

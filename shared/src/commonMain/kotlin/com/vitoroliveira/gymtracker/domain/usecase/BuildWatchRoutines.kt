@@ -6,6 +6,8 @@ import com.vitoroliveira.gymtracker.domain.repository.MuscleGroupRepository
 import com.vitoroliveira.gymtracker.domain.repository.ProfileRepository
 import com.vitoroliveira.gymtracker.domain.repository.WorkoutRepository
 import com.vitoroliveira.gymtracker.presentation.workout.suggestNextGroup
+import com.vitoroliveira.gymtracker.domain.resolveGroupName
+import com.vitoroliveira.gymtracker.watch.WatchRecent
 import com.vitoroliveira.gymtracker.watch.WatchRoutines
 import com.vitoroliveira.gymtracker.watch.buildWatchRoutines
 import com.vitoroliveira.gymtracker.watch.epochMsToIso
@@ -44,10 +46,22 @@ class BuildWatchRoutines(
         val dates = history.mapNotNull { w ->
             w.startedAt?.let { s -> runCatching { Instant.parse(s).toLocalDateTime(zone).date }.getOrNull() }
         }
+        val groupsById = gs.associateBy { it.id }
+        val recent = history.take(5).mapNotNull { w ->
+            val start = w.startedAt?.let { runCatching { Instant.parse(it) }.getOrNull() } ?: return@mapNotNull null
+            val end = w.finishedAt?.let { runCatching { Instant.parse(it) }.getOrNull() }
+            val d = start.toLocalDateTime(zone).date
+            WatchRecent(
+                day = "${d.dayOfMonth.toString().padStart(2, '0')}/${d.monthNumber.toString().padStart(2, '0')}",
+                name = w.resolveGroupName(groupsById) ?: "Treino livre",
+                minutes = end?.let { (it - start).inWholeMinutes.toInt() }
+            )
+        }
         return buildWatchRoutines(
             gs, ex, recent, records, nowMs,
             workoutDates = dates, today = clock.todayIn(zone), weeklyGoal = goal,
-            suggestedGroupId = suggestNextGroup(gs, history)
+            suggestedGroupId = suggestNextGroup(gs, history),
+            recent = recent
         )
     }
 

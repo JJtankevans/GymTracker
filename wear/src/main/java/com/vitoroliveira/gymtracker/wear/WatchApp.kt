@@ -271,6 +271,21 @@ private fun HomeScreen(
         } else {
             item { EmptyRoutines(c, accent) }
         }
+        val recent = routines?.recent.orEmpty()
+        if (recent.isNotEmpty()) {
+            item { ListHeader { Text("Últimos treinos", color = Muted) } }
+            items(recent.size) { i ->
+                val r = recent[i]
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(r.day, fontSize = 11.sp, color = Muted, modifier = Modifier.padding(end = 8.dp))
+                    Text(r.name, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                    r.minutes?.let { Text("$it min", fontSize = 11.sp, color = accent) }
+                }
+            }
+        }
         item {
             Chip(
                 onClick = onQuick,

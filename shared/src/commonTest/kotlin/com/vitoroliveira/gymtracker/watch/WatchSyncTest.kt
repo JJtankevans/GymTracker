@@ -66,6 +66,9 @@ class WatchSyncTest {
         assertEquals(2, r.streakDays)
         assertEquals("g2", r.suggestedGroupId)
         assertEquals("g2", r.routines.first().groupId)    // a sugerida vem primeiro
+        val withRecent = buildWatchRoutines(groups, exercises, emptyList(), emptyList(), 0L,
+            recent = List(7) { WatchRecent("2$it/10", "Treino $it", 40) })
+        assertEquals(5, withRecent.recent.size)            // só os 5 últimos vão para o relógio
         assertNull(buildWatchRoutines(groups, exercises, emptyList(), emptyList(), 0L, suggestedGroupId = "sumiu").suggestedGroupId)
     }
 
