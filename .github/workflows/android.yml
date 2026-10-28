@@ -95,6 +95,17 @@ jobs:
           retention-days: 30
           if-no-files-found: error
 
+      # permissões que os APKs pedem de verdade (manifesto final, com as das bibliotecas): o Play Protect bloqueia
+      # instalação fora da loja de app com permissão sensível (ex.: ler notificações)
+      - name: Permissões dos APKs
+        continue-on-error: true
+        run: |
+          AAPT2=$(ls -d "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -n 1)
+          for apk in app/build/outputs/apk/debug/app-debug.apk wear/build/outputs/apk/debug/wear-debug.apk; do
+            perms=$("$AAPT2" dump permissions "$apk" 2>/dev/null | grep -o "name='[^']*'" | sed "s/name='//; s/'//" | grep -v '^com.vitoroliveira' | tr '\n' ' ')
+            echo "::notice title=Permissões de $(basename "$apk")::$perms"
+          done
+
       # depois do APK: se algum teste falhar, o APK já está guardado e o relatório vira artefato
       - name: Testes do :shared
         run: |
