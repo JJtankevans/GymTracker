@@ -27,7 +27,13 @@ enum class Buzz(val pattern: LongArray) {
     /** Faltam 10 s. */
     WARN(longArrayOf(0, 80, 100, 80)),
     /** Recorde: batidas crescentes. */
-    RECORD(longArrayOf(0, 60, 60, 60, 60, 120, 60, 400))
+    RECORD(longArrayOf(0, 60, 60, 60, 60, 120, 60, 400)),
+    /** Intervalos: começou o esforço (uma batida longa). */
+    GO(longArrayOf(0, 500)),
+    /** Intervalos: começou a pausa (duas curtas). */
+    PAUSE(longArrayOf(0, 120, 100, 120)),
+    /** Intervalos: contagem 3, 2, 1. */
+    TICK(longArrayOf(0, 40))
 }
 
 fun Context.buzz(kind: Buzz) {

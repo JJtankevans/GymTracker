@@ -10,6 +10,7 @@ import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
 import androidx.test.core.app.ApplicationProvider
 import com.github.takahirom.roborazzi.captureRoboImage
+import com.vitoroliveira.gymtracker.watch.IntervalPlan
 import com.vitoroliveira.gymtracker.watch.WatchExercise
 import com.vitoroliveira.gymtracker.watch.WatchRoutine
 import com.vitoroliveira.gymtracker.watch.WatchRoutines
@@ -93,5 +94,23 @@ class WatchGalleryTest {
         rule.onNodeWithText("Continuar treino").performClick()
         rule.mainClock.advanceTimeBy(1500)
         rule.onRoot().captureRoboImage("build/outputs/watch-gallery/3_descanso.png")
+    }
+
+    @Test
+    fun intervalMenu() {
+        val c = controller(null)
+        rule.setContent { IntervalMenuScreen(c, Accents[0].second, onRun = {}, onEdit = {}) }
+        rule.waitForIdle()
+        rule.onRoot().captureRoboImage("build/outputs/watch-gallery/6_intervalos.png")
+    }
+
+    @Test
+    fun intervalTimer() {
+        val c = controller(null)
+        c.startInterval(IntervalPlan(workSec = 40, restSec = 20, rounds = 8, prepSec = 0))
+        rule.mainClock.autoAdvance = false
+        rule.setContent { IntervalRunScreen(c, Accents[0].second, onClose = {}) }
+        rule.mainClock.advanceTimeBy(1500)
+        rule.onRoot().captureRoboImage("build/outputs/watch-gallery/7_timer.png")
     }
 }

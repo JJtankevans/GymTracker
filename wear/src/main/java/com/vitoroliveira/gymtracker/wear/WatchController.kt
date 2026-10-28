@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.vitoroliveira.gymtracker.watch.IntervalPlan
 import com.vitoroliveira.gymtracker.watch.WatchOutbox
 import com.vitoroliveira.gymtracker.watch.WatchRoutine
 import com.vitoroliveira.gymtracker.watch.WatchRoutines
@@ -33,6 +34,13 @@ data class FinishSummary(
     val bestLiftName: String? = null,
     val bestLiftKg: Double? = null
 )
+
+/** Timer de intervalos rodando. [pausedElapsed] != null = pausado com esse tanto já decorrido. */
+data class IntervalRun(val plan: IntervalPlan, val startedAt: Long, val pausedElapsed: Long? = null) {
+    val paused: Boolean get() = pausedElapsed != null
+    fun elapsed(now: Long): Long = pausedElapsed ?: (now - startedAt)
+    fun endsAt(): Long = startedAt + plan.totalMs
+}
 
 /** Situação da conversa com o celular, para a tela inicial. */
 enum class PhoneStatus { UNKNOWN, CHECKING, CONNECTED, OUT_OF_RANGE, ERROR }
@@ -66,6 +74,10 @@ class WatchController(
     var kgStep by mutableFloatStateOf(store.kgStep); private set
     var autoRest by mutableStateOf(store.autoRest); private set
     var heartRateOn by mutableStateOf(store.heartRateOn); private set
+
+    // timer de intervalos
+    var intervalPlan by mutableStateOf(store.intervalPlan); private set
+    var intervalRun by mutableStateOf<IntervalRun?>(null); private set
 
     // série em edição (repetições e carga que a coroa mexe)
     var draftReps by mutableIntStateOf(10); private set
@@ -362,7 +374,7 @@ class WatchController(
     val shouldAskPermissions: Boolean get() = !store.askedPermissions
 
     private fun updateHeartRate() {
-        val on = heartRateOn && session != null && resumed && !ambient && app.hasHeartRatePermission()
+        val on = heartRateOn && (session != null || intervalRun != null) && resumed && !ambient && app.hasHeartRatePermission()
         if (on) heart.start(::onHeartRate) else heart.stop()
         if (!on) heartRate = null
     }
@@ -372,6 +384,30 @@ class WatchController(
         val s = session ?: return
         session = s.withHeartRate(bpm)
         if (++hrSamples % 20 == 0) store.session = session   // grava de vez em quando (chega ~1 por segundo)
+    }
+
+    // ───────────── timer de intervalos ─────────────
+
+    fun startInterval(plan: IntervalPlan) {
+        intervalRun = IntervalRun(plan.normalized(), System.currentTimeMillis())
+        updateHeartRate()
+    }
+
+    fun toggleIntervalPause() {
+        val r = intervalRun ?: return
+        val now = System.currentTimeMillis()
+        intervalRun = if (r.pausedElapsed != null) r.copy(startedAt = now - r.pausedElapsed, pausedElapsed = null)
+        else r.copy(pausedElapsed = now - r.startedAt)
+    }
+
+    fun stopInterval() {
+        intervalRun = null
+        updateHeartRate()
+    }
+
+    fun saveIntervalPlan(plan: IntervalPlan) {
+        intervalPlan = plan.normalized()
+        store.intervalPlan = intervalPlan
     }
 
     // ───────────── ajustes ─────────────

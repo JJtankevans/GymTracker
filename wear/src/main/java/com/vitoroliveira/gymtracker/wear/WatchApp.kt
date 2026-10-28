@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
@@ -103,6 +104,9 @@ private object Routes {
     const val DISCARD = "descartar"
     const val PLATES = "anilhas"
     const val ADD_EXERCISE = "adicionar"
+    const val INTERVALS = "intervalos"
+    const val INTERVAL_EDIT = "intervalos/ajustar"
+    const val INTERVAL_RUN = "intervalos/timer"
 }
 
 @Composable
@@ -135,7 +139,8 @@ fun WatchApp(c: WatchController) {
                             if (c.session != null) nav.navigate("trocar/-1")
                             else { c.startQuick(); nav.navigate(Routes.WORKOUT) }
                         },
-                        onSettings = { nav.navigate(Routes.SETTINGS) }
+                        onSettings = { nav.navigate(Routes.SETTINGS) },
+                        onIntervals = { nav.navigate(Routes.INTERVALS) }
                     )
                 }
                 composable(Routes.WORKOUT) {
@@ -185,6 +190,15 @@ fun WatchApp(c: WatchController) {
                 composable(Routes.SETTINGS) { SettingsScreen(c, accent) }
                 composable(Routes.PLATES) { PlatesScreen(c.draftKg, accent) }
                 composable(Routes.ADD_EXERCISE) { AddExerciseScreen(c, accent) { nav.popBackStack() } }
+                composable(Routes.INTERVALS) {
+                    IntervalMenuScreen(c, accent, onRun = { nav.navigate(Routes.INTERVAL_RUN) }, onEdit = { nav.navigate(Routes.INTERVAL_EDIT) })
+                }
+                composable(Routes.INTERVAL_EDIT) {
+                    IntervalEditScreen(c, accent) { nav.navigate(Routes.INTERVAL_RUN) { popUpTo(Routes.INTERVALS) } }
+                }
+                composable(Routes.INTERVAL_RUN) {
+                    IntervalRunScreen(c, accent) { nav.popBackStack(Routes.INTERVALS, inclusive = false) }
+                }
             }
             if (c.ambient) AmbientScreen(c)
         }
@@ -217,7 +231,8 @@ private fun HomeScreen(
     onContinue: () -> Unit,
     onRoutine: (Int, WatchRoutine) -> Unit,
     onQuick: () -> Unit,
-    onSettings: () -> Unit
+    onSettings: () -> Unit,
+    onIntervals: () -> Unit
 ) {
     val routines = c.routines
     WatchList {
@@ -293,6 +308,18 @@ private fun HomeScreen(
                 label = { Text("Treino rápido") },
                 secondaryLabel = { Text("Sem exercício · fica no relógio", color = Muted, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 icon = { Icon(Icons.Filled.Favorite, contentDescription = null, tint = accent) },
+                colors = ChipDefaults.secondaryChipColors()
+            )
+        }
+        item {
+            Chip(
+                onClick = onIntervals,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Intervalos") },
+                secondaryLabel = {
+                    Text(c.intervalRun?.let { "Rodando · ${it.plan.label}" } ?: "HIIT, Tabata, EMOM", color = if (c.intervalRun != null) accent else Muted, maxLines = 1)
+                },
+                icon = { Icon(Icons.Filled.Notifications, contentDescription = null, tint = accent) },
                 colors = ChipDefaults.secondaryChipColors()
             )
         }
@@ -477,7 +504,12 @@ private fun AmbientScreen(c: WatchController) {
             Text(clock(now), fontSize = 34.sp, fontWeight = FontWeight.Light, color = Color.White)
             val rest = c.rest
             val s = c.session
+            val iv = c.intervalRun
             when {
+                iv != null -> {
+                    Text("INTERVALOS", fontSize = 11.sp, letterSpacing = 2.sp, color = Color.Gray)
+                    Text(if (iv.paused) "pausado" else "até ${clock(iv.endsAt())}", fontSize = 16.sp, color = Color.White)
+                }
                 rest != null -> {
                     Text("DESCANSO", fontSize = 11.sp, letterSpacing = 2.sp, color = Color.Gray)
                     Text("até ${clock(rest.endsAt)}", fontSize = 16.sp, color = Color.White)

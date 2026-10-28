@@ -19,6 +19,7 @@
   - **Melhor série** no resumo final (1RM estimado, fórmula de Epley).
   - **Adicionar exercício** fora do grupo durante o treino (lista de exercícios → "Adicionar exercício").
   - **Últimos treinos** (5, vindos do celular) na tela inicial; quando o celular grava um treino do relógio, mostra a notificação "Treino do relógio salvo".
+  - **Intervalos** (tela inicial → "Intervalos"): timer de HIIT/Tabata/EMOM. Prontos (Tabata 20/10 ×8, HIIT 40/20 e 30/30, EMOM 10 min, Prancha 45/15) e "Meu timer" (esforço, pausa, rodadas e preparo com − / +, fica salvo). Anel vermelho no esforço e azul na pausa, vibra na troca (longa = vai, duas curtas = pausa), conta 3-2-1 com toques antes do esforço, mostra batimentos, pausar/seguir/parar. A tela fica acesa enquanto o timer roda; **com o app fechado o timer não vibra** (diferente do descanso, que usa alarme).
   - O celular atualiza o relógio sozinho ao abrir o app (com relógio conectado, no máximo a cada 15 min); no **Perfil → Relógio** há "Sincronizar com o relógio".
 
 ## Como funciona a sincronização
@@ -83,6 +84,7 @@ Apps de celular como **Bugjaeger** ou **Wear Installer 2** instalam APK no reló
 11. Complicação: colocar "Treinos na semana" num mostrador que aceite complicações (anel ou texto curto).
 12. Anilhas: carga 62,5 kg → cada lado 20 + 1,25 (barra 20); trocar a barra para 15.
 13. Adicionar um exercício de fora do grupo, registrar uma série e conferir no Histórico do celular.
+14. Intervalos → Tabata: 5 s de preparo com 3 toques, vibração longa ao começar, duas curtas na pausa, "FIM!" depois de 3:55. Pausar e seguir não perdem o tempo. Baixar o pulso: a tela de sempre ligada mostra "INTERVALOS até HH:MM".
 
 ## Chave de assinatura fixa (opcional, recomendado)
 Gere uma vez no PC (pasta qualquer, fora do repositório):

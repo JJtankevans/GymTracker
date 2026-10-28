@@ -227,7 +227,7 @@ private fun RoundButton(symbol: String, onClick: () -> Unit) {
 }
 
 @Composable
-private fun HeartChip(bpm: Int) {
+internal fun HeartChip(bpm: Int) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(Icons.Filled.Favorite, contentDescription = "Batimentos", tint = Danger, modifier = Modifier.size(11.dp))
         Text(" $bpm", fontSize = 11.sp, color = Color.White, fontWeight = FontWeight.Bold)

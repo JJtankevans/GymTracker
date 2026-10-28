@@ -1,6 +1,7 @@
 package com.vitoroliveira.gymtracker.wear
 
 import android.content.Context
+import com.vitoroliveira.gymtracker.watch.IntervalPlan
 import com.vitoroliveira.gymtracker.watch.WatchJson
 import com.vitoroliveira.gymtracker.watch.WatchOutbox
 import com.vitoroliveira.gymtracker.watch.WatchRoutines
@@ -70,4 +71,13 @@ class WatchStore(context: Context) {
     var quickKg: Float
         get() = p.getFloat("kg", 20f)
         set(v) = p.edit().putFloat("kg", v).apply()
+
+    /** Último timer de intervalos personalizado. */
+    var intervalPlan: IntervalPlan
+        get() = IntervalPlan(
+            workSec = p.getInt("ivWork", 40), restSec = p.getInt("ivRest", 20),
+            rounds = p.getInt("ivRounds", 8), prepSec = p.getInt("ivPrep", 5)
+        )
+        set(v) = p.edit().putInt("ivWork", v.workSec).putInt("ivRest", v.restSec)
+            .putInt("ivRounds", v.rounds).putInt("ivPrep", v.prepSec).apply()
 }
