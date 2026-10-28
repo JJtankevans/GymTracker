@@ -65,6 +65,15 @@ fun HistoryScreenContent(
             kotlin.time.Clock.System.now().toLocalDateTime(tz).date
         )
     }
+    val recap = remember(uiState.workouts) {
+        val tz = TimeZone.currentSystemDefault()
+        com.vitoroliveira.gymtracker.presentation.workout.monthRecap(
+            uiState.workouts.map {
+                com.vitoroliveira.gymtracker.presentation.workout.RecapSession(it.startedAt.toLocalDateTime(tz).date, it.durationMinutes, it.muscleGroupName)
+            },
+            kotlin.time.Clock.System.now().toLocalDateTime(tz).date
+        )
+    }
     var pendingDelete by remember { mutableStateOf<WorkoutHistoryItem?>(null) }
 
     LaunchedEffect(uiState.errorMessage) {
@@ -96,6 +105,7 @@ fun HistoryScreenContent(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    item(key = "recap") { MonthRecapCard(recap) }
                     item(key = "heatmap") { TrainingHeatmap(calendar) }
                     item {
                         Text(
@@ -224,4 +234,55 @@ private fun HistoryScreenPreviewWithData() {
 @Composable
 private fun HistoryScreenPreviewEmpty() {
     GymTrackerTheme { HistoryScreenContent(uiState = HistoryUiState(), onBack = {}) }
+}
+
+/** Resumo do mês corrente x mês anterior, no topo do Histórico. */
+@Composable
+private fun MonthRecapCard(r: com.vitoroliveira.gymtracker.presentation.workout.MonthRecap) {
+    ThemedCard(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(
+                r.monthName.replaceFirstChar { it.uppercase() },
+                style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold
+            )
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text("${r.workouts}", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.primary)
+                Spacer(Modifier.width(8.dp))
+                Column(Modifier.padding(bottom = 6.dp)) {
+                    Text(if (r.workouts == 1) "treino" else "treinos", style = MaterialTheme.typography.bodyMedium)
+                    val d = r.workoutsDelta
+                    if (r.previousWorkouts > 0 || d != 0) {
+                        Text(
+                            when {
+                                d > 0 -> "+$d vs ${r.previousMonthName}"
+                                d < 0 -> "$d vs ${r.previousMonthName}"
+                                else -> "igual a ${r.previousMonthName}"
+                            },
+                            style = MaterialTheme.typography.labelMedium,
+                            color = if (d >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+            Row(Modifier.fillMaxWidth()) {
+                RecapStat(com.vitoroliveira.gymtracker.presentation.workout.formatMinutes(r.minutes), "treinando", Modifier.weight(1f))
+                RecapStat("${r.activeDays}", if (r.activeDays == 1) "dia ativo" else "dias ativos", Modifier.weight(1f))
+                RecapStat(r.longestMinutes?.let { com.vitoroliveira.gymtracker.presentation.workout.formatMinutes(it) } ?: "—", "mais longo", Modifier.weight(1f))
+            }
+            r.topGroup?.let {
+                Text(
+                    "Mais treinado: $it (${r.topGroupCount}x)",
+                    style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RecapStat(value: String, label: String, modifier: Modifier = Modifier) {
+    Column(modifier) {
+        Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
 }
