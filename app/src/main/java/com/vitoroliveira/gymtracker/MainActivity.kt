@@ -10,9 +10,18 @@ import com.vitoroliveira.gymtracker.ui.GymTrackerNavHost
 import com.vitoroliveira.gymtracker.ui.theme.AppThemes
 import com.vitoroliveira.gymtracker.ui.theme.GymTrackerTheme
 import com.vitoroliveira.gymtracker.ui.theme.ThemePreferences
+import androidx.lifecycle.lifecycleScope
 import org.koin.compose.koinInject
 
 class MainActivity : ComponentActivity() {
+    private val watch: com.vitoroliveira.gymtracker.wear.WatchBridge by org.koin.android.ext.android.inject()
+
+    override fun onResume() {
+        super.onResume()
+        // o relógio fica em dia (semana, últimas cargas) sem precisar tocar em "Sincronizar"; sem relógio, falha calado
+        watch.publishInBackgroundIfStale(lifecycleScope)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()

@@ -102,6 +102,7 @@ private object Routes {
     const val FINISH = "terminar"
     const val DISCARD = "descartar"
     const val PLATES = "anilhas"
+    const val ADD_EXERCISE = "adicionar"
 }
 
 @Composable
@@ -141,6 +142,7 @@ fun WatchApp(c: WatchController) {
                     WorkoutScreen(
                         c, accent,
                         onPlates = { nav.navigate(Routes.PLATES) },
+                        onAddExercise = { nav.navigate(Routes.ADD_EXERCISE) },
                         onFinish = { nav.navigate(Routes.FINISH) },
                         onDiscard = { nav.navigate(Routes.DISCARD) },
                         onGone = { nav.popBackStack(Routes.HOME, inclusive = false) }
@@ -182,6 +184,7 @@ fun WatchApp(c: WatchController) {
                 }
                 composable(Routes.SETTINGS) { SettingsScreen(c, accent) }
                 composable(Routes.PLATES) { PlatesScreen(c.draftKg, accent) }
+                composable(Routes.ADD_EXERCISE) { AddExerciseScreen(c, accent) { nav.popBackStack() } }
             }
             if (c.ambient) AmbientScreen(c)
         }

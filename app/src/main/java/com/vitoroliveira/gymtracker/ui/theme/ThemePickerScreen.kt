@@ -28,6 +28,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -67,6 +68,14 @@ fun ThemePickerScreen(onBack: () -> Unit) {
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+                    }
+                },
+                actions = {
+                    // 40 temas: deixa a sorte escolher (nunca repete o atual)
+                    IconButton(onClick = {
+                        AppThemes.available.filter { it.id != selectedId }.randomOrNull()?.let { prefs.select(it.id) }
+                    }) {
+                        Icon(Icons.Default.Shuffle, contentDescription = "Tema aleatório")
                     }
                 }
             )

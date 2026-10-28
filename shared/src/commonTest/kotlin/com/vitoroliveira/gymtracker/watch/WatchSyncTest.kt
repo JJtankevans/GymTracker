@@ -137,6 +137,17 @@ class WatchSyncTest {
     }
 
     @Test
+    fun addingAnExerciseOutsideTheGroupFocusesIt() {
+        val extra = WatchExercise("e9", "Abdominal", sets = 3, reps = 20)
+        val s = WatchSession.start("w1", routine, 0L).addExercise(extra)
+        assertEquals(3, s.exercises.size)
+        assertEquals("e9", s.current.id)
+        assertEquals(0, s.addExercise(supino).currentIndex)      // já estava: só vai até ele
+        assertEquals(3, s.addExercise(extra).exercises.size)    // não duplica
+        assertTrue(WatchSession.quick("q", 10, 20.0, 0L).addExercise(extra).isQuick)
+    }
+
+    @Test
     fun heartRateStatsIgnoreNoise() {
         val s = WatchSession.start("w1", routine, 0L).withHeartRate(100).withHeartRate(140).withHeartRate(0).withHeartRate(300)
         assertEquals(120, s.avgHeartRate)

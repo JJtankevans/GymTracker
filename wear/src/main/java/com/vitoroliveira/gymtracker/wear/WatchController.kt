@@ -183,6 +183,20 @@ class WatchController(
         loadDraft()
     }
 
+    /** Exercícios da conta que ainda não estão no treino (da rotina "Todos os exercícios"). */
+    val extraExercises: List<com.vitoroliveira.gymtracker.watch.WatchExercise>
+        get() {
+            val s = session ?: return emptyList()
+            val inSession = s.exercises.map { it.id }.toSet()
+            return routines?.routines?.firstOrNull { it.groupId == null }?.exercises.orEmpty().filter { it.id !in inSession }
+        }
+
+    fun addExercise(ex: com.vitoroliveira.gymtracker.watch.WatchExercise) {
+        val s = session ?: return
+        saveSession(s.addExercise(ex))
+        loadDraft()
+    }
+
     fun changeReps(delta: Int) { draftReps = (draftReps + delta).coerceIn(1, 99) }
 
     fun changeKg(steps: Int) {

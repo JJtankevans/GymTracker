@@ -15,6 +15,9 @@ import com.vitoroliveira.gymtracker.domain.usecase.BuildWatchRoutines
 import com.vitoroliveira.gymtracker.domain.usecase.ImportWatchWorkout
 import com.vitoroliveira.gymtracker.watch.WatchJson
 import com.vitoroliveira.gymtracker.watch.WatchPaths
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 /**
@@ -35,6 +38,28 @@ class WatchBridge(
     /** Nomes dos relógios conectados agora (vazio = nenhum ou sem os serviços do Google). */
     suspend fun connectedWatches(): List<String> =
         Wearable.getNodeClient(app).connectedNodes.await().map { it.displayName }
+
+    private var lastAutoPublish = 0L
+
+    /**
+     * Ao abrir o app: se há relógio conectado e a última publicação automática foi há mais de 15 min, publica em
+     * segundo plano. Sem relógio (ou sem os serviços do Google) não faz nada e não mostra erro.
+     */
+    fun publishInBackgroundIfStale(scope: CoroutineScope) {
+        val now = System.currentTimeMillis()
+        if (now - lastAutoPublish < 15 * 60_000L) return
+        lastAutoPublish = now
+        scope.launch {
+            try {
+                if (connectedWatches().isNotEmpty()) {
+                    importPending()
+                    publishRoutines()
+                }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+            }
+        }
+    }
 
     /** Publica grupos, exercícios, última carga, semana e sugestão para o relógio. */
     suspend fun publishRoutines() {

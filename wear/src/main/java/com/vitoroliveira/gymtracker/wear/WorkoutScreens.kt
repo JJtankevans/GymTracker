@@ -24,6 +24,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
@@ -78,7 +79,7 @@ private const val PAGE_STATS = 2
 
 /** Treino em andamento: ← lista de exercícios · série/descanso (meio) · tempo e números →. */
 @Composable
-fun WorkoutScreen(c: WatchController, accent: Color, onPlates: () -> Unit, onFinish: () -> Unit, onDiscard: () -> Unit, onGone: () -> Unit) {
+fun WorkoutScreen(c: WatchController, accent: Color, onPlates: () -> Unit, onAddExercise: () -> Unit, onFinish: () -> Unit, onDiscard: () -> Unit, onGone: () -> Unit) {
     val session = c.session
     if (session == null) {
         LaunchedEffect(Unit) { onGone() }
@@ -91,7 +92,7 @@ fun WorkoutScreen(c: WatchController, accent: Color, onPlates: () -> Unit, onFin
     Box(Modifier.fillMaxSize()) {
         HorizontalPager(pager, Modifier.fillMaxSize()) { page ->
             when (page) {
-                PAGE_EXERCISES -> ExercisesPage(c, session, accent, onFinish, onDiscard) { i ->
+                PAGE_EXERCISES -> ExercisesPage(c, session, accent, onFinish, onDiscard, onAddExercise) { i ->
                     c.select(i)
                     scope.launch { pager.animateScrollToPage(PAGE_SET) }
                 }
@@ -315,7 +316,7 @@ private fun NextUp(s: WatchSession) {
 @Composable
 private fun ExercisesPage(
     c: WatchController, s: WatchSession, accent: Color,
-    onFinish: () -> Unit, onDiscard: () -> Unit, onPick: (Int) -> Unit
+    onFinish: () -> Unit, onDiscard: () -> Unit, onAddExercise: () -> Unit, onPick: (Int) -> Unit
 ) {
     WatchList {
         item {
@@ -345,6 +346,18 @@ private fun ExercisesPage(
                         else Text("${i + 1}", fontWeight = FontWeight.Black, fontSize = 15.sp)
                     },
                     colors = if (selected) ChipDefaults.primaryChipColors() else ChipDefaults.secondaryChipColors()
+                )
+            }
+        }
+        if (!s.isQuick && c.extraExercises.isNotEmpty()) {
+            item {
+                Chip(
+                    onClick = onAddExercise,
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Adicionar exercício") },
+                    secondaryLabel = { Text("Fora deste grupo", color = Muted) },
+                    icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                    colors = ChipDefaults.secondaryChipColors()
                 )
             }
         }
@@ -492,6 +505,30 @@ fun SummaryScreen(c: WatchController, accent: Color, onDone: () -> Unit) {
                 label = { Text("Concluir", fontWeight = FontWeight.Bold) },
                 icon = { Icon(Icons.Filled.Check, contentDescription = null) },
                 colors = ChipDefaults.primaryChipColors()
+            )
+        }
+    }
+}
+
+// ───────────────────────── adicionar exercício ─────────────────────────
+
+/** Lista dos exercícios da conta que não estão no treino; tocar põe no treino e volta para a série. */
+@Composable
+fun AddExerciseScreen(c: WatchController, accent: Color, onDone: () -> Unit) {
+    val list = c.extraExercises
+    WatchList {
+        item { ListHeader { Text("Adicionar", color = accent, fontWeight = FontWeight.Bold) } }
+        if (list.isEmpty()) {
+            item { Text("Todos os exercícios já estão no treino.", color = Muted, fontSize = 12.sp, textAlign = TextAlign.Center) }
+        }
+        items(list.size) { i ->
+            val ex = list[i]
+            Chip(
+                onClick = { c.addExercise(ex); onDone() },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(ex.name, maxLines = 2, overflow = TextOverflow.Ellipsis) },
+                secondaryLabel = { Text("${ex.sets}×${ex.reps}" + (ex.lastKg?.let { " · ${formatKg(it)} kg" } ?: ""), color = Muted) },
+                colors = ChipDefaults.secondaryChipColors()
             )
         }
     }

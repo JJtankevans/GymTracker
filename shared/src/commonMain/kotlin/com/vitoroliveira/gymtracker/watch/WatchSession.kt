@@ -54,6 +54,14 @@ data class WatchSession(
 
     fun select(index: Int): WatchSession = copy(currentIndex = index.coerceIn(0, exercises.lastIndex))
 
+    /** Põe um exercício fora do grupo no treino (ou vai até ele, se já está) e deixa o foco nele. */
+    fun addExercise(ex: WatchExercise): WatchSession {
+        if (isQuick) return this
+        val existing = exercises.indexOfFirst { it.id == ex.id }
+        if (existing >= 0) return copy(currentIndex = existing)
+        return copy(exercises = exercises + ex, currentIndex = exercises.size)
+    }
+
     /** Registra uma série do exercício em foco. Passa sozinho ao próximo exercício quando as séries planejadas acabam. */
     fun addSet(reps: Int, weightKg: Double, nowMs: Long): AddSetResult {
         val ex = current
