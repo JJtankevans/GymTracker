@@ -28,6 +28,8 @@ O relógio não fala com o Supabase. Ele conversa com o app do celular pela Data
 **Regra importante:** celular e relógio só conversam se os dois apps tiverem o mesmo pacote **e a mesma assinatura**. Os APKs do GitHub Actions são assinados com uma chave nova a cada execução, então **instale os dois APKs da mesma execução**. Para não precisar disso, configure o secret `DEBUG_KEYSTORE_BASE64` (ver o fim deste arquivo).
 
 ## Instalar (PC com adb)
+**Atalho:** o script `tools\instalar_apks.ps1` faz os passos 2 a 5 sozinho (acha os APKs em Downloads, instala no celular pelo cabo, pareia/conecta o relógio pelo Wi-Fi e instala nele; se a assinatura for diferente, pergunta antes de desinstalar). Rodar: `powershell -ExecutionPolicy Bypass -File tools\instalar_apks.ps1`.
+
 Precisa: o PC com o adb (`%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe`), o celular no cabo USB e o relógio no **mesmo Wi-Fi** do PC.
 
 ### 1. Baixar os dois APKs da mesma execução
