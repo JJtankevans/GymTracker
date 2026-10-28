@@ -38,8 +38,10 @@ jobs:
 
       - name: Compilar o :shared para iOS
         run: |
-          ./gradlew :shared:compileKotlinIosSimulatorArm64 :shared:compileKotlinIosArm64 --stacktrace > build-ios.log 2>&1 || {
-            echo "::error title=Falha ao compilar o shared para iOS::$(grep -E '^e: |error:|What went wrong' -A2 build-ios.log | grep -v '^> Task' | head -n 30 | sed ':a;N;$!ba;s/\n/%0A/g')"
+          ./gradlew :shared:compileKotlinIosSimulatorArm64 :shared:compileKotlinIosArm64 --continue --stacktrace > build-ios.log 2>&1 || {
+            msg=$(grep -E '^e: |error:|What went wrong' -A3 build-ios.log | grep -v '^> Task' | head -n 40)
+            [ -z "$msg" ] && msg=$(tail -n 40 build-ios.log)
+            echo "::error title=Falha ao compilar o shared para iOS::$(echo "$msg" | sed ':a;N;$!ba;s/\n/%0A/g')"
             exit 1
           }
 
