@@ -121,7 +121,8 @@ class SocialGalleryTest {
                             )
                         )
                     ),
-                    {}
+                    {},
+                    goals = mapOf("1" to 110.0, "2" to 140.0)
                 )
             }
         }

@@ -167,6 +167,8 @@ Pendente / ideias:
 - **Catálogo:** 93 exercícios (Cardio, Mobilidade, +11 de força).
 - **iOS:** `ios.yml` compila o `:shared` para iPhone e roda os testes no simulador (verde); `docs/IOS.md` com o plano (Compose Multiplatform).
 - **Depois do PR #12 aberto (mesma noite):** resumo do mês no Histórico; liga da semana no Social (migração 015); avisos locais do Social (WorkManager); app de iPhone mínimo em Compose Multiplatform (`composeApp/` + `iosApp/`); OCR das telas do relógio e galeria dos 40 temas no CI.
+- **Fim da madrugada (mesmo PR #12):** mais 6 Loucos (`ThemeDecorCrazy4.kt`: RADAR, SAKURA, VOLCANO, DNA, VINYL, DUNGEON; total 52 temas, 31 Loucos); relógio com **timer de intervalos** (`watch/IntervalTimer.kt`: preparo, rodadas de esforço/pausa, prontos Tabata/HIIT/EMOM e um personalizado salvo; vibra nas trocas; tela acesa; não vibra com o app fechado), **Recordes** e **zonas de batimento** (`watch/HeartZones.kt`: FC máxima de Tanaka pela idade de "Meus dados", amostras por zona na sessão, barra no resumo); **Estagnados** em Recordes no celular e no iPhone (`presentation/records/Plateaus.kt`); **metas de carga** por exercício em Recordes (só no aparelho).
+- **Ideias que ficaram:** salvar o timer de intervalos como treino (precisaria de um exercício "Intervalos"); timer de intervalos vibrar com o app fechado (alarme como o do descanso); zonas também no Histórico do celular (hoje o treino só leva média/máximo); metas de carga na nuvem e no relógio.
 - **Não testado no aparelho:** nada.
 
 # Anexo: notas detalhadas das sessões de 21 a 27/10/2026 (movidas do CONTEXTO_SESSAO.md em 27/10/2026; retrato daquele momento, ex.: os PRs citados como abertos já foram mergeados)

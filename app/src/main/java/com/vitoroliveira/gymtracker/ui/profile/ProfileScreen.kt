@@ -370,7 +370,7 @@ fun ProfileScreenContent(
             text = {
                 Text(
                     "Seus treinos, o peso, as medidas e os dados do corpo ficam salvos na conta. O que existe só neste celular é apagado: " +
-                        "agenda da semana, favoritos do catálogo e o ritmo aprendido no circuito."
+                        "agenda da semana, favoritos do catálogo, metas de carga e o ritmo aprendido no circuito."
                 )
             },
             confirmButton = {

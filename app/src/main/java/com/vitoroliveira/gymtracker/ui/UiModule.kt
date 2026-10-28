@@ -17,6 +17,7 @@ import org.koin.dsl.module
 val uiModule = module {
     single { ThemePreferences(androidContext()) }
     single { com.vitoroliveira.gymtracker.ui.exercise.CatalogPrefs(androidContext()) }
+    single { com.vitoroliveira.gymtracker.ui.records.LoadGoalPrefs(androidContext()) }
     single<TimingStore> { PrefsTimingStore(androidContext()) }
     viewModel { CircuitViewModel(get()) }
     single<BodyStore> { PrefsBodyStore(androidContext()) }
@@ -36,6 +37,6 @@ val uiModule = module {
     }
     single { com.vitoroliveira.gymtracker.wear.WatchBridge(androidContext(), get(), get(), get(), get(), get()) }
     single<com.vitoroliveira.gymtracker.domain.repository.LocalUserData> {
-        LocalUserDataImpl(androidContext(), get(), get(), get(), get())
+        LocalUserDataImpl(androidContext(), get(), get(), get(), get(), get())
     }
 }

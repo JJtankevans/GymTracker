@@ -17,7 +17,8 @@ class LocalUserDataImpl(
     private val body: BodyRepository,
     private val schedule: ScheduleRepository,
     private val catalog: CatalogPrefs,
-    private val timing: TimingStore
+    private val timing: TimingStore,
+    private val goals: com.vitoroliveira.gymtracker.ui.records.LoadGoalPrefs
 ) : LocalUserData {
     private val appContext = context.applicationContext
     private val cacheDir = appContext.cacheDir
@@ -30,6 +31,7 @@ class LocalUserDataImpl(
         schedule.clear()
         catalog.clear()
         timing.save(emptyMap())
+        goals.clear()
         com.vitoroliveira.gymtracker.ui.social.SocialAlertsWorker.clearSeen(appContext)
         // CSV exportado tem o histórico inteiro
         File(cacheDir, "exports").deleteRecursively()
