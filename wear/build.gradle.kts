@@ -53,6 +53,7 @@ dependencies {
     implementation(libs.wear.ongoing)           // atalho do treino no mostrador
     implementation(libs.wear.tiles)             // tile "Treinar" no carrossel
     implementation(libs.wear.protolayout)
+    implementation(libs.wear.complications.source) // complicação "treinos na semana" no mostrador
     implementation(libs.health.services.client) // batimentos
     // ListenableFuture (devolvido por unregisterMeasureCallbackAsync): o artefato "listenablefuture" que chega
     // pelas dependências é a versão vazia 9999.0, então é preciso a Guava inteira

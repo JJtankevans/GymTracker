@@ -11,10 +11,11 @@ import com.vitoroliveira.gymtracker.ui.theme.AppThemes
 import com.vitoroliveira.gymtracker.ui.theme.GymTrackerTheme
 import com.vitoroliveira.gymtracker.ui.theme.ThemePreferences
 import androidx.lifecycle.lifecycleScope
+import org.koin.android.ext.android.inject
 import org.koin.compose.koinInject
 
 class MainActivity : ComponentActivity() {
-    private val watch: com.vitoroliveira.gymtracker.wear.WatchBridge by org.koin.android.ext.android.inject()
+    private val watch: com.vitoroliveira.gymtracker.wear.WatchBridge by inject()
 
     override fun onResume() {
         super.onResume()

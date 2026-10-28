@@ -162,6 +162,7 @@ class WorkoutTileService : TileService() {
         /** Pede ao sistema para redesenhar o tile (treino aberto/fechado, rotinas novas, cor). */
         fun refresh(context: Context) {
             runCatching { getUpdater(context).requestUpdate(WorkoutTileService::class.java) }
+            WeekComplicationService.refresh(context)
         }
     }
 }
