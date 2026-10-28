@@ -160,7 +160,7 @@ Pendente / ideias:
 
 ## Décima oitava rodada (28/10/2026, 7ª sessão na nuvem, noite sem o Thiago) — temas, Play Protect, relógio, iOS
 - **Play Protect:** leitura de notificações removida (serviço, mini player, cor da música, gravação das músicas). O app só pede INTERNET, VIBRATE e POST_NOTIFICATIONS.
-- **Temas:** 12 Loucos novos (`ThemeDecorCrazy2.kt`: STORM, DISCO, KALEIDO, ABYSS, GALAXY, STATIC, HOLO, HAUNTED, FIREWORKS, BLOCKS, ECG, LASERS), total 40; botão de tema aleatório.
+- **Temas:** 18 Loucos novos (`ThemeDecorCrazy2.kt`: STORM, DISCO, KALEIDO, ABYSS, GALAXY, STATIC, HOLO, HAUNTED, FIREWORKS, BLOCKS, ECG, LASERS; `ThemeDecorCrazy3.kt`: CIRCUIT, SNOW, BUBBLES, DESERT, ORIGAMI, NEON_CITY), total 46; botão de tema aleatório.
 - **Relógio:** semana/sequência/sugestão vindas do celular (`BuildWatchRoutines`), tile com "Treinar", complicação "treinos na semana", anilhas, 1RM no resumo, adicionar exercício fora do grupo; celular com `WatchBridge`, cartão "Relógio" no Perfil e publicação automática ao abrir o app.
 - **Correções:** erros 14–22 e 24–28 (`ERROS_CONHECIDOS.md`), migração 013 (horários protegidos, testada no Postgres local).
 - **Medidas na nuvem:** migração 014 + sincronização no `BodyRepository` (testes novos).

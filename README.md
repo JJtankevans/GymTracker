@@ -7,7 +7,7 @@ App Android de registro de treinos de academia, com camada social. Feito em Kotl
 - **Catálogo:** 93 exercícios (inclui cardio e mobilidade) com séries/reps padrão e ilustrações (41 prontas), 9 treinos prontos, agenda da semana e sugestão do próximo grupo.
 - **Acompanhamento:** Histórico com mapa de calor, detalhe do treino com anotação, Recordes, detalhe do exercício (gráfico, 1RM, tabela de cargas, calculadora de anilhas com aquecimento), Evolução (4 levantamentos básicos, séries por músculo na semana, peso e medidas corporais), Conquistas e exportação CSV.
 - **Social:** perfil público/só seguidores/privado, seguir, feed de treinos com reações, grupos, desafios com placar, mensagens e títulos (Alpha, Chad...), compartilhar um grupo de treino por código.
-- **Aparência:** 40 temas em 4 categorias (Profissionais, Ousados, Abstratos, Loucos), vários com fundo animado e layouts de Home por tema.
+- **Aparência:** 46 temas em 4 categorias (Profissionais, Ousados, Abstratos, Loucos), vários com fundo animado e layouts de Home por tema.
 - **Relógio (`:wear`):** app para Wear OS (com tile e complicação de mostrador) que recebe os grupos do celular, registra o treino exercício por exercício (carga sugerida, coroa, descanso com alarme, batimentos, tela sempre ligada) e manda o treino para o celular gravar no Supabase. Instalação e detalhes em `docs/RELOGIO.md`.
 
 ## Estrutura
