@@ -27,5 +27,10 @@ O Thiago pediu "a versão iOS" para distribuir a outras pessoas. Este arquivo di
 5. Conta Apple Developer + TestFlight (o CI pode subir o build com as chaves da Apple guardadas em secrets).
 6. Apple Watch (watchOS) seria outro app, em SwiftUI, conversando com o iPhone pelo WatchConnectivity; fica para depois.
 
+## Situação do build (28/10/2026, fim da noite)
+- `:shared` compila para iPhone e **todos os testes passam no simulador de iOS**.
+- O **app de iPhone compila** (precisa do **Xcode 26**: o Compose Multiplatform 1.11 usa APIs do iOS 26, ex.: `UIViewLayoutRegion`; o workflow escolhe o Xcode 26 do runner), **instala e abre no simulador e continua aberto depois de 35 s**. A captura tem conteúdo (cerca de 11% da tela clara sobre o fundo escuro, o que bate com a tela de login). O OCR serve para confirmar o texto; o resultado aparece nos avisos da execução.
+- Abas: Início, Histórico, Recordes e Perfil, mais o treino ativo.
+
 ## Não testado
-Nada de iOS foi visto num iPhone. O CI de iOS só garante que a lógica compila e que os testes passam no simulador.
+Nada de iOS foi visto num iPhone de verdade, nem por uma pessoa no simulador (o CI só abre o app e tira uma captura). O login não foi exercitado no CI (não digitamos senha de conta real). Falta ver: entrar com a conta, carregar grupos/semana, registrar séries, terminar o treino e ver o resumo.
