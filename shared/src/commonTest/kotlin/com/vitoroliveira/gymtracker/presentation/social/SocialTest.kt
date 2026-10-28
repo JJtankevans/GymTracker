@@ -34,6 +34,9 @@ import kotlin.test.assertTrue
 import kotlin.time.Instant
 
 class FakeSocialRepository(val meId: String = "me") : SocialRepository {
+    var leagueRows = listOf<com.vitoroliveira.gymtracker.data.model.LeagueRow>()
+    var failLeague = false
+    override suspend fun weeklyLeague() = if (failLeague) throw RuntimeException("function weekly_league() does not exist") else leagueRows
     var settings = SocialSettings()
     var profiles = mutableListOf<SocialProfile>()
     var followList = mutableListOf<Follow>()
@@ -299,6 +302,18 @@ class SocialTest {
         vm.editPost("p1", "ok", "todos")
         assertEquals("Visibilidade inválida.", vm.state.value.error)
         assertEquals("ok", vm.state.value.feed.single().post.caption)
+    }
+
+    @Test fun ligaDaSemanaCarregaESemAMigracaoNaoMostraErro() {
+        val rows = listOf(
+            com.vitoroliveira.gymtracker.data.model.LeagueRow("b", "beto", workouts = 3),
+            com.vitoroliveira.gymtracker.data.model.LeagueRow("me", "eu", workouts = 1, isMe = true)
+        )
+        val ok = vm(FakeSocialRepository().apply { leagueRows = rows }).state.value
+        assertEquals(listOf("beto", "eu"), ok.league.map { it.username })
+        val semMigracao = vm(FakeSocialRepository().apply { failLeague = true }).state.value
+        assertTrue(semMigracao.league.isEmpty())
+        assertNull(semMigracao.error)
     }
 
     @Test fun reagirLigaEDesliga() {

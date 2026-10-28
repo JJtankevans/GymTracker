@@ -62,6 +62,8 @@ data class SocialUiState(
     val titles: Map<String, ProfileTitle> = emptyMap(),
     /** Meu perfil público (foto e nome nos meus posts). */
     val myProfile: SocialProfile? = null,
+    /** Liga da semana (eu + quem eu sigo). Vazia sem a migração 015 ou sem ninguém. */
+    val league: List<com.vitoroliveira.gymtracker.data.model.LeagueRow> = emptyList(),
     val profileView: ProfileView? = null,
     val message: String? = null,
     val error: String? = null,
@@ -114,6 +116,7 @@ class SocialViewModel(
             section("o feed") { loadFeed() }
             section("os grupos") { loadGroups() }
             section("os desafios") { loadChallenges() }
+            loadLeagueQuietly()
             update {
                 val nothing = feed.isEmpty() && people.isEmpty() && myGroups.isEmpty() && publicGroups.isEmpty() && challenges.isEmpty()
                 copy(isLoading = false, error = errors.firstOrNull(), loadError = if (nothing) errors.firstOrNull() else null)
@@ -141,6 +144,16 @@ class SocialViewModel(
         val requests = follows.filter { it.followedId == me && it.status == "pending" }
             .mapNotNull { f -> profiles.firstOrNull { it.id == f.followerId } }
         update { copy(people = items, followRequests = requests) }
+    }
+
+    /** A liga é um extra: sem a migração 015 (ou sem rede) o cartão só não aparece, sem mensagem de erro. */
+    private suspend fun loadLeagueQuietly() {
+        try {
+            val rows = repo.weeklyLeague()
+            update { copy(league = rows) }
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+        }
     }
 
     /** Títulos são um enfeite: se falhar (ex.: migração 010 ainda não rodou), a tela segue sem eles e sem mensagem de erro. */

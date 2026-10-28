@@ -189,3 +189,16 @@ data class ProfileTitle(
     @SerialName("streak_days") val streakDays: Int = 0,
     val failures: Int = 0
 )
+
+/** Uma linha da liga da semana (função `weekly_league()`, migração 015). */
+@Serializable
+data class LeagueRow(
+    @SerialName("profile_id") val profileId: String,
+    val username: String,
+    @SerialName("avatar_url") val avatarUrl: String? = null,
+    val workouts: Int = 0,
+    @SerialName("active_days") val activeDays: Int = 0,
+    @SerialName("volume_kg") val volumeKg: Double = 0.0,
+    val minutes: Int = 0,
+    @SerialName("is_me") val isMe: Boolean = false
+)

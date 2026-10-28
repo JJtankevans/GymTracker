@@ -74,7 +74,9 @@ jobs:
             ARCHS=arm64 ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=NO build > xcode.log 2>&1 || {
             msg=$(grep -v 'ld: warning' xcode.log | grep -E "Undefined symbol|^ld: |not found|referenced from|^e: |error:|What went wrong|FAILED" -A4 | grep -v '^--$' | head -n 60)
             [ -z "$msg" ] && msg=$(tail -n 40 xcode.log)
-            echo "::error title=Falha ao compilar o app de iPhone::$(echo "$msg" | sed ':a;N;$!ba;s/\n/%0A/g')"
+            echo "::error title=Falha ao compilar o app de iPhone::$(echo "$msg" | head -n 3 | sed ':a;N;$!ba;s/\n/%0A/g')"
+            # símbolos que faltaram no link, um aviso por linha (o aviso único cortava a lista)
+            grep -A14 'Undefined symbols' xcode.log | head -n 30 | sed 's/%/%25/g' | while IFS= read -r line; do echo "::warning title=ld::$line"; done
             exit 1
           }
           ls -d iosApp/build/Debug-iphonesimulator/GymTracker.app

@@ -87,6 +87,9 @@ class SocialRepositoryImpl(private val supabase: SupabaseClient) : SocialReposit
     override suspend fun profileStats(userId: String): ProfileStats? =
         supabase.postgrest.rpc("profile_stats", buildJsonObject { put("p_profile", userId) }).decodeAsOrNull<ProfileStats>()
 
+    override suspend fun weeklyLeague(): List<com.vitoroliveira.gymtracker.data.model.LeagueRow> =
+        supabase.postgrest.rpc("weekly_league").decodeList()
+
     override suspend fun topTracks(userId: String): List<TopTrack> =
         supabase.postgrest.rpc("profile_top_tracks", buildJsonObject { put("p_profile", userId); put("p_limit", 10) }).decodeList()
 

@@ -32,6 +32,8 @@ interface SocialRepository {
     suspend fun acceptFollower(userId: String)
     suspend fun rejectFollower(userId: String)
     suspend fun profileStats(userId: String): ProfileStats?
+    /** Liga da semana: eu + quem eu sigo, ordenado (migração 015). Vazio por padrão (fakes e banco sem a função). */
+    suspend fun weeklyLeague(): List<com.vitoroliveira.gymtracker.data.model.LeagueRow> = emptyList()
     suspend fun topTracks(userId: String): List<TopTrack>
     /** Títulos de desafio (honra/falha) dos perfis, quando quem consulta pode vê-los: no máximo um por perfil. */
     suspend fun titles(profileIds: List<String>): List<ProfileTitle>

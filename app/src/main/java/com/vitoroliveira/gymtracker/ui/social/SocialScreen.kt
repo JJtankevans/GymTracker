@@ -217,6 +217,8 @@ private fun FeedTab(state: SocialUiState, a: SocialActions, onOpenSettings: () -
                 }
             }
         }
+        // liga da semana (eu + quem eu sigo) só aparece com mais de uma pessoa
+        if (state.league.size > 1) item(key = "league") { LeagueCard(state.league) }
         if (state.feed.isEmpty()) item(key = "empty") {
             Empty("Feed vazio", "Quando você (ou quem você segue) finalizar um treino compartilhado, ele aparece aqui.")
         }
@@ -444,6 +446,52 @@ private fun PersonRow(item: PersonItem, a: SocialActions, title: com.vitorolivei
                 Relation.REQUESTED -> OutlinedButton({ a.unfollow(p.id) }) { Text("Pedido enviado") }
                 Relation.FOLLOWING -> OutlinedButton({ a.unfollow(p.id) }) { Text("Seguindo") }
             }
+        }
+    }
+}
+
+/** Liga da semana: ranking por treinos (desempate por dias ativos e volume) entre você e quem você segue. */
+@Composable
+private fun LeagueCard(rows: List<com.vitoroliveira.gymtracker.data.model.LeagueRow>) {
+    var expanded by remember { mutableStateOf(false) }
+    val meIndex = rows.indexOfFirst { it.isMe }
+    // fechado: os 3 primeiros e eu (se eu estiver mais para baixo)
+    val shown = if (expanded || rows.size <= 4) rows.withIndex().toList()
+    else rows.withIndex().filter { it.index < 3 || it.index == meIndex }
+    ThemedCard(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.LocalFireDepartment, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Spacer(Modifier.width(8.dp))
+                Column(Modifier.weight(1f)) {
+                    Text("Liga da semana", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                    Text("Você e quem você segue, de segunda a domingo", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                if (meIndex >= 0) Text("${meIndex + 1}º", fontWeight = FontWeight.Black, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
+            }
+            shown.forEach { (i, r) ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        "${i + 1}", modifier = Modifier.width(26.dp), fontWeight = FontWeight.Black,
+                        color = if (i == 0) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    com.vitoroliveira.gymtracker.ui.profile.UserAvatar(r.avatarUrl, 28.dp, fallbackName = r.username)
+                    Spacer(Modifier.width(8.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            if (r.isMe) "Você" else "@${r.username}",
+                            fontWeight = if (r.isMe) FontWeight.Black else FontWeight.Medium, maxLines = 1
+                        )
+                        Text(
+                            "${r.activeDays} ${if (r.activeDays == 1) "dia" else "dias"} · ${com.vitoroliveira.gymtracker.presentation.social.formatInt(r.volumeKg)} kg · ${r.minutes} min",
+                            style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1
+                        )
+                    }
+                    Text("${r.workouts}", fontWeight = FontWeight.Black, style = MaterialTheme.typography.titleMedium)
+                    Text(" treino${if (r.workouts == 1) "" else "s"}", style = MaterialTheme.typography.labelSmall)
+                }
+            }
+            if (rows.size > 4) TextButton(onClick = { expanded = !expanded }) { Text(if (expanded) "Mostrar menos" else "Ver todos (${rows.size})") }
         }
     }
 }
