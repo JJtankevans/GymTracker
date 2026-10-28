@@ -112,6 +112,17 @@ jobs:
             exit 1
           }
 
+      # lê o texto das capturas do relógio (OCR) e mostra como aviso: dá para conferir as telas sem baixar as imagens
+      - name: Texto das telas do relógio (OCR)
+        continue-on-error: true
+        run: |
+          sudo apt-get install -y -qq tesseract-ocr tesseract-ocr-por > /dev/null 2>&1
+          for f in wear/build/outputs/watch-gallery/*.png; do
+            [ -f "$f" ] || continue
+            txt=$(tesseract "$f" - -l por+eng 2>/dev/null | tr '\n' ' ' | tr -s ' ' | cut -c1-220)
+            echo "::notice title=Relógio $(basename "$f")::$txt"
+          done
+
       # todos os temas desenhados na Home (Robolectric): pega tema que quebra ao desenhar (só avisa)
       - name: Galeria de temas do :app
         continue-on-error: true

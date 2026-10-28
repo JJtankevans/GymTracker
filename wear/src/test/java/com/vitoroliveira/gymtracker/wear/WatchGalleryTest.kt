@@ -4,7 +4,10 @@ import android.content.Context
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.test.swipeRight
 import androidx.test.core.app.ApplicationProvider
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.vitoroliveira.gymtracker.watch.WatchExercise
@@ -60,14 +63,24 @@ class WatchGalleryTest {
             .addSet(10, 40.0, 1L).session
         val c = controller(s)
         rule.setContent { WatchApp(c) }
-        rule.runOnIdle { c.startRoutine(peito) }
+        rule.waitForIdle()
+        rule.onNodeWithText("Continuar treino").performClick()
         rule.waitForIdle()
         rule.onRoot().captureRoboImage("build/outputs/watch-gallery/2_serie.png")
+        // o descanso tem um laço de atualização: relógio do teste manual para não esperar "ficar parado" para sempre
+        rule.mainClock.autoAdvance = false
         rule.runOnIdle { c.registerSet() }
-        rule.waitForIdle()
+        rule.mainClock.advanceTimeBy(600)
         rule.onRoot().captureRoboImage("build/outputs/watch-gallery/3_descanso.png")
+        rule.runOnIdle { c.skipRest() }
+        rule.mainClock.advanceTimeBy(600)
         rule.onRoot().performTouchInput { swipeLeft() }
-        rule.waitForIdle()
+        rule.mainClock.advanceTimeBy(1500)
         rule.onRoot().captureRoboImage("build/outputs/watch-gallery/4_numeros.png")
+        rule.onRoot().performTouchInput { swipeRight() }
+        rule.mainClock.advanceTimeBy(1500)
+        rule.onRoot().performTouchInput { swipeRight() }
+        rule.mainClock.advanceTimeBy(1500)
+        rule.onRoot().captureRoboImage("build/outputs/watch-gallery/5_exercicios.png")
     }
 }

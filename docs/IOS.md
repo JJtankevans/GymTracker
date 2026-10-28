@@ -4,7 +4,11 @@ O Thiago pediu "a versão iOS" para distribuir a outras pessoas. Este arquivo di
 
 ## O que já existe
 - **O módulo `:shared` é Kotlin Multiplatform** e já declara os alvos iOS (`iosX64`, `iosArm64`, `iosSimulatorArm64`, framework estático `shared`). Lá estão os modelos, os repositórios do Supabase (Ktor com motor `darwin` no iOS), os casos de uso, os ViewModels e as regras (treino, circuito, recordes, social, relógio).
-- **CI de iOS** (`.github/workflows/ios.yml`, criado em 28/10/2026): num Mac do GitHub (grátis, o repositório é público) compila o `:shared` para iPhone, roda os mesmos testes do Android no simulador de iOS e gera o framework. Roda sozinho quando o `:shared` muda, ou à mão em Actions → "iOS (shared)" → Run workflow.
+- **CI de iOS** (`.github/workflows/ios.yml`, criado em 28/10/2026): num Mac do GitHub (grátis, o repositório é público) compila o `:shared` para iPhone, roda os mesmos testes do Android no simulador de iOS e gera o framework. Depois compila o **app de iPhone**, abre no simulador, tira uma captura (artefato `iphone-captura`) e lê o texto da tela por OCR (aparece como aviso na execução). Roda sozinho quando `shared/`, `composeApp/` ou `iosApp/` mudam, ou à mão em Actions → "iOS (shared)" → Run workflow.
+- **App de iPhone mínimo** (28/10/2026, Compose Multiplatform):
+  - `composeApp/` (só alvos iOS; usa os ViewModels e repositórios do `:shared` sem Koin): Login/criar conta, Início (semana x meta, sequência, grupos com o sugerido destacado, treino livre), treino ativo (séries por exercício com a última carga e o recorde, descanso 60/90/120 s, terminar com resumo e recordes), Histórico e Perfil (sair). Tema escuro com acento limão.
+  - `iosApp/`: casca SwiftUI; o projeto Xcode é gerado pelo **XcodeGen** a partir de `iosApp/project.yml` (o `.xcodeproj` não vai para o git). As chaves do Supabase vêm do `local.properties` ou das variáveis `SUPABASE_URL`/`SUPABASE_KEY` (no CI, os mesmos secrets do Android) e viram `AppConfig.kt` gerado.
+  - Num Mac: `brew install xcodegen`, `cd iosApp && xcodegen generate`, abrir `GymTracker.xcodeproj` no Xcode e rodar no simulador (ou no próprio iPhone com o Apple ID).
 
 ## O que falta (o grosso)
 - **As telas.** Todo o `:app` é Jetpack Compose com APIs de Android (notificações, vibração, câmera/galeria, SharedPreferences, Koin Android, Navigation do Android, Vico). Nada disso roda no iPhone como está.
@@ -17,7 +21,7 @@ O Thiago pediu "a versão iOS" para distribuir a outras pessoas. Este arquivo di
 
 ## Ordem sugerida (Compose Multiplatform)
 1. CI de iOS verde (feito: compila e testa o `:shared`).
-2. Módulo `:composeApp` com tema, Login e Home; projeto `iosApp` mínimo; rodar no simulador pelo CI (`xcodebuild` no Mac do GitHub).
+2. Módulo `:composeApp` com tema, Login e Home; projeto `iosApp` mínimo; rodar no simulador pelo CI (feito em 28/10: ver a situação do build na seção "Não testado").
 3. Treino ativo, histórico, recordes; armazenamento local multiplataforma (ex.: `multiplatform-settings`).
 4. Social, temas animados, perfil e foto.
 5. Conta Apple Developer + TestFlight (o CI pode subir o build com as chaves da Apple guardadas em secrets).
