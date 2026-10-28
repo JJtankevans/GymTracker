@@ -96,7 +96,7 @@ class SocialGalleryTest {
         )
         rule.setContent {
             GymTrackerTheme(spec = AppThemes.byId("carbon")) {
-                com.vitoroliveira.gymtracker.ui.social.ChallengeSheet(team, standings, "me", {}, {}, {}, {})
+                com.vitoroliveira.gymtracker.ui.social.ChallengeSheet(team, standings, "me", onLoad = {}, onJoin = {}, onLeave = {}, onDismiss = {})
             }
         }
         rule.waitForIdle()
