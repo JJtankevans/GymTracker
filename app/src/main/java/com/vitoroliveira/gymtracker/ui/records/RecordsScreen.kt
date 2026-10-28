@@ -196,61 +196,61 @@ private fun RecordCard(r: RecordRow, state: RecordsUiState, goalKg: Double?, onC
     val recent = state.today?.let { r.isRecent(it) } == true
 
     ThemedCard(Modifier.fillMaxWidth().clickable(onClick = onClick), shape = MaterialTheme.shapes.medium) {
-      Column {
-        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            if (catalog != null) {
-                val tint = catalog.muscle.tint()
-                Box(
-                    Modifier.size(46.dp).clip(MaterialTheme.shapes.small).background(tint.copy(alpha = 0.18f)),
-                    contentAlignment = Alignment.Center
-                ) { ExerciseArt(catalog, tint, 32.dp, Modifier.fillMaxSize().padding(2.dp)) }
-            } else {
-                Box(
-                    Modifier.size(46.dp).clip(MaterialTheme.shapes.small).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)),
-                    contentAlignment = Alignment.Center
-                ) { Icon(Icons.Default.EmojiEvents, null, tint = MaterialTheme.colorScheme.primary) }
-            }
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(r.exerciseName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                Text(
-                    "1RM estimado ${formatKg(r.bestOneRmKg)} kg · ${dayMonth(r.bestDate)}",
-                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                r.improvementKg?.takeIf { it > 0 }?.let {
+        Column {
+            Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                if (catalog != null) {
+                    val tint = catalog.muscle.tint()
+                    Box(
+                        Modifier.size(46.dp).clip(MaterialTheme.shapes.small).background(tint.copy(alpha = 0.18f)),
+                        contentAlignment = Alignment.Center
+                    ) { ExerciseArt(catalog, tint, 32.dp, Modifier.fillMaxSize().padding(2.dp)) }
+                } else {
+                    Box(
+                        Modifier.size(46.dp).clip(MaterialTheme.shapes.small).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)),
+                        contentAlignment = Alignment.Center
+                    ) { Icon(Icons.Default.EmojiEvents, null, tint = MaterialTheme.colorScheme.primary) }
+                }
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(r.exerciseName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                     Text(
-                        "+${formatKg(it)} kg sobre o recorde anterior",
-                        style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.tertiary
+                        "1RM estimado ${formatKg(r.bestOneRmKg)} kg · ${dayMonth(r.bestDate)}",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    r.improvementKg?.takeIf { it > 0 }?.let {
+                        Text(
+                            "+${formatKg(it)} kg sobre o recorde anterior",
+                            style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.tertiary
+                        )
+                    }
+                }
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        "${formatKg(r.bestWeightKg)} kg",
+                        style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    if (recent) Text("NOVO", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.tertiary, fontWeight = FontWeight.Bold)
+                }
+            }
+            goalKg?.let { target ->
+                val g = GoalProgress(target, r.bestWeightKg)
+                Column(Modifier.padding(start = 14.dp, end = 14.dp, bottom = 12.dp)) {
+                    LinearProgressIndicator(
+                        progress = { g.fraction },
+                        modifier = Modifier.fillMaxWidth().height(6.dp).clip(MaterialTheme.shapes.small),
+                        color = if (g.reached) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        if (g.reached) "Meta de ${formatKg(target)} kg batida! Toque para pôr outra."
+                        else "Meta ${formatKg(target)} kg · faltam ${formatKg(g.remainingKg)} kg (${g.percent}%)",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (g.reached) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    "${formatKg(r.bestWeightKg)} kg",
-                    style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                if (recent) Text("NOVO", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.tertiary, fontWeight = FontWeight.Bold)
-            }
         }
-        goalKg?.let { target ->
-            val g = GoalProgress(target, r.bestWeightKg)
-            Column(Modifier.padding(start = 14.dp, end = 14.dp, bottom = 12.dp)) {
-                LinearProgressIndicator(
-                    progress = { g.fraction },
-                    modifier = Modifier.fillMaxWidth().height(6.dp).clip(MaterialTheme.shapes.small),
-                    color = if (g.reached) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    if (g.reached) "Meta de ${formatKg(target)} kg batida! Toque para pôr outra."
-                    else "Meta ${formatKg(target)} kg · faltam ${formatKg(g.remainingKg)} kg (${g.percent}%)",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (g.reached) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-      }
     }
 }
 
