@@ -5,16 +5,16 @@ App Android de registro de treinos de academia, com camada social. Feito em Kotl
 ## O que o app faz
 - **Treino:** grupos de treino (ex.: "Pernas") com exercícios (um exercício pode estar em vários grupos), treino ativo com pré-preenchimento da última carga, sugestão de carga, detecção de recorde (com confete), descanso com aviso também com a tela bloqueada, modo circuito (beta, conta séries e descanso sozinho e aprende o ritmo), resumo e compartilhamento no fim.
 - **Catálogo:** 93 exercícios (inclui cardio e mobilidade) com séries/reps padrão e ilustrações (41 prontas), 9 treinos prontos, agenda da semana e sugestão do próximo grupo.
-- **Acompanhamento:** Histórico com mapa de calor, detalhe do treino com anotação, Recordes, detalhe do exercício (gráfico, 1RM, tabela de cargas, calculadora de anilhas com aquecimento), Evolução (4 levantamentos básicos, séries por músculo na semana, peso e medidas corporais), Conquistas e exportação CSV.
+- **Acompanhamento:** Histórico com mapa de calor e resumo do mês, detalhe do treino com anotação, Recordes (com metas de carga e exercícios estagnados), detalhe do exercício (gráfico, 1RM, tabela de cargas, calculadora de anilhas com aquecimento), Evolução (4 levantamentos básicos, séries por músculo na semana, peso e medidas corporais), Conquistas e exportação CSV.
 - **Social:** perfil público/só seguidores/privado, seguir, feed de treinos com reações, grupos, desafios com placar, mensagens e títulos (Alpha, Chad...), compartilhar um grupo de treino por código.
-- **Aparência:** 46 temas em 4 categorias (Profissionais, Ousados, Abstratos, Loucos), vários com fundo animado e layouts de Home por tema.
-- **Relógio (`:wear`):** app para Wear OS (com tile e complicação de mostrador) que recebe os grupos do celular, registra o treino exercício por exercício (carga sugerida, coroa, descanso com alarme, batimentos, tela sempre ligada) e manda o treino para o celular gravar no Supabase. Instalação e detalhes em `docs/RELOGIO.md`.
+- **Aparência:** 52 temas em 4 categorias (Profissionais, Ousados, Abstratos, Loucos), vários com fundo animado e layouts de Home por tema.
+- **Relógio (`:wear`):** app para Wear OS (com tile e complicação de mostrador) que recebe os grupos do celular, registra o treino exercício por exercício (carga sugerida, coroa, descanso com alarme, batimentos e zonas, tela sempre ligada), tem timer de intervalos (HIIT/Tabata/EMOM) e recordes, e manda o treino para o celular gravar no Supabase. Instalação e detalhes em `docs/RELOGIO.md`.
 
 ## Estrutura
 | Módulo | Conteúdo |
 |--------|----------|
 | `:shared` | KMP (Android; iOS compila e testa no CI, ainda sem telas): modelos, repositórios Supabase, casos de uso, ViewModels e regras puras. Testes em `shared/src/commonTest` (278 `@Test`; rodam no CI do Android e no simulador de iOS). |
-| `:app` | Telas Compose, temas, navegação, notificações, música, armazenamento local. Galerias de captura (Robolectric + Roborazzi) em `app/src/test`. |
+| `:app` | Telas Compose, temas, navegação, notificações, armazenamento local. Galerias de captura (Robolectric + Roborazzi) em `app/src/test`. |
 | `:wear` | App do relógio (usa o `:shared` para o protocolo com o celular e as regras do treino). |
 | `docs/` | Documentação (ver abaixo) e SQL do Supabase em `docs/supabase/`. |
 | iOS | Ainda sem telas: o `:shared` compila para iPhone e passa nos testes no simulador (`.github/workflows/ios.yml`). Plano em `docs/IOS.md`. |
