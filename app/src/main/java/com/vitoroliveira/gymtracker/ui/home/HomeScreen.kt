@@ -64,6 +64,25 @@ fun HomeScreen(
         onNavigateToRecords = onNavigateToRecords,
         onNavigateToSocial = onNavigateToSocial,
         onClearError = { viewModel.clearError() },
+        topSlot = {
+            val pos = uiState.leaguePosition
+            if (pos != null) LeagueChip(pos, uiState.leagueSize, onNavigateToSocial)
+        }
+    )
+}
+
+/** "2º de 5 na liga da semana" (você e quem você segue); toque abre o Social. */
+@Composable
+private fun LeagueChip(position: Int, size: Int, onClick: () -> Unit) {
+    androidx.compose.material3.AssistChip(
+        onClick = onClick,
+        label = { Text(if (position == 1) "1º na liga da semana (de $size)" else "${position}º de $size na liga da semana") },
+        leadingIcon = {
+            Icon(
+                Icons.Default.EmojiEvents, contentDescription = null,
+                tint = if (position == 1) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary
+            )
+        }
     )
 }
 

@@ -40,6 +40,9 @@ data class HomeUiState(
     val suggestedGroupId: String? = null,
     /** Pedidos para me seguir esperando resposta (selo no ícone do Social). */
     val pendingFollowRequests: Int = 0,
+    /** Minha posição na liga da semana (1 = primeiro) e quantos estão nela; null sem liga (migração 015) ou sozinho. */
+    val leaguePosition: Int? = null,
+    val leagueSize: Int = 0,
     val errorMessage: String? = null
 )
 
@@ -81,8 +84,11 @@ class HomeViewModel(
                 val lastWorkout = history.firstOrNull()
                 val lastWorkoutGroupName = lastWorkout?.resolveGroupName(muscleGroups.associateBy { it.id })
 
+                val league = leagueQuietly()
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
+                    leaguePosition = league?.first,
+                    leagueSize = league?.second ?: 0,
                     weeklyCount = weeklyCount,
                     weeklyGoal = profile.weeklyGoal,
                     streakDays = streakDays,
@@ -117,6 +123,19 @@ class HomeViewModel(
         val day = date.dayOfMonth.toString().padStart(2, '0')
         val month = date.monthNumber.toString().padStart(2, '0')
         return "$day/$month"
+    }
+
+    /** (minha posição, tamanho) na liga da semana; null se não há liga, se estou sozinho ou se falhar. */
+    private suspend fun leagueQuietly(): Pair<Int, Int>? {
+        val repo = socialRepository ?: return null
+        return try {
+            val rows = repo.weeklyLeague()
+            val me = rows.indexOfFirst { it.isMe }
+            if (rows.size < 2 || me < 0) null else (me + 1) to rows.size
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            null
+        }
     }
 
     /** Contagem é um extra: sem rede ou sem as tabelas sociais, fica 0 e a Home segue normal. */
