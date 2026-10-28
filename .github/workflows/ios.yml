@@ -101,10 +101,10 @@ jobs:
           xcrun simctl launch "$UDID" com.vitoroliveira.gymtracker
           sleep 35
           xcrun simctl io "$UDID" screenshot iphone-tela-inicial.png
-          swift iosApp/ocr.swift iphone-tela-inicial.png 2>/dev/null > ocr.txt || true
-          # o Vision não lê texto na máquina virtual do CI: o Tesseract lê
+          swift iosApp/ocr.swift iphone-tela-inicial.png ocr-entrada.png 2>/dev/null > ocr.txt || true
+          # o Vision não lê texto na máquina virtual do CI: o Tesseract lê (na cópia invertida, texto escuro em fundo claro)
           brew install tesseract > /dev/null 2>&1 || true
-          tesseract iphone-tela-inicial.png - 2>/dev/null | tr -s ' \n' ' ' | cut -c1-300 >> ocr.txt || true
+          echo "tesseract: $(tesseract ocr-entrada.png - 2>/dev/null | tr -s ' \n' ' ' | cut -c1-300)" >> ocr.txt || true
           echo "::notice title=Tela do app de iPhone (texto lido por OCR)::$(head -n 25 ocr.txt | sed ':a;N;$!ba;s/\n/ | /g')"
           # o app ainda está vivo? (se fechou sozinho, o launchctl não lista)
           if xcrun simctl spawn "$UDID" launchctl list | grep -q gymtracker; then

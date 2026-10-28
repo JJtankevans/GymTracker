@@ -3,6 +3,7 @@
 import Foundation
 import Vision
 import AppKit
+import CoreImage
 
 let path = CommandLine.arguments[1]
 guard let image = NSImage(contentsOfFile: path),
@@ -29,6 +30,18 @@ if let data = cg.dataProvider?.data, let ptr = CFDataGetBytePtr(data) {
     }
 }
 print("tela \(w)x\(h), com conteúdo: \(total > 0 ? lit * 100 / total : 0)%")
+
+// cópia invertida e em cinza (texto escuro em fundo claro) para o Tesseract, que lê mal texto claro em fundo escuro
+if CommandLine.arguments.count > 2 {
+    let ci = CIImage(cgImage: cg)
+        .applyingFilter("CIColorControls", parameters: [kCIInputSaturationKey: 0.0, kCIInputContrastKey: 1.4])
+        .applyingFilter("CIColorInvert")
+    let ctx = CIContext()
+    if let out = ctx.createCGImage(ci, from: ci.extent) {
+        let rep = NSBitmapImageRep(cgImage: out)
+        try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: CommandLine.arguments[2]))
+    }
+}
 
 let request = VNRecognizeTextRequest { req, _ in
     for case let obs as VNRecognizedTextObservation in req.results ?? [] {

@@ -52,7 +52,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
-private enum class Tab(val label: String) { HOME("Início"), HISTORY("Histórico"), PROFILE("Perfil") }
+private enum class Tab(val label: String) { HOME("Início"), HISTORY("Histórico"), RECORDS("Recordes"), PROFILE("Perfil") }
 
 /** O app depois do login: abas Início / Histórico / Perfil; o treino abre por cima. */
 @Composable
@@ -64,11 +64,12 @@ fun MainScreen(onSignedOut: () -> Unit) {
     val home = remember { HomeViewModel(Services.workouts, Services.profiles, Services.groups) }
     val groups = remember { MuscleGroupViewModel(Services.groups) }
     val history = remember { HistoryViewModel(Services.workouts, Services.groups) }
+    val records = remember { com.vitoroliveira.gymtracker.presentation.records.RecordsViewModel(Services.exercises, Services.workouts) }
 
     workout?.let { (groupId, name) ->
         WorkoutScreen(groupId, name, onClose = {
             workout = null
-            home.loadDashboard(); history.loadHistory()
+            home.loadDashboard(); history.loadHistory(); records.load()
         })
         return
     }
@@ -91,6 +92,7 @@ fun MainScreen(onSignedOut: () -> Unit) {
             when (tab) {
                 Tab.HOME -> HomeTab(home, groups) { g -> workout = g.id to g.name }
                 Tab.HISTORY -> HistoryTab(history)
+                Tab.RECORDS -> RecordsTab(records)
                 Tab.PROFILE -> ProfileTab(onSignedOut)
             }
         }
@@ -240,5 +242,37 @@ private fun ProfileTab(onSignedOut: () -> Unit) {
                 onSignedOut()
             }
         }, modifier = Modifier.fillMaxWidth()) { Text("Sair da conta") }
+    }
+}
+
+// ───────────────────────── Recordes ─────────────────────────
+
+@Composable
+private fun RecordsTab(vm: com.vitoroliveira.gymtracker.presentation.records.RecordsViewModel) {
+    val s by vm.state.collectAsState()
+    LazyColumn(
+        Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(20.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        item {
+            Text("Recordes", fontSize = 30.sp, fontWeight = FontWeight.Black)
+            if (s.recentCount > 0) Text("${s.recentCount} batidos nos últimos 30 dias", color = Lime, fontSize = 13.sp)
+        }
+        if (s.isLoading && s.records.isEmpty()) item { CircularProgressIndicator() }
+        s.errorMessage?.let { item { Text(it, color = MaterialTheme.colorScheme.error) } }
+        if (!s.isLoading && s.records.isEmpty()) item { Text("Registre séries com carga para ver seus recordes.", color = Muted) }
+        items(s.records, key = { it.exerciseId }) { r ->
+            val date = r.bestDate.let { if (it.length >= 10) "${it.substring(8, 10)}/${it.substring(5, 7)}" else it }
+            Panel {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(r.exerciseName, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text("em $date · 1RM ~${com.vitoroliveira.gymtracker.watch.formatKg(r.bestOneRmKg)} kg · ${r.sessions} sessões", color = Muted, fontSize = 12.sp)
+                    }
+                    Text("${com.vitoroliveira.gymtracker.watch.formatKg(r.bestWeightKg)} kg", color = Lime, fontWeight = FontWeight.Black, fontSize = 18.sp)
+                }
+            }
+        }
     }
 }
