@@ -41,4 +41,22 @@ class SocialAlertsTest {
         val again = socialAlerts("me", listOf(Follow("ana", "me", "pending")), emptyList(), emptyList(), emptyList(), setOf("seguir:ana"), now)
         assertEquals(emptyList(), again)
     }
+
+    @Test
+    fun fechamentoDaSemanaNoDomingoANoiteOuNaSegunda() {
+        val d = { m: Int, day: Int -> kotlinx.datetime.LocalDate(2026, m, day) }
+        val sessions = listOf(d(10, 26) to 60L, d(10, 28) to 50L, d(10, 30) to 70L, d(10, 20) to 40L)   // semana de 26/10 a 1/11
+        val domingoNoite = kotlinx.datetime.LocalDateTime(2026, 11, 1, 19, 0)
+        val alert = weekRecapAlert(sessions, goal = 3, now = domingoNoite, seen = emptySet())
+        assertEquals("semana:2026-10-26", alert?.key)
+        assertEquals("3 treinos (meta de 3 batida) · 3 h treinando. Mandou bem!", alert?.text)
+        // segunda de manhã: mesma semana, mas já avisada
+        assertEquals(null, weekRecapAlert(sessions, 3, kotlinx.datetime.LocalDateTime(2026, 11, 2, 8, 0), setOf("semana:2026-10-26")))
+        // domingo de tarde e quarta: ainda não
+        assertEquals(null, weekRecapAlert(sessions, 3, kotlinx.datetime.LocalDateTime(2026, 11, 1, 15, 0), emptySet()))
+        assertEquals(null, weekRecapAlert(sessions, 3, kotlinx.datetime.LocalDateTime(2026, 10, 28, 20, 0), emptySet()))
+        // faltou treino
+        assertEquals("1 treino · 40 min. Faltou 3 para a meta de 4.",
+            weekRecapAlert(listOf(d(10, 20) to 40L), 4, kotlinx.datetime.LocalDateTime(2026, 10, 26, 9, 0), emptySet())?.text)
+    }
 }

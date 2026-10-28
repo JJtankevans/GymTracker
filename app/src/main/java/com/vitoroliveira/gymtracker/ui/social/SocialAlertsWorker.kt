@@ -24,6 +24,7 @@ import com.vitoroliveira.gymtracker.domain.repository.AuthRepository
 import com.vitoroliveira.gymtracker.domain.repository.SocialRepository
 import com.vitoroliveira.gymtracker.presentation.social.socialAlerts
 import kotlinx.coroutines.CancellationException
+import kotlinx.datetime.toLocalDateTime
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.util.concurrent.TimeUnit
@@ -37,6 +38,8 @@ class SocialAlertsWorker(context: Context, params: WorkerParameters) : Coroutine
 
     private val auth: AuthRepository by inject()
     private val social: SocialRepository by inject()
+    private val workouts: com.vitoroliveira.gymtracker.domain.repository.WorkoutRepository by inject()
+    private val profiles: com.vitoroliveira.gymtracker.domain.repository.ProfileRepository by inject()
 
     override suspend fun doWork(): Result {
         return try {
@@ -53,16 +56,31 @@ class SocialAlertsWorker(context: Context, params: WorkerParameters) : Coroutine
                 seen = seen,
                 now = Clock.System.now()
             )
-            if (alerts.isNotEmpty()) {
-                alerts.take(3).forEachIndexed { i, a -> notify(a.title, a.text, i) }
+            // fechamento da semana (domingo à noite ou segunda), mesmo sem nada do Social
+            val week = runCatching { weekAlert(seen) }.getOrNull()
+            val all = alerts.take(3) + listOfNotNull(week)
+            if (all.isNotEmpty()) {
+                all.forEachIndexed { i, a -> notify(a.title, a.text, i) }
                 // guarda as chaves avisadas (as 200 mais recentes bastam)
-                prefs.edit().putStringSet(KEY_SEEN, (seen + alerts.map { it.key }).toList().takeLast(200).toSet()).apply()
+                prefs.edit().putStringSet(KEY_SEEN, (seen + all.map { it.key }).toList().takeLast(200).toSet()).apply()
             }
             Result.success()
         } catch (e: Exception) {
             if (e is CancellationException) throw e
             Result.retry()
         }
+    }
+
+    private suspend fun weekAlert(seen: Set<String>): com.vitoroliveira.gymtracker.presentation.social.SocialAlert? {
+        val zone = kotlinx.datetime.TimeZone.currentSystemDefault()
+        val now = Clock.System.now().toLocalDateTime(zone)
+        val sessions = workouts.getHistory().mapNotNull { w ->
+            val start = w.startedAt?.let { runCatching { kotlin.time.Instant.parse(it) }.getOrNull() } ?: return@mapNotNull null
+            val end = w.finishedAt?.let { runCatching { kotlin.time.Instant.parse(it) }.getOrNull() }
+            start.toLocalDateTime(zone).date to end?.let { (it - start).inWholeMinutes }
+        }
+        val goal = runCatching { profiles.getCurrentProfile().weeklyGoal }.getOrDefault(0)
+        return com.vitoroliveira.gymtracker.presentation.social.weekRecapAlert(sessions, goal, now, seen)
     }
 
     private fun notify(title: String, text: String, index: Int) {
