@@ -21,4 +21,5 @@ object Services {
     val exercises by lazy { ExerciseRepositoryImpl(client) }
     val workouts by lazy { WorkoutRepositoryImpl(client) }
     val profiles by lazy { ProfileRepositoryImpl(client) }
+    val social by lazy { com.vitoroliveira.gymtracker.data.repository.SocialRepositoryImpl(client) }
 }

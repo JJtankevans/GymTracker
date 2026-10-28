@@ -52,7 +52,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
-private enum class Tab(val label: String) { HOME("Início"), HISTORY("Histórico"), RECORDS("Recordes"), PROFILE("Perfil") }
+private enum class Tab(val label: String) { HOME("Início"), HISTORY("Histórico"), RECORDS("Recordes"), SOCIAL("Social"), PROFILE("Perfil") }
 
 /** O app depois do login: abas Início / Histórico / Perfil; o treino abre por cima. */
 @Composable
@@ -65,11 +65,12 @@ fun MainScreen(onSignedOut: () -> Unit) {
     val groups = remember { MuscleGroupViewModel(Services.groups) }
     val history = remember { HistoryViewModel(Services.workouts, Services.groups) }
     val records = remember { com.vitoroliveira.gymtracker.presentation.records.RecordsViewModel(Services.exercises, Services.workouts) }
+    val social = remember { com.vitoroliveira.gymtracker.presentation.social.SocialViewModel(Services.social) }
 
     workout?.let { (groupId, name) ->
         WorkoutScreen(groupId, name, onClose = {
             workout = null
-            home.loadDashboard(); history.loadHistory(); records.load()
+            home.loadDashboard(); history.loadHistory(); records.load(); social.refresh()
         })
         return
     }
@@ -93,6 +94,7 @@ fun MainScreen(onSignedOut: () -> Unit) {
                 Tab.HOME -> HomeTab(home, groups) { g -> workout = g.id to g.name }
                 Tab.HISTORY -> HistoryTab(history)
                 Tab.RECORDS -> RecordsTab(records)
+                Tab.SOCIAL -> SocialTab(social)
                 Tab.PROFILE -> ProfileTab(onSignedOut)
             }
         }
