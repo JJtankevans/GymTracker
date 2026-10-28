@@ -64,6 +64,12 @@ fun DrawScope.drawThemeBackground(extras: ThemeExtras, base: Color, t: Float) {
         Decor.BLOCKS -> drawBlocks(extras.decorColors, t)
         Decor.ECG -> drawEcg(extras.decorColors, t)
         Decor.LASERS -> drawLasers(extras.decorColors, t)
+        Decor.CIRCUIT -> drawCircuit(extras.decorColors, t)
+        Decor.SNOW -> drawSnow(extras.decorColors, t)
+        Decor.BUBBLES -> drawBubbles(extras.decorColors, t)
+        Decor.DESERT -> drawDesert(extras.decorColors, t)
+        Decor.ORIGAMI -> drawOrigami(extras.decorColors, t)
+        Decor.NEON_CITY -> drawNeonCity(extras.decorColors, t)
     }
 }
 

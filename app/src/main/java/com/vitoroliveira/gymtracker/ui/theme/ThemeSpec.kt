@@ -59,7 +59,14 @@ enum class Decor {
     FIREWORKS,  // fogos de artifício
     BLOCKS,     // peças de blocos caindo
     ECG,        // monitor cardíaco
-    LASERS      // lasers de rave varrendo
+    LASERS,     // lasers de rave varrendo
+    // terceira leva (ThemeDecorCrazy3.kt)
+    CIRCUIT,    // trilhas de placa-mãe com pulsos
+    SNOW,       // nevasca com floquinhos
+    BUBBLES,    // bolhas de sabão iridescentes
+    DESERT,     // sol, dunas e calor tremendo
+    ORIGAMI,    // pássaros de papel planando
+    NEON_CITY   // prédios com janelas, letreiros e carros voadores
 }
 
 /**

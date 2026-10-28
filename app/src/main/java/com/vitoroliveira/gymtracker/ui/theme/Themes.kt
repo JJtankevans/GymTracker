@@ -916,6 +916,150 @@ object AppThemes {
         )
     )
 
+    // ───────────── LOUCOS, terceira leva (28/10/2026, madrugada) ─────────────
+
+    val PlacaMae = AppThemeSpec(
+        id = "placa_mae", name = "Placa-Mãe", tagline = "Energia correndo pelas trilhas. Overclock no shape",
+        category = ThemeCategory.CRAZY, isDark = true,
+        colors = makeScheme(
+            dark = true,
+            primary = hex(0x00E08A), secondary = hex(0xB6FF3B), tertiary = hex(0x3BC9FF),
+            background = hex(0x03140C), surface = hex(0x062014), onSurface = hex(0xE3FFF0),
+            outline = hex(0x1C6B45), cardColor = hex(0x072618).copy(alpha = 0.9f), onPrimary = hex(0x00240F)
+        ),
+        typography = makeTypography(ThemeFonts.Mono, ThemeFonts.Inter, FontWeight.Bold, 0.5.sp, labelWeight = FontWeight.Bold),
+        shapes = cutShapes(3.dp, 6.dp, 10.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.BENTO,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.CIRCUIT,
+            decorColors = listOf(hex(0x00E08A), hex(0xB6FF3B)),
+            cardBorderWidth = 1.dp, cardBorderColor = hex(0x00E08A).copy(alpha = 0.5f),
+            glowColor = hex(0x00E08A).copy(alpha = 0.3f),
+            success = hex(0xB6FF3B),
+            animated = true
+        )
+    )
+
+    val Nevasca = AppThemeSpec(
+        id = "nevasca", name = "Nevasca", tagline = "Floco por floco, série por série. Treino no gelo",
+        category = ThemeCategory.CRAZY, isDark = true,
+        colors = makeScheme(
+            dark = true,
+            primary = hex(0x9AD8FF), secondary = hex(0xE0F4FF), tertiary = hex(0xFFB3C7),
+            background = hex(0x0A1626), surface = hex(0x102036), onSurface = hex(0xF2F9FF),
+            cardColor = hex(0x13263F).copy(alpha = 0.82f), onPrimary = hex(0x002238),
+            topBar = Color.Transparent
+        ),
+        typography = makeTypography(ThemeFonts.SpaceGrotesk, ThemeFonts.Inter, FontWeight.Bold, 0.8.sp),
+        shapes = roundedShapes(16.dp, 24.dp, 32.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.ORBIT,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.SNOW,
+            backgroundGradient = listOf(hex(0x15304F), hex(0x0E1F36), hex(0x08121F)),
+            decorColors = listOf(hex(0xBDE7FF)),
+            cardBorderWidth = 1.dp, cardBorderColor = Color.White.copy(alpha = 0.3f),
+            success = hex(0x9AD8FF),
+            animated = true
+        )
+    )
+
+    val Bolhas = AppThemeSpec(
+        id = "bolhas", name = "Bolhas", tagline = "Bolhas de sabão furta-cor subindo. Leveza no pós-treino",
+        category = ThemeCategory.CRAZY, isDark = true,
+        colors = makeScheme(
+            dark = true,
+            primary = hex(0x9AE6FF), secondary = hex(0xFF9AE6), tertiary = hex(0xFFF09A),
+            background = hex(0x10101E), surface = hex(0x181830), onSurface = hex(0xF6F4FF),
+            cardColor = hex(0x1B1B36).copy(alpha = 0.8f), onPrimary = hex(0x00222E),
+            topBar = Color.Transparent
+        ),
+        typography = makeTypography(ThemeFonts.Inter, ThemeFonts.Inter, FontWeight.SemiBold, 0.2.sp),
+        shapes = roundedShapes(24.dp, 32.dp, 40.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.ORBIT,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.BUBBLES,
+            decorColors = listOf(hex(0xFF9AE6), hex(0x9AE6FF), hex(0xFFF09A)),
+            cardBorderWidth = 1.dp, cardBorderColor = hex(0x9AE6FF).copy(alpha = 0.4f),
+            success = hex(0x9AFFC8),
+            animated = true
+        )
+    )
+
+    val Miragem = AppThemeSpec(
+        id = "miragem", name = "Miragem", tagline = "Sol a pino e dunas tremendo de calor. Cardio no deserto",
+        category = ThemeCategory.CRAZY, isDark = true,
+        colors = makeScheme(
+            dark = true,
+            primary = hex(0xFFB347), secondary = hex(0xFF6B4A), tertiary = hex(0xFFE08A),
+            background = hex(0x2A1408), surface = hex(0x341A0C), onSurface = hex(0xFFF3E6),
+            cardColor = hex(0x3A1D0D).copy(alpha = 0.82f), onPrimary = hex(0x2A1300),
+            topBar = Color.Transparent
+        ),
+        typography = makeTypography(ThemeFonts.Playfair, ThemeFonts.Inter, FontWeight.Black, 0.2.sp, headingFeatures = "lnum"),
+        shapes = roundedShapes(12.dp, 20.dp, 28.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.POSTER,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.DESERT,
+            backgroundGradient = listOf(hex(0x5A2410), hex(0x3A170A), hex(0x1E0C05)),
+            decorColors = listOf(hex(0xFFB347), hex(0xD9824A)),
+            cardBorderWidth = 1.dp, cardBorderColor = hex(0xFFB347).copy(alpha = 0.45f),
+            success = hex(0xFFE08A),
+            animated = true
+        )
+    )
+
+    val Origami = AppThemeSpec(
+        id = "origami", name = "Origami", tagline = "Pássaros de papel voando sobre papel creme. Claro e leve",
+        category = ThemeCategory.CRAZY, isDark = false,
+        colors = makeScheme(
+            dark = false,
+            primary = hex(0xC8432F), secondary = hex(0x2F8F83), tertiary = hex(0x3B5BA9),
+            background = hex(0xF6EFE3), surface = hex(0xFFFAF2), onSurface = hex(0x2A2118),
+            cardColor = hex(0xFFFAF2).copy(alpha = 0.9f)
+        ),
+        typography = makeTypography(ThemeFonts.Playfair, ThemeFonts.Inter, FontWeight.Bold, (-0.2).sp, headingFeatures = "lnum"),
+        shapes = cutShapes(2.dp, 4.dp, 8.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.EDITORIAL,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.ORIGAMI,
+            decorColors = listOf(hex(0xE8604C), hex(0x2F8F83), hex(0xF2B33D), hex(0x3B5BA9)),
+            cardBorderWidth = 1.dp, cardBorderColor = hex(0x2A2118).copy(alpha = 0.2f),
+            hardShadowOffset = 3.dp, hardShadowColor = hex(0x2A2118).copy(alpha = 0.15f),
+            success = hex(0x2F8F83),
+            animated = true
+        )
+    )
+
+    val CidadeNeon = AppThemeSpec(
+        id = "cidade_neon", name = "Cidade Neon", tagline = "Prédios acesos, letreiros e carros voadores. 2077 na academia",
+        category = ThemeCategory.CRAZY, isDark = true,
+        colors = makeScheme(
+            dark = true,
+            primary = hex(0xFF2E88), secondary = hex(0x2EE6FF), tertiary = hex(0xFFD12E),
+            background = hex(0x0B0518), surface = hex(0x140A26), onSurface = hex(0xFFF0F8),
+            cardColor = hex(0x170B2E).copy(alpha = 0.86f), onPrimary = hex(0x2A0016),
+            topBar = Color.Transparent
+        ),
+        typography = makeTypography(ThemeFonts.BarlowCondensed, ThemeFonts.Inter, FontWeight.Black, 1.2.sp, labelWeight = FontWeight.Bold),
+        shapes = cutShapes(4.dp, 10.dp, 16.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.POSTER,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.NEON_CITY,
+            backgroundGradient = listOf(hex(0x1A0838), hex(0x10061F), hex(0x07030E)),
+            decorColors = listOf(hex(0xFF2E88), hex(0x2EE6FF), hex(0xFFD12E)),
+            cardBorderWidth = 1.5.dp, cardBorderColor = hex(0x2EE6FF).copy(alpha = 0.55f),
+            glowColor = hex(0xFF2E88).copy(alpha = 0.4f),
+            success = hex(0x2EE6FF),
+            animated = true
+        )
+    )
+
     /** Ordem = ordem de exibição dentro de cada categoria. */
     val all: List<AppThemeSpec> = listOf(
         System, Studio, Carbon, Oceano, Tinta, Nordico, Obsidiana, Cobalto, Floresta,
@@ -923,7 +1067,8 @@ object AppThemes {
         Aurora, Sunset, Confete, Magma, Artico,
         Matrix, Hipnose, Hiperespaco, Glitch, Lava, Arcade, Carnaval,
         Tempestade, Discoteca, Caleidoscopio, Abissal, Galaxia, ForaDoAr, Holografico,
-        Assombrado, Reveillon, Blocos, Cardio, Rave
+        Assombrado, Reveillon, Blocos, Cardio, Rave,
+        PlacaMae, Nevasca, Bolhas, Miragem, Origami, CidadeNeon
     )
 
     val available: List<AppThemeSpec> get() = all.filter { it.enabled }
