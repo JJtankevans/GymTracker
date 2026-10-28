@@ -72,7 +72,7 @@ jobs:
           (cd iosApp && xcodegen generate)
           xcodebuild -project iosApp/GymTracker.xcodeproj -target GymTracker -configuration Debug -sdk iphonesimulator \
             ARCHS=arm64 ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=NO build > xcode.log 2>&1 || {
-            msg=$(grep -E '^e: |error:|What went wrong|FAILED' -A3 xcode.log | head -n 40)
+            msg=$(grep -E "^ld: |Undefined symbol|ld: warning|framework '|^e: |error:|What went wrong|FAILED" -A4 xcode.log | grep -v '^--$' | head -n 45)
             [ -z "$msg" ] && msg=$(tail -n 40 xcode.log)
             echo "::error title=Falha ao compilar o app de iPhone::$(echo "$msg" | sed ':a;N;$!ba;s/\n/%0A/g')"
             exit 1
