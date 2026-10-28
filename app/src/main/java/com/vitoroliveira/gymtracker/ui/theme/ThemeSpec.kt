@@ -46,7 +46,20 @@ enum class Decor {
     CARNIVAL,   // confete e serpentina caindo
     WAVES,      // ondas e bolhas (Oceano)
     FIREFLIES,  // vaga-lumes no mato (Floresta)
-    DECO        // leque e moldura art déco (Ouro)
+    DECO,       // leque e moldura art déco (Ouro)
+    // segunda leva dos Loucos (ThemeDecorCrazy2.kt)
+    STORM,      // chuva, nuvens e relâmpagos
+    DISCO,      // bola espelhada e fachos de luz
+    KALEIDO,    // raios de arco-íris e polígonos girando
+    ABYSS,      // águas-vivas e plâncton brilhando
+    GALAXY,     // braços espirais de estrelas
+    STATIC,     // chuvisco de TV fora do ar
+    HOLO,       // reflexo perolado holográfico
+    HAUNTED,    // lua, morcegos, neblina e cerca torta
+    FIREWORKS,  // fogos de artifício
+    BLOCKS,     // peças de blocos caindo
+    ECG,        // monitor cardíaco
+    LASERS      // lasers de rave varrendo
 }
 
 /**

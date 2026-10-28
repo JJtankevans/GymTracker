@@ -6,20 +6,18 @@ import com.vitoroliveira.gymtracker.presentation.body.BodyRepository
 import com.vitoroliveira.gymtracker.presentation.circuit.TimingStore
 import com.vitoroliveira.gymtracker.presentation.schedule.ScheduleRepository
 import com.vitoroliveira.gymtracker.ui.exercise.CatalogPrefs
-import com.vitoroliveira.gymtracker.ui.music.WorkoutTrackRecorder
 import java.io.File
 
 /**
  * Tudo o que o app guarda no aparelho e é do usuário logado. Ficam de fora as preferências do aparelho (tema,
- * intensidade, cores da música, gravar músicas) e o cache de fotos de perfil (são públicas).
+ * intensidade) e o cache de fotos de perfil (são públicas).
  */
 class LocalUserDataImpl(
     context: Context,
     private val body: BodyRepository,
     private val schedule: ScheduleRepository,
     private val catalog: CatalogPrefs,
-    private val timing: TimingStore,
-    private val tracks: WorkoutTrackRecorder
+    private val timing: TimingStore
 ) : LocalUserData {
     private val cacheDir = context.applicationContext.cacheDir
 
@@ -31,7 +29,6 @@ class LocalUserDataImpl(
         schedule.clear()
         catalog.clear()
         timing.save(emptyMap())
-        tracks.discard()
         // CSV exportado tem o histórico inteiro
         File(cacheDir, "exports").deleteRecursively()
     }

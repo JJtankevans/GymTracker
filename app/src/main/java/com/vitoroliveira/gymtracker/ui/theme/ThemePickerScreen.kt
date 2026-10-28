@@ -79,7 +79,6 @@ fun ThemePickerScreen(onBack: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 item(key = "intensity") { IntensityCard(prefs) }
-                item(key = "music") { MusicCard(prefs) }
                 ThemeCategory.entries.forEach { category ->
                     val themes = AppThemes.available.filter { it.category == category }
                     if (themes.isEmpty()) return@forEach
@@ -194,61 +193,6 @@ private fun ThemeOption(spec: AppThemeSpec, selected: Boolean, onClick: () -> Un
             }
             if (selected) {
                 Icon(Icons.Default.Check, contentDescription = "Selecionado", tint = MaterialTheme.colorScheme.primary)
-            }
-        }
-    }
-}
-
-@Composable
-private fun MusicCard(prefs: ThemePreferences) {
-    val music: com.vitoroliveira.gymtracker.ui.music.MusicController = koinInject()
-    val state by music.state.collectAsState()
-    val reactive by prefs.musicReactive.collectAsState()
-    val context = androidx.compose.ui.platform.LocalContext.current
-    androidx.compose.runtime.LaunchedEffect(Unit) { music.refresh() }
-
-    ThemedCard(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text("Cores da música", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text(
-                        "O tema pega a cor da capa do álbum que está tocando e mostra um mini-player no treino.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                androidx.compose.material3.Switch(checked = reactive, onCheckedChange = prefs::setMusicReactive)
-            }
-            val social: com.vitoroliveira.gymtracker.ui.music.SocialPrefs = koinInject()
-            val rec by social.recordMusic.collectAsState()
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text("Guardar músicas dos treinos", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                    Text(
-                        "Anota o que toca durante o treino para montar a playlist dele (envio ao perfil só funciona quando a parte social estiver ativa).",
-                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                androidx.compose.material3.Switch(checked = rec, onCheckedChange = social::setRecordMusic)
-            }
-            if (!state.hasAccess) {
-                Text(
-                    "Precisa de acesso à mídia. Abra a tela, ative o GymTracker e volte. Nenhuma notificação é lida.",
-                    style = MaterialTheme.typography.bodySmall
-                )
-                Button(onClick = {
-                    context.startActivity(
-                        android.content.Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
-                            .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                    )
-                }) { Text("Permitir acesso") }
-            } else {
-                val np = state.nowPlaying
-                Text(
-                    if (np != null) "Tocando: ${np.title} — ${np.artist}" else "Acesso liberado. Toque algo no seu app de música.",
-                    style = MaterialTheme.typography.labelLarge
-                )
             }
         }
     }

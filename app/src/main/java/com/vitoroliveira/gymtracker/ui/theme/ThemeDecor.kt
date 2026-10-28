@@ -50,6 +50,18 @@ fun DrawScope.drawThemeBackground(extras: ThemeExtras, base: Color, t: Float) {
         Decor.WAVES -> drawWaves(extras.decorColors, t)
         Decor.FIREFLIES -> drawFireflies(extras.decorColors, t)
         Decor.DECO -> drawDeco(extras.decorColors)
+        Decor.STORM -> drawStorm(extras.decorColors, t)
+        Decor.DISCO -> drawDisco(extras.decorColors, t)
+        Decor.KALEIDO -> drawKaleido(extras.decorColors, t)
+        Decor.ABYSS -> drawAbyss(extras.decorColors, t)
+        Decor.GALAXY -> drawGalaxy(extras.decorColors, t)
+        Decor.STATIC -> drawStatic(extras.decorColors, t)
+        Decor.HOLO -> drawHolo(extras.decorColors, t)
+        Decor.HAUNTED -> drawHaunted(extras.decorColors, t)
+        Decor.FIREWORKS -> drawFireworks(extras.decorColors, t)
+        Decor.BLOCKS -> drawBlocks(extras.decorColors, t)
+        Decor.ECG -> drawEcg(extras.decorColors, t)
+        Decor.LASERS -> drawLasers(extras.decorColors, t)
     }
 }
 

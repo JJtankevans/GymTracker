@@ -67,7 +67,8 @@ fun SettingsDialog(settings: SocialSettings, onSave: (SocialSettings) -> Unit, o
     var bio by remember { mutableStateOf(settings.bio.orEmpty()) }
     var visibility by remember { mutableStateOf(settings.visibility) }
     var shareWorkouts by remember { mutableStateOf(settings.shareWorkouts) }
-    var shareMusic by remember { mutableStateOf(settings.shareMusic) }
+    // a captura de músicas saiu (Play Protect); o valor guardado continua o mesmo
+    val shareMusic = settings.shareMusic
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -94,13 +95,6 @@ fun SettingsDialog(settings: SocialSettings, onSave: (SocialSettings) -> Unit, o
                         Text("Treinos finalizados viram posts no feed.", style = MaterialTheme.typography.bodySmall)
                     }
                     Switch(shareWorkouts, { shareWorkouts = it })
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text("Compartilhar músicas", fontWeight = FontWeight.Bold)
-                        Text("Outros veem a playlist dos seus treinos.", style = MaterialTheme.typography.bodySmall)
-                    }
-                    Switch(shareMusic, { shareMusic = it })
                 }
             }
         },

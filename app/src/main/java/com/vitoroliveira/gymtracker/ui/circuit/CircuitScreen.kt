@@ -29,7 +29,6 @@ import com.vitoroliveira.gymtracker.presentation.viewmodel.WorkoutViewModel
 import com.vitoroliveira.gymtracker.presentation.viewmodel.maxSetsFor
 import com.vitoroliveira.gymtracker.presentation.viewmodel.setLimitMessage
 import com.vitoroliveira.gymtracker.ui.home.ProgressRing
-import com.vitoroliveira.gymtracker.ui.music.MiniPlayer
 import com.vitoroliveira.gymtracker.ui.theme.ThemedCard
 import com.vitoroliveira.gymtracker.ui.theme.ThemedScaffold
 import com.vitoroliveira.gymtracker.ui.theme.ThemedTopAppBar
@@ -66,7 +65,6 @@ fun CircuitScreen(
         }
     }
 
-    com.vitoroliveira.gymtracker.ui.music.TrackRecording(w.activeWorkout?.id, w.summary != null)
     LaunchedEffect(Unit) { workoutVm.startWorkout(muscleGroupId) }
     DisposableEffect(view) { view.keepScreenOn = true; onDispose { view.keepScreenOn = false } }
 
@@ -278,7 +276,7 @@ private fun Mini(label: String, value: String, onMinus: () -> Unit, onPlus: () -
 @Composable
 fun CircuitRun(c: CircuitState, vm: CircuitViewModel) = CircuitRunContent(
     c, onDone = vm::tapDone, onStillGoing = vm::tapStillGoing, onExtend = { vm.extendRest(15) },
-    onAdjust = { r, k -> vm.adjust(r, k) }, player = { MiniPlayer() }
+    onAdjust = { r, k -> vm.adjust(r, k) }
 )
 
 @Composable

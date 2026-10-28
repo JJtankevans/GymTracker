@@ -16,15 +16,6 @@ class ThemePreferences(context: Context) {
     )
     val themeId: StateFlow<String> = _themeId.asStateFlow()
 
-    private val _musicReactive = MutableStateFlow(prefs.getBoolean(KEY_MUSIC, true))
-    /** Quando ligado, as cores do tema acompanham a capa do álbum tocando. */
-    val musicReactive: StateFlow<Boolean> = _musicReactive.asStateFlow()
-
-    fun setMusicReactive(on: Boolean) {
-        prefs.edit().putBoolean(KEY_MUSIC, on).apply()
-        _musicReactive.value = on
-    }
-
     private val _intensity = MutableStateFlow(
         runCatching { Intensity.valueOf(prefs.getString(KEY_INTENSITY, null) ?: "NORMAL") }.getOrDefault(Intensity.NORMAL)
     )
@@ -44,7 +35,6 @@ class ThemePreferences(context: Context) {
 
     private companion object {
         const val KEY_THEME = "theme_id"
-        const val KEY_MUSIC = "music_reactive"
         const val KEY_INTENSITY = "intensity"
     }
 }
