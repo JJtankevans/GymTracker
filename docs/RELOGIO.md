@@ -18,6 +18,7 @@
   - **Anilhas:** na tela da série, com a carga selecionada, toque em "anilhas" (aparece a partir de 20 kg): cada lado da barra desenhado com as cores olímpicas; toque na barra para trocar 20/15/10 kg.
   - **Melhor série** no resumo final (1RM estimado, fórmula de Epley).
   - **Adicionar exercício** fora do grupo durante o treino (lista de exercícios → "Adicionar exercício").
+  - **Últimos treinos** (5, vindos do celular) na tela inicial; quando o celular grava um treino do relógio, mostra a notificação "Treino do relógio salvo".
   - O celular atualiza o relógio sozinho ao abrir o app (com relógio conectado, no máximo a cada 15 min); no **Perfil → Relógio** há "Sincronizar com o relógio".
 
 ## Como funciona a sincronização

@@ -30,7 +30,7 @@ O Thiago pediu "a versão iOS" para distribuir a outras pessoas. Este arquivo di
 ## Situação do build (28/10/2026, fim da noite)
 - `:shared` compila para iPhone e **todos os testes passam no simulador de iOS**.
 - O **app de iPhone compila** (precisa do **Xcode 26**: o Compose Multiplatform 1.11 usa APIs do iOS 26, ex.: `UIViewLayoutRegion`; o workflow escolhe o Xcode 26 do runner), **instala e abre no simulador e continua aberto depois de 35 s**. **A tela de login aparece**: o OCR da captura leu "GYMTRACKER · Entrar · E-mail · Senha · ENTRAR · Criar uma conta" (execução 40633914088). O resultado do OCR fica nos avisos de cada execução.
-- Abas: Início, Histórico, Recordes, Social (liga da semana e feed com reações) e Perfil, mais o treino ativo.
+- Abas: Início, Histórico, Recordes, Social (liga da semana e feed com reações) e Perfil, mais o treino ativo e a tela **Montar treinos** (treinos prontos, novo grupo, exercícios do catálogo).
 
 ## Não testado
 Nada de iOS foi visto num iPhone de verdade, nem por uma pessoa no simulador (o CI só abre o app e tira uma captura). O login não foi exercitado no CI (não digitamos senha de conta real). Falta ver: entrar com a conta, carregar grupos/semana, registrar séries, terminar o treino e ver o resumo.
