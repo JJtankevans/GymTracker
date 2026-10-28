@@ -59,7 +59,7 @@ private val RestColor = Color(0xFF22E3FF)
 fun IntervalMenuScreen(c: WatchController, accent: Color, onRun: () -> Unit, onEdit: () -> Unit) {
     WatchList {
         item { ListHeader { Text("Intervalos", color = accent, fontWeight = FontWeight.Bold) } }
-        c.intervalRun?.let {
+        c.intervalRun?.takeIf { !it.done }?.let {
             item {
                 Chip(
                     onClick = onRun,
@@ -192,7 +192,7 @@ fun IntervalRunScreen(c: WatchController, accent: Color, onClose: () -> Unit) {
                 }
             }
             last = st
-            if (st.phase == IntervalPhase.DONE) break
+            if (st.phase == IntervalPhase.DONE) { c.onIntervalDone(); break }
             delay(200)
         }
     }

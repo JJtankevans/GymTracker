@@ -339,7 +339,8 @@ private fun HomeScreen(
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Intervalos") },
                 secondaryLabel = {
-                    Text(c.intervalRun?.let { "Rodando · ${it.plan.label}" } ?: "HIIT, Tabata, EMOM", color = if (c.intervalRun != null) accent else Muted, maxLines = 1)
+                    val running = c.intervalRun?.takeIf { !it.done }
+                    Text(running?.let { "Rodando · ${it.plan.label}" } ?: "HIIT, Tabata, EMOM", color = if (running != null) accent else Muted, maxLines = 1)
                 },
                 icon = { Icon(Icons.Filled.Notifications, contentDescription = null, tint = accent) },
                 colors = ChipDefaults.secondaryChipColors()
@@ -558,7 +559,7 @@ private fun AmbientScreen(c: WatchController) {
             Text(clock(now), fontSize = 34.sp, fontWeight = FontWeight.Light, color = Color.White)
             val rest = c.rest
             val s = c.session
-            val iv = c.intervalRun
+            val iv = c.intervalRun?.takeIf { !it.done }
             when {
                 iv != null -> {
                     Text("INTERVALOS", fontSize = 11.sp, letterSpacing = 2.sp, color = Color.Gray)

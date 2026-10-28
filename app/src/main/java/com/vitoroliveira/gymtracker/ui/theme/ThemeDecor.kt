@@ -70,6 +70,12 @@ fun DrawScope.drawThemeBackground(extras: ThemeExtras, base: Color, t: Float) {
         Decor.DESERT -> drawDesert(extras.decorColors, t)
         Decor.ORIGAMI -> drawOrigami(extras.decorColors, t)
         Decor.NEON_CITY -> drawNeonCity(extras.decorColors, t)
+        Decor.RADAR -> drawRadar(extras.decorColors, t)
+        Decor.SAKURA -> drawSakura(extras.decorColors, t)
+        Decor.VOLCANO -> drawVolcano(extras.decorColors, t)
+        Decor.DNA -> drawDna(extras.decorColors, t)
+        Decor.VINYL -> drawVinyl(extras.decorColors, t)
+        Decor.DUNGEON -> drawDungeon(extras.decorColors, t)
     }
 }
 

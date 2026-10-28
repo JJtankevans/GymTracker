@@ -1060,6 +1060,149 @@ object AppThemes {
         )
     )
 
+    val Radar = AppThemeSpec(
+        id = "radar", name = "Radar", tagline = "Sala de controle: o feixe varre e os alvos piscam",
+        category = ThemeCategory.CRAZY, isDark = true,
+        colors = makeScheme(
+            dark = true,
+            primary = hex(0x3DFF8A), secondary = hex(0xFFE14D), tertiary = hex(0x7CFFC4),
+            background = hex(0x03140B), surface = hex(0x062014), onSurface = hex(0xD8FFE8),
+            cardColor = hex(0x072617).copy(alpha = 0.85f), topBar = Color.Transparent
+        ),
+        typography = makeTypography(ThemeFonts.Mono, ThemeFonts.Mono, FontWeight.Bold, 0.5.sp),
+        shapes = cutShapes(2.dp, 6.dp, 10.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.TERMINAL,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.RADAR,
+            backgroundGradient = listOf(hex(0x062A17), hex(0x03140B), hex(0x010A05)),
+            decorColors = listOf(hex(0x3DFF8A), hex(0xFFE14D)),
+            cardBorderWidth = 1.dp, cardBorderColor = hex(0x3DFF8A).copy(alpha = 0.5f),
+            glowColor = hex(0x3DFF8A).copy(alpha = 0.3f),
+            success = hex(0x3DFF8A),
+            animated = true
+        )
+    )
+
+    val Sakura = AppThemeSpec(
+        id = "sakura", name = "Sakura", tagline = "Cerejeira em flor e pétalas caindo. Claro e calmo",
+        category = ThemeCategory.CRAZY, isDark = false,
+        colors = makeScheme(
+            dark = false,
+            primary = hex(0xD94A86), secondary = hex(0x6B8E5A), tertiary = hex(0x8A5A9E),
+            background = hex(0xFFF3F7), surface = hex(0xFFFAFC), onSurface = hex(0x3A2230),
+            cardColor = hex(0xFFFFFF).copy(alpha = 0.82f)
+        ),
+        typography = makeTypography(ThemeFonts.Playfair, ThemeFonts.Inter, FontWeight.Bold, 0.sp, headingFeatures = "lnum"),
+        shapes = roundedShapes(14.dp, 22.dp, 30.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.EDITORIAL,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.SAKURA,
+            backgroundGradient = listOf(hex(0xFFE4EE), hex(0xFFF3F7), hex(0xFFFBF5)),
+            decorColors = listOf(hex(0xFF8DB8), hex(0xFFC9DD), hex(0x5B3A3A)),
+            cardBorderWidth = 1.dp, cardBorderColor = hex(0xD94A86).copy(alpha = 0.18f),
+            success = hex(0x6B8E5A),
+            animated = true
+        )
+    )
+
+    val Vulcao = AppThemeSpec(
+        id = "vulcao", name = "Vulcão", tagline = "Erupção ao fundo: lava, fumaça e faíscas no céu",
+        category = ThemeCategory.CRAZY, isDark = true,
+        colors = makeScheme(
+            dark = true,
+            primary = hex(0xFF5A1F), secondary = hex(0xFFD23F), tertiary = hex(0xFF8A5C),
+            background = hex(0x140705), surface = hex(0x1F0C08), onSurface = hex(0xFFEDE3),
+            cardColor = hex(0x22100B).copy(alpha = 0.84f), topBar = Color.Transparent
+        ),
+        typography = makeTypography(ThemeFonts.BarlowCondensed, ThemeFonts.Inter, FontWeight.Black, 0.8.sp, labelWeight = FontWeight.Bold),
+        shapes = roundedShapes(6.dp, 12.dp, 18.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.POSTER,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.VOLCANO,
+            backgroundGradient = listOf(hex(0x2B0905), hex(0x170605), hex(0x0A0303)),
+            decorColors = listOf(hex(0xFF5A1F), hex(0xFFD23F), hex(0x120807)),
+            cardBorderWidth = 1.dp, cardBorderColor = hex(0xFF5A1F).copy(alpha = 0.45f),
+            glowColor = hex(0xFF5A1F).copy(alpha = 0.35f),
+            success = hex(0xFFD23F),
+            animated = true
+        )
+    )
+
+    val Dna = AppThemeSpec(
+        id = "dna", name = "DNA", tagline = "Hélices girando: o seu código genético de monstro",
+        category = ThemeCategory.CRAZY, isDark = true,
+        colors = makeScheme(
+            dark = true,
+            primary = hex(0x4DD8FF), secondary = hex(0xFF5FD2), tertiary = hex(0xB8FF5C),
+            background = hex(0x050A18), surface = hex(0x0A1226), onSurface = hex(0xE6F6FF),
+            cardColor = hex(0x0C1630).copy(alpha = 0.85f), topBar = Color.Transparent
+        ),
+        typography = makeTypography(ThemeFonts.SpaceGrotesk, ThemeFonts.Inter, FontWeight.Bold, 0.2.sp),
+        shapes = roundedShapes(10.dp, 18.dp, 26.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.ORBIT,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.DNA,
+            backgroundGradient = listOf(hex(0x0B1834), hex(0x060D1E), hex(0x02050C)),
+            decorColors = listOf(hex(0x4DD8FF), hex(0xFF5FD2), hex(0xB8FF5C)),
+            cardBorderWidth = 1.dp, cardBorderColor = hex(0x4DD8FF).copy(alpha = 0.4f),
+            glowColor = hex(0xFF5FD2).copy(alpha = 0.3f),
+            success = hex(0xB8FF5C),
+            animated = true
+        )
+    )
+
+    val Vinil = AppThemeSpec(
+        id = "vinil", name = "Vinil", tagline = "Disco girando na vitrola e o equalizador pulando",
+        category = ThemeCategory.CRAZY, isDark = true,
+        colors = makeScheme(
+            dark = true,
+            primary = hex(0xFFC23D), secondary = hex(0xFF4D4D), tertiary = hex(0x3DD6C6),
+            background = hex(0x1A1410), surface = hex(0x241C16), onSurface = hex(0xFFF2E0),
+            cardColor = hex(0x2A2019).copy(alpha = 0.86f)
+        ),
+        typography = makeTypography(ThemeFonts.Playfair, ThemeFonts.Inter, FontWeight.Black, 0.sp, headingFeatures = "lnum"),
+        shapes = roundedShapes(8.dp, 14.dp, 22.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.POSTER,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.VINYL,
+            backgroundGradient = listOf(hex(0x2B1F16), hex(0x1A1410), hex(0x0E0B08)),
+            decorColors = listOf(hex(0xFF4D4D), hex(0xFFFFFF), hex(0xFFC23D)),
+            cardBorderWidth = 1.dp, cardBorderColor = hex(0xFFC23D).copy(alpha = 0.35f),
+            hardShadowOffset = 3.dp, hardShadowColor = hex(0x000000).copy(alpha = 0.5f),
+            success = hex(0x3DD6C6),
+            animated = true
+        )
+    )
+
+    val Masmorra = AppThemeSpec(
+        id = "masmorra", name = "Masmorra", tagline = "Parede de pedra e tochas acesas. Treino de RPG",
+        category = ThemeCategory.CRAZY, isDark = true,
+        colors = makeScheme(
+            dark = true,
+            primary = hex(0xFF8A1F), secondary = hex(0xB39DDB), tertiary = hex(0xFFE07A),
+            background = hex(0x120F17), surface = hex(0x1B1722), onSurface = hex(0xF3EAD8),
+            cardColor = hex(0x1E1926).copy(alpha = 0.86f), topBar = Color.Transparent
+        ),
+        typography = makeTypography(ThemeFonts.Playfair, ThemeFonts.Inter, FontWeight.Black, 0.6.sp, headingFeatures = "lnum"),
+        shapes = cutShapes(4.dp, 8.dp, 14.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.BENTO,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.DUNGEON,
+            backgroundGradient = listOf(hex(0x1D1826), hex(0x120F17), hex(0x08070B)),
+            decorColors = listOf(hex(0xFF8A1F), hex(0xFFE07A), hex(0x4A3F5C)),
+            cardBorderWidth = 1.5.dp, cardBorderColor = hex(0xFF8A1F).copy(alpha = 0.4f),
+            hardShadowOffset = 2.dp, hardShadowColor = hex(0x000000).copy(alpha = 0.6f),
+            success = hex(0xFFE07A),
+            animated = true
+        )
+    )
+
     /** Ordem = ordem de exibição dentro de cada categoria. */
     val all: List<AppThemeSpec> = listOf(
         System, Studio, Carbon, Oceano, Tinta, Nordico, Obsidiana, Cobalto, Floresta,
@@ -1068,7 +1211,8 @@ object AppThemes {
         Matrix, Hipnose, Hiperespaco, Glitch, Lava, Arcade, Carnaval,
         Tempestade, Discoteca, Caleidoscopio, Abissal, Galaxia, ForaDoAr, Holografico,
         Assombrado, Reveillon, Blocos, Cardio, Rave,
-        PlacaMae, Nevasca, Bolhas, Miragem, Origami, CidadeNeon
+        PlacaMae, Nevasca, Bolhas, Miragem, Origami, CidadeNeon,
+        Radar, Sakura, Vulcao, Dna, Vinil, Masmorra
     )
 
     val available: List<AppThemeSpec> get() = all.filter { it.enabled }

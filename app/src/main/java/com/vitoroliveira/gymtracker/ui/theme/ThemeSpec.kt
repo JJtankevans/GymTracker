@@ -66,7 +66,14 @@ enum class Decor {
     BUBBLES,    // bolhas de sabão iridescentes
     DESERT,     // sol, dunas e calor tremendo
     ORIGAMI,    // pássaros de papel planando
-    NEON_CITY   // prédios com janelas, letreiros e carros voadores
+    NEON_CITY,  // prédios com janelas, letreiros e carros voadores
+    // quarta leva (ThemeDecorCrazy4.kt)
+    RADAR,      // varredura de radar com alvos piscando
+    SAKURA,     // galho de cerejeira e pétalas caindo
+    VOLCANO,    // vulcão em erupção com lava e fumaça
+    DNA,        // hélices de DNA girando
+    VINYL,      // disco de vinil girando e equalizador
+    DUNGEON     // parede de pedra com tochas
 }
 
 /**

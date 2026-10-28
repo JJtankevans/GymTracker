@@ -7,14 +7,25 @@ import com.vitoroliveira.gymtracker.data.model.WorkoutDate
 import com.vitoroliveira.gymtracker.presentation.viewmodel.FakeExerciseRepository
 import com.vitoroliveira.gymtracker.presentation.viewmodel.FakeWorkoutRepository
 import com.vitoroliveira.gymtracker.presentation.viewmodel.FixedClock
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.time.Instant
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class PlateausTest {
+
+    @BeforeTest fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
+    @AfterTest fun tearDown() = Dispatchers.resetMain()
 
     private val today = LocalDate.parse("2026-10-20")
     private val utc = TimeZone.UTC

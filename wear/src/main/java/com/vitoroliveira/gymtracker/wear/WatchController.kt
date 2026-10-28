@@ -38,6 +38,8 @@ data class FinishSummary(
 /** Timer de intervalos rodando. [pausedElapsed] != null = pausado com esse tanto já decorrido. */
 data class IntervalRun(val plan: IntervalPlan, val startedAt: Long, val pausedElapsed: Long? = null) {
     val paused: Boolean get() = pausedElapsed != null
+    /** Terminou (fica parado no fim para a tela mostrar "FIM!"). */
+    val done: Boolean get() = (pausedElapsed ?: 0L) >= plan.totalMs
     fun elapsed(now: Long): Long = pausedElapsed ?: (now - startedAt)
     fun endsAt(): Long = startedAt + plan.totalMs
 }
@@ -374,7 +376,7 @@ class WatchController(
     val shouldAskPermissions: Boolean get() = !store.askedPermissions
 
     private fun updateHeartRate() {
-        val on = heartRateOn && (session != null || intervalRun != null) && resumed && !ambient && app.hasHeartRatePermission()
+        val on = heartRateOn && (session != null || intervalRun?.done == false) && resumed && !ambient && app.hasHeartRatePermission()
         if (on) heart.start(::onHeartRate) else heart.stop()
         if (!on) heartRate = null
     }
@@ -398,6 +400,14 @@ class WatchController(
         val now = System.currentTimeMillis()
         intervalRun = if (r.pausedElapsed != null) r.copy(startedAt = now - r.pausedElapsed, pausedElapsed = null)
         else r.copy(pausedElapsed = now - r.startedAt)
+    }
+
+    /** O timer chegou ao fim: congela no fim e desliga os batimentos (se não houver treino). */
+    fun onIntervalDone() {
+        val r = intervalRun ?: return
+        if (r.done) return
+        intervalRun = r.copy(pausedElapsed = r.plan.totalMs)
+        updateHeartRate()
     }
 
     fun stopInterval() {
