@@ -1,5 +1,6 @@
-# Primeiro passo da versão iOS: compila o módulo :shared (regras, repositórios, ViewModels, relógio) para iPhone
-# e roda os mesmos testes do Android no simulador de iOS. Ainda não existe app iOS (telas): ver docs/IOS.md.
+# Versão iOS: compila o módulo :shared (regras, repositórios, ViewModels, relógio) para iPhone, roda os mesmos testes
+# do Android no simulador de iOS e compila o app de iPhone (composeApp + iosApp), abrindo-o no simulador para uma
+# captura de tela (lida por OCR no próprio Mac). Ver docs/IOS.md.
 # Roda num Mac do GitHub (grátis em repositório público) quando o :shared muda, ou à mão (Actions > iOS > Run workflow).
 name: iOS (shared)
 
@@ -8,6 +9,8 @@ on:
   push:
     paths:
       - "shared/**"
+      - "composeApp/**"
+      - "iosApp/**"
       - "gradle/**"
       - "*.gradle.kts"
       - ".github/workflows/ios.yml"
@@ -19,7 +22,10 @@ concurrency:
 jobs:
   shared-ios:
     runs-on: macos-15
-    timeout-minutes: 60
+    timeout-minutes: 75
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
     steps:
       - uses: actions/checkout@v4
 
@@ -59,6 +65,48 @@ jobs:
             echo "::warning title=Framework iOS::$(grep -E '^e: |error:|What went wrong' -A2 link-ios.log | grep -v '^> Task' | head -n 20 | sed ':a;N;$!ba;s/\n/%0A/g')"
             exit 1
           }
+
+      - name: App de iPhone (compilar)
+        run: |
+          brew install xcodegen > /dev/null 2>&1 || true
+          (cd iosApp && xcodegen generate)
+          xcodebuild -project iosApp/GymTracker.xcodeproj -target GymTracker -configuration Debug -sdk iphonesimulator \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=NO build > xcode.log 2>&1 || {
+            msg=$(grep -E '^e: |error:|What went wrong|FAILED' -A3 xcode.log | head -n 40)
+            [ -z "$msg" ] && msg=$(tail -n 40 xcode.log)
+            echo "::error title=Falha ao compilar o app de iPhone::$(echo "$msg" | sed ':a;N;$!ba;s/\n/%0A/g')"
+            exit 1
+          }
+          ls -d iosApp/build/Debug-iphonesimulator/GymTracker.app
+
+      - name: App de iPhone no simulador (captura + OCR)
+        continue-on-error: true
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print(next(x['udid'] for k,v in d.items() if 'iOS' in k for x in v if x['name'].startswith('iPhone')))")
+          echo "simulador: $UDID"
+          xcrun simctl boot "$UDID" || true
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl install "$UDID" iosApp/build/Debug-iphonesimulator/GymTracker.app
+          xcrun simctl launch "$UDID" com.vitoroliveira.gymtracker
+          sleep 25
+          xcrun simctl io "$UDID" screenshot iphone-tela-inicial.png
+          swift iosApp/ocr.swift iphone-tela-inicial.png > ocr.txt 2>&1 || true
+          echo "::notice title=Tela do app de iPhone (texto lido por OCR)::$(head -n 25 ocr.txt | sed ':a;N;$!ba;s/\n/ | /g')"
+          # o app ainda está vivo? (se fechou sozinho, o launchctl não lista)
+          if xcrun simctl spawn "$UDID" launchctl list | grep -q gymtracker; then
+            echo "::notice title=App de iPhone::continua aberto depois de 25 s"
+          else
+            echo "::warning title=App de iPhone::não está mais rodando (pode ter fechado sozinho)"
+          fi
+
+      - name: Captura do iPhone
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: iphone-captura
+          path: iphone-tela-inicial.png
+          retention-days: 14
+          if-no-files-found: ignore
 
       - name: Relatório dos testes iOS
         if: always()
