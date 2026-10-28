@@ -47,7 +47,7 @@ class BuildWatchRoutines(
             w.startedAt?.let { s -> runCatching { Instant.parse(s).toLocalDateTime(zone).date }.getOrNull() }
         }
         val groupsById = gs.associateBy { it.id }
-        val recent = history.take(5).mapNotNull { w ->
+        val lastWorkouts = history.take(5).mapNotNull { w ->
             val start = w.startedAt?.let { runCatching { Instant.parse(it) }.getOrNull() } ?: return@mapNotNull null
             val end = w.finishedAt?.let { runCatching { Instant.parse(it) }.getOrNull() }
             val d = start.toLocalDateTime(zone).date
@@ -61,7 +61,7 @@ class BuildWatchRoutines(
             gs, ex, recent, records, nowMs,
             workoutDates = dates, today = clock.todayIn(zone), weeklyGoal = goal,
             suggestedGroupId = suggestNextGroup(gs, history),
-            recent = recent
+            recent = lastWorkouts
         )
     }
 
