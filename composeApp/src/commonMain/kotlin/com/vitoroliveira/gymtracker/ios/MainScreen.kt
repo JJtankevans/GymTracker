@@ -62,10 +62,18 @@ fun MainScreen(onSignedOut: () -> Unit) {
     var workout by remember { mutableStateOf<Pair<String?, String>?>(null) }
     // cada aba guarda o próprio ViewModel enquanto o app está aberto
     val home = remember { HomeViewModel(Services.workouts, Services.profiles, Services.groups) }
-    val groups = remember { MuscleGroupViewModel(Services.groups) }
+    val groups = remember {
+        MuscleGroupViewModel(Services.groups, com.vitoroliveira.gymtracker.domain.usecase.CreateWorkoutFromTemplate(Services.groups, Services.exercises))
+    }
+    var managing by remember { mutableStateOf(false) }
     val history = remember { HistoryViewModel(Services.workouts, Services.groups) }
     val records = remember { com.vitoroliveira.gymtracker.presentation.records.RecordsViewModel(Services.exercises, Services.workouts) }
     val social = remember { com.vitoroliveira.gymtracker.presentation.social.SocialViewModel(Services.social) }
+
+    if (managing) {
+        ManageScreen(groups, onClose = { managing = false; groups.loadMuscleGroups(); home.loadDashboard() })
+        return
+    }
 
     workout?.let { (groupId, name) ->
         WorkoutScreen(groupId, name, onClose = {
@@ -91,7 +99,7 @@ fun MainScreen(onSignedOut: () -> Unit) {
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             when (tab) {
-                Tab.HOME -> HomeTab(home, groups) { g -> workout = g.id to g.name }
+                Tab.HOME -> HomeTab(home, groups, onManage = { managing = true }) { g -> workout = g.id to g.name }
                 Tab.HISTORY -> HistoryTab(history)
                 Tab.RECORDS -> RecordsTab(records)
                 Tab.SOCIAL -> SocialTab(social)
@@ -112,7 +120,7 @@ private fun Dot(selected: Boolean) {
 // ───────────────────────── Início ─────────────────────────
 
 @Composable
-private fun HomeTab(home: HomeViewModel, groupsVm: MuscleGroupViewModel, onStart: (MuscleGroup) -> Unit) {
+private fun HomeTab(home: HomeViewModel, groupsVm: MuscleGroupViewModel, onManage: () -> Unit, onStart: (MuscleGroup) -> Unit) {
     val s by home.uiState.collectAsState()
     val g by groupsVm.uiState.collectAsState()
     LazyColumn(
@@ -161,6 +169,12 @@ private fun HomeTab(home: HomeViewModel, groupsVm: MuscleGroupViewModel, onStart
                     Text("INICIAR", color = Lime, fontWeight = FontWeight.Black, fontSize = 13.sp)
                 }
             }
+        }
+        if (!g.isLoading && g.muscleGroups.isEmpty()) item {
+            Text("Você ainda não tem treinos. Comece por um treino pronto ou monte o seu.", color = Muted)
+        }
+        item {
+            Button(onClick = onManage, modifier = Modifier.fillMaxWidth()) { Text("MONTAR TREINOS", fontWeight = FontWeight.Black) }
         }
         item {
             OutlinedButton(onClick = { onStart(MuscleGroup(id = null, name = "Treino livre")) }, modifier = Modifier.fillMaxWidth()) {
