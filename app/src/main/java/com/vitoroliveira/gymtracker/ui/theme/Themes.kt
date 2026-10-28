@@ -1215,6 +1215,9 @@ object AppThemes {
         Radar, Sakura, Vulcao, Dna, Vinil, Masmorra
     )
 
+    /** Temas que ganham o selo "NOVO" no seletor (os da última leva). */
+    val newIds: Set<String> = setOf("radar", "sakura", "vulcao", "dna", "vinil", "masmorra")
+
     val available: List<AppThemeSpec> get() = all.filter { it.enabled }
 
     fun byId(id: String?): AppThemeSpec =

@@ -7,6 +7,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -193,7 +194,18 @@ private fun ThemeOption(spec: AppThemeSpec, selected: Boolean, onClick: () -> Un
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(Modifier.weight(1f)) {
-                Text(spec.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(spec.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    if (spec.id in AppThemes.newIds) {
+                        Text(
+                            "NOVO",
+                            Modifier.padding(start = 8.dp).background(MaterialTheme.colorScheme.tertiary, MaterialTheme.shapes.extraSmall)
+                                .padding(horizontal = 6.dp, vertical = 1.dp),
+                            style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Black,
+                            color = MaterialTheme.colorScheme.onTertiary
+                        )
+                    }
+                }
                 Text(
                     spec.tagline,
                     style = MaterialTheme.typography.bodySmall,
