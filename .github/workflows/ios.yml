@@ -1,0 +1,67 @@
+# Primeiro passo da versão iOS: compila o módulo :shared (regras, repositórios, ViewModels, relógio) para iPhone
+# e roda os mesmos testes do Android no simulador de iOS. Ainda não existe app iOS (telas): ver docs/IOS.md.
+# Roda num Mac do GitHub (grátis em repositório público) quando o :shared muda, ou à mão (Actions > iOS > Run workflow).
+name: iOS (shared)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "shared/**"
+      - "gradle/**"
+      - "*.gradle.kts"
+      - ".github/workflows/ios.yml"
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  shared-ios:
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # o :shared também tem o alvo Android, então o Gradle precisa achar o Android SDK (já vem no runner)
+      - name: Android SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          printf 'sdk.dir=%s\n' "$ANDROID_HOME" > local.properties
+
+      - name: Compilar o :shared para iOS
+        run: |
+          ./gradlew :shared:compileKotlinIosSimulatorArm64 :shared:compileKotlinIosArm64 --stacktrace > build-ios.log 2>&1 || {
+            echo "::error title=Falha ao compilar o shared para iOS::$(grep -E '^e: |error:|What went wrong' -A2 build-ios.log | grep -v '^> Task' | head -n 30 | sed ':a;N;$!ba;s/\n/%0A/g')"
+            exit 1
+          }
+
+      - name: Testes do :shared no simulador de iOS
+        run: |
+          ./gradlew :shared:iosSimulatorArm64Test --stacktrace > test-ios.log 2>&1 || {
+            echo "::error title=Falha nos testes do shared no iOS::$(grep -E '^e: |FAILED|What went wrong|Exception|expected' test-ios.log | grep -v '^> Task' | head -n 30 | sed ':a;N;$!ba;s/\n/%0A/g')"
+            exit 1
+          }
+
+      - name: Framework do :shared (para um app iOS usar)
+        run: |
+          ./gradlew :shared:linkDebugFrameworkIosSimulatorArm64 --stacktrace > link-ios.log 2>&1 || {
+            echo "::warning title=Framework iOS::$(grep -E '^e: |error:|What went wrong' -A2 link-ios.log | grep -v '^> Task' | head -n 20 | sed ':a;N;$!ba;s/\n/%0A/g')"
+            exit 1
+          }
+
+      - name: Relatório dos testes iOS
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-testes-ios
+          path: shared/build/reports/tests/
+          retention-days: 14
+          if-no-files-found: ignore

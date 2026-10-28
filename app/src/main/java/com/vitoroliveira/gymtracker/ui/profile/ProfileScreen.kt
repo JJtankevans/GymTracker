@@ -369,8 +369,8 @@ fun ProfileScreenContent(
             title = { Text("Sair da conta") },
             text = {
                 Text(
-                    "Seus treinos, o peso e os dados do corpo ficam salvos na conta. O que existe só neste celular é apagado: " +
-                        "medidas corporais, agenda da semana, favoritos do catálogo e o ritmo aprendido no circuito."
+                    "Seus treinos, o peso, as medidas e os dados do corpo ficam salvos na conta. O que existe só neste celular é apagado: " +
+                        "agenda da semana, favoritos do catálogo e o ritmo aprendido no circuito."
                 )
             },
             confirmButton = {

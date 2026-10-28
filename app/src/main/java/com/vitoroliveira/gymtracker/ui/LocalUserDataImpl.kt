@@ -21,7 +21,7 @@ class LocalUserDataImpl(
 ) : LocalUserData {
     private val cacheDir = context.applicationContext.cacheDir
 
-    /** Peso e perfil corporal pendentes vão para a nuvem antes de sair (as medidas ainda não têm tabela). */
+    /** Peso, perfil corporal e medidas pendentes vão para a nuvem antes de sair (medidas: migração 014). */
     override suspend fun flush() = body.sync(force = true)
 
     override fun clear() {

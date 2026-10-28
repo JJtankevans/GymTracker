@@ -48,8 +48,10 @@ data class BodyData(
     val weights: List<BodyWeightEntry> = emptyList(),
     /** Dias apagados aqui que ainda não foram apagados na nuvem (sem isso a sincronização "ressuscitaria" o registro). */
     val pendingDeletes: Set<Int> = emptySet(),
-    /** Medidas com fita (só no aparelho por enquanto). */
-    val measurements: List<BodyMeasurement> = emptyList()
+    /** Medidas com fita (cópia na nuvem desde a migração 014). */
+    val measurements: List<BodyMeasurement> = emptyList(),
+    /** Medidas apagadas aqui e ainda não na nuvem ([measureKey]). */
+    val pendingMeasureDeletes: Set<String> = emptySet()
 ) {
     val latestKg: Double? get() = weights.maxByOrNull { it.epochDay }?.kg
 }
@@ -62,6 +64,22 @@ interface BodyCloud {
     suspend fun deleteWeight(epochDay: Int)
     suspend fun fetchProfile(): BodyProfile?
     suspend fun saveProfile(profile: BodyProfile)
+
+    // medidas com fita (tabela body_measurements, migração 014); o padrão "não faz nada" serve para quem não tem nuvem
+    suspend fun fetchMeasurements(): List<BodyMeasurement> = emptyList()
+    /** Uma por dia e local: substitui a do mesmo dia e local. */
+    suspend fun upsertMeasurement(m: BodyMeasurement) {}
+    suspend fun deleteMeasurement(epochDay: Int, site: MeasureSite) {}
+}
+
+/** Chave de uma medida (dia + local) para a lista de apagadas pendentes. */
+fun measureKey(epochDay: Int, site: MeasureSite): String = "$epochDay|${site.name}"
+
+/** Mesma regra dos pesos: o aparelho vence no mesmo dia e local; os só da nuvem entram; apagados pendentes não voltam. */
+fun mergeMeasurements(local: List<BodyMeasurement>, remote: List<BodyMeasurement>, deleted: Set<String>): List<BodyMeasurement> {
+    val localKeys = local.map { measureKey(it.epochDay, it.site) }.toSet()
+    return (local + remote.filter { measureKey(it.epochDay, it.site).let { k -> k !in localKeys && k !in deleted } })
+        .sortedWith(compareBy({ it.epochDay }, { it.site.ordinal }))
 }
 
 /** Peso como o banco guarda (numeric(5,1)): uma casa decimal. */
