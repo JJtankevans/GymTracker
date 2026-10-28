@@ -1,5 +1,6 @@
 package com.vitoroliveira.gymtracker.presentation.social
 
+import com.vitoroliveira.gymtracker.mapInPlace
 import com.vitoroliveira.gymtracker.data.model.Challenge
 import com.vitoroliveira.gymtracker.data.model.ChallengeParticipant
 import com.vitoroliveira.gymtracker.data.model.FeedPost
@@ -54,7 +55,7 @@ class FakeSocialRepository(val meId: String = "me") : SocialRepository {
     override suspend fun follow(userId: String) { followList += Follow(meId, userId, "pending"); calls += "follow:$userId" }
     override suspend fun unfollow(userId: String) { followList.removeAll { it.followerId == meId && it.followedId == userId } }
     override suspend fun acceptFollower(userId: String) {
-        followList.replaceAll { if (it.followerId == userId && it.followedId == meId) it.copy(status = "accepted") else it }
+        followList.mapInPlace { if (it.followerId == userId && it.followedId == meId) it.copy(status = "accepted") else it }
     }
     override suspend fun rejectFollower(userId: String) { followList.removeAll { it.followerId == userId && it.followedId == meId } }
     var titleList = mutableListOf<com.vitoroliveira.gymtracker.data.model.ProfileTitle>()
@@ -73,7 +74,7 @@ class FakeSocialRepository(val meId: String = "me") : SocialRepository {
     override suspend fun feed(limit: Int): List<FeedPost> { if (failFeed) throw RuntimeException("Unable to resolve host"); return posts.toList() }
     override suspend fun reactions(postIds: List<String>) = reactionList.filter { it.postId in postIds }
     override suspend fun updatePost(postId: String, caption: String?, visibility: String) {
-        posts.replaceAll { if (it.id == postId) it.copy(caption = caption, visibility = visibility) else it }
+        posts.mapInPlace { if (it.id == postId) it.copy(caption = caption, visibility = visibility) else it }
     }
     override suspend fun addReaction(postId: String, kind: String) { reactionList += PostReaction(postId, meId, kind) }
     override suspend fun removeReaction(postId: String, kind: String) {

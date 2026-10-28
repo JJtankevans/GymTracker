@@ -1,5 +1,6 @@
 package com.vitoroliveira.gymtracker.presentation.viewmodel
 
+import com.vitoroliveira.gymtracker.mapInPlace
 import com.vitoroliveira.gymtracker.data.model.Exercise
 import com.vitoroliveira.gymtracker.data.model.ExerciseBaseline
 import com.vitoroliveira.gymtracker.data.model.ExerciseProgression
@@ -77,7 +78,7 @@ class FakeWorkoutRepository : WorkoutRepository {
     override suspend fun updateNotes(workoutId: String, notes: String?) {
         failNotes?.let { throw it }
         val clean = notes?.trim()?.takeIf { it.isNotEmpty() }
-        history.replaceAll { if (it.id == workoutId) it.copy(notes = clean) else it }
+        history.mapInPlace { if (it.id == workoutId) it.copy(notes = clean) else it }
     }
 
     /** Quando definido, a gravação da série espera por ele (simula a rede lenta). */
