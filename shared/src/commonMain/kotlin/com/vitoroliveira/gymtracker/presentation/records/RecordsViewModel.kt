@@ -17,12 +17,15 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
 
 data class RecordsUiState(
     val isLoading: Boolean = false,
     val records: List<RecordRow> = emptyList(),
     val today: LocalDate? = null,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    /** Exercícios com o recorde parado há 6+ semanas apesar de treinados (vazio se a consulta falhar). */
+    val plateaus: List<Plateau> = emptyList()
 ) {
     /** Recordes batidos nos últimos 30 dias. */
     val recentCount: Int get() = today?.let { t -> records.count { it.isRecent(t) } } ?: 0
@@ -51,9 +54,19 @@ class RecordsViewModel(
                     // banco sem a função `records_summary()` (008 ainda não rodada): caminho antigo, mais lento
                     loadPerExercise()
                 }
+                val zone = TimeZone.currentSystemDefault()
+                val today = clock.todayIn(zone)
+                val plateaus = try {
+                    val since = (clock.now() - PLATEAU_DAYS.days).toString()
+                    findPlateaus(rows, workoutRepository.getSetsSince(since), today, zone)
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                    emptyList()
+                }
                 _state.value = RecordsUiState(
                     records = rows.sortedForDisplay(),
-                    today = clock.todayIn(TimeZone.currentSystemDefault())
+                    today = today,
+                    plateaus = plateaus
                 )
             } catch (e: Exception) {
                 if (e is CancellationException) throw e

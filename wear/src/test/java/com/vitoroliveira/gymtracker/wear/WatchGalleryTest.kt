@@ -105,6 +105,15 @@ class WatchGalleryTest {
     }
 
     @Test
+    fun records() {
+        val c = controller(null)
+        rule.setContent { RecordsScreen(c) }
+        rule.waitForIdle()
+        rule.onNodeWithText("Supino reto").assertExists()
+        rule.onRoot().captureRoboImage("build/outputs/watch-gallery/8_recordes.png")
+    }
+
+    @Test
     fun intervalTimer() {
         val c = controller(null)
         c.startInterval(IntervalPlan(workSec = 40, restSec = 20, rounds = 8, prepSec = 0))
@@ -112,5 +121,10 @@ class WatchGalleryTest {
         rule.setContent { IntervalRunScreen(c, Accents[0].second, onClose = {}) }
         rule.mainClock.advanceTimeBy(1500)
         rule.onRoot().captureRoboImage("build/outputs/watch-gallery/7_timer.png")
+        rule.onNodeWithText("VAI!").assertExists()
+        rule.onNodeWithText("rodada 1 de 8").assertExists()
+        rule.onNodeWithText("Pausar").performClick()
+        rule.mainClock.advanceTimeBy(500)
+        rule.onNodeWithText("Seguir").assertExists()
     }
 }

@@ -1,6 +1,7 @@
 package com.vitoroliveira.gymtracker.ui.records
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.automirrored.filled.TrendingFlat
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -29,13 +33,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vitoroliveira.gymtracker.data.catalog.ExerciseCatalog
+import com.vitoroliveira.gymtracker.presentation.records.Plateau
 import com.vitoroliveira.gymtracker.presentation.records.RecordRow
 import com.vitoroliveira.gymtracker.presentation.records.RecordsUiState
 import com.vitoroliveira.gymtracker.presentation.records.RecordsViewModel
@@ -89,6 +96,7 @@ fun RecordsContent(state: RecordsUiState, onBack: () -> Unit, onRetry: () -> Uni
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 item(key = "summary") { Summary(state) }
+                if (state.plateaus.isNotEmpty()) item(key = "plateaus") { PlateausCard(state.plateaus) }
                 items(state.records, key = { it.exerciseId }) { RecordCard(it, state) }
                 item(key = "foot") {
                     Text(
@@ -118,6 +126,39 @@ private fun Summary(state: RecordsUiState) {
                     if (state.recentCount > 0) "${state.recentCount} batido${if (state.recentCount > 1) "s" else ""} nos últimos 30 dias"
                     else "Nenhum recorde novo nos últimos 30 dias",
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+        }
+    }
+}
+
+/** Exercícios com o recorde parado há 6+ semanas, mesmo sendo treinados, com uma dica do que mudar. */
+@Composable
+private fun PlateausCard(plateaus: List<Plateau>) {
+    var open by remember { mutableStateOf(false) }
+    ThemedCard(Modifier.fillMaxWidth().clickable { open = !open }, shape = MaterialTheme.shapes.medium) {
+        Column(Modifier.padding(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.AutoMirrored.Filled.TrendingFlat, null, tint = MaterialTheme.colorScheme.error)
+                Spacer(Modifier.width(8.dp))
+                Column(Modifier.weight(1f)) {
+                    Text("Estagnados", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    Text(
+                        "${plateaus.size} exercício${if (plateaus.size > 1) "s" else ""} sem recorde há 6+ semanas",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Icon(if (open) Icons.Default.ExpandLess else Icons.Default.ExpandMore, if (open) "Recolher" else "Ver")
+            }
+            if (open) plateaus.forEach { p ->
+                Spacer(Modifier.height(10.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(p.exerciseName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                    Text("${formatKg(p.bestKg)} kg em ${dayMonth(p.bestDate)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Text(
+                    "${p.sessionsSince} treinos em 6 semanas, máximo ${formatKg(p.topRecentKg)} kg. ${p.tip}",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }

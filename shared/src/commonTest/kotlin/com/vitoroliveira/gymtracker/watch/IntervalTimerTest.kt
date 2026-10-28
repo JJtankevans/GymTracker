@@ -53,3 +53,17 @@ class IntervalTimerTest {
         assertEquals(0.5f, tabata.stateAt(15_000).fraction)
     }
 }
+
+class WatchRecordsTest {
+    @Test
+    fun recordesSemRepetirDoMaisPesado() {
+        val supino = WatchExercise("e1", "Supino", bestKg = 80.0)
+        val r = WatchRoutines(
+            routines = listOf(
+                WatchRoutine("g1", "Peito", exercises = listOf(supino, WatchExercise("e2", "Crucifixo", bestKg = 16.0), WatchExercise("e3", "Flexão"))),
+                WatchRoutine(null, "Todos", exercises = listOf(supino, WatchExercise("e4", "Terra", bestKg = 140.0)))
+            )
+        )
+        assertEquals(listOf("Terra", "Supino", "Crucifixo"), r.records().map { it.name })
+    }
+}

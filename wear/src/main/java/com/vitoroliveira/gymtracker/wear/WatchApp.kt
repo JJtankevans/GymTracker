@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -64,6 +65,7 @@ import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import com.vitoroliveira.gymtracker.watch.WatchRoutine
 import com.vitoroliveira.gymtracker.watch.formatKg
+import com.vitoroliveira.gymtracker.watch.records
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -105,6 +107,7 @@ private object Routes {
     const val PLATES = "anilhas"
     const val ADD_EXERCISE = "adicionar"
     const val INTERVALS = "intervalos"
+    const val RECORDS = "recordes"
     const val INTERVAL_EDIT = "intervalos/ajustar"
     const val INTERVAL_RUN = "intervalos/timer"
 }
@@ -140,7 +143,8 @@ fun WatchApp(c: WatchController) {
                             else { c.startQuick(); nav.navigate(Routes.WORKOUT) }
                         },
                         onSettings = { nav.navigate(Routes.SETTINGS) },
-                        onIntervals = { nav.navigate(Routes.INTERVALS) }
+                        onIntervals = { nav.navigate(Routes.INTERVALS) },
+                        onRecords = { nav.navigate(Routes.RECORDS) }
                     )
                 }
                 composable(Routes.WORKOUT) {
@@ -190,6 +194,7 @@ fun WatchApp(c: WatchController) {
                 composable(Routes.SETTINGS) { SettingsScreen(c, accent) }
                 composable(Routes.PLATES) { PlatesScreen(c.draftKg, accent) }
                 composable(Routes.ADD_EXERCISE) { AddExerciseScreen(c, accent) { nav.popBackStack() } }
+                composable(Routes.RECORDS) { RecordsScreen(c) }
                 composable(Routes.INTERVALS) {
                     IntervalMenuScreen(c, accent, onRun = { nav.navigate(Routes.INTERVAL_RUN) }, onEdit = { nav.navigate(Routes.INTERVAL_EDIT) })
                 }
@@ -232,7 +237,8 @@ private fun HomeScreen(
     onRoutine: (Int, WatchRoutine) -> Unit,
     onQuick: () -> Unit,
     onSettings: () -> Unit,
-    onIntervals: () -> Unit
+    onIntervals: () -> Unit,
+    onRecords: () -> Unit
 ) {
     val routines = c.routines
     WatchList {
@@ -310,6 +316,22 @@ private fun HomeScreen(
                 icon = { Icon(Icons.Filled.Favorite, contentDescription = null, tint = accent) },
                 colors = ChipDefaults.secondaryChipColors()
             )
+        }
+        val records = routines?.records().orEmpty()
+        if (records.isNotEmpty()) {
+            item {
+                Chip(
+                    onClick = onRecords,
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Recordes") },
+                    secondaryLabel = {
+                        val top = records.first()
+                        Text("${top.name} · ${formatKg(top.bestKg ?: 0.0)} kg", color = Muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    },
+                    icon = { Icon(Icons.Filled.Star, contentDescription = null, tint = Gold) },
+                    colors = ChipDefaults.secondaryChipColors()
+                )
+            }
         }
         item {
             Chip(
@@ -487,6 +509,38 @@ private fun SettingsScreen(c: WatchController, accent: Color) {
             Text(
                 "GymTracker para relógio 2.0",
                 color = Muted, fontSize = 10.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 6.dp)
+            )
+        }
+    }
+}
+
+// ───────────────────────── recordes ─────────────────────────
+
+/** Recorde de carga de cada exercício (vem do celular com as rotinas). */
+@Composable
+internal fun RecordsScreen(c: WatchController) {
+    val list = c.routines?.records().orEmpty()
+    WatchList {
+        item { ListHeader { Text("Recordes", color = Gold, fontWeight = FontWeight.Bold) } }
+        items(list.size) { i ->
+            val e = list[i]
+            Row(
+                Modifier.fillMaxWidth().clip(CircleShape).background(Surface).padding(horizontal = 14.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    if (i < 3) "${i + 1}º" else "",
+                    color = Gold, fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(end = 6.dp)
+                )
+                Text(e.name, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                Text("${formatKg(e.bestKg ?: 0.0)} kg", fontSize = 13.sp, fontWeight = FontWeight.Black, color = Gold)
+            }
+        }
+        item {
+            Text(
+                "Bata um recorde no relógio e o celular atualiza esta lista na próxima sincronização.",
+                color = Muted, fontSize = 10.sp, textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp)
             )
         }
     }

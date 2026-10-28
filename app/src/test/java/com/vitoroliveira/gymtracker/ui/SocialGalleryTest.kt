@@ -111,7 +111,18 @@ class SocialGalleryTest {
         )
         rule.setContent {
             GymTrackerTheme(spec = AppThemes.byId("carbon")) {
-                RecordsContent(RecordsUiState(records = rows, today = LocalDate(2026, 10, 20)), {})
+                RecordsContent(
+                    RecordsUiState(
+                        records = rows, today = LocalDate(2026, 10, 20),
+                        plateaus = listOf(
+                            com.vitoroliveira.gymtracker.presentation.records.Plateau(
+                                "2", "Agachamento Livre", 140.0, "2026-09-02", 6, 5, 135.0,
+                                com.vitoroliveira.gymtracker.presentation.records.plateauTip(140.0, 135.0, 5)
+                            )
+                        )
+                    ),
+                    {}
+                )
             }
         }
         rule.waitForIdle()

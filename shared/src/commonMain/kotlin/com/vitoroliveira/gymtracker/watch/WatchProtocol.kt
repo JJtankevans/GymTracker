@@ -181,3 +181,10 @@ internal fun lastLoads(recentSets: List<RecentSet>): Map<String, Pair<Double, In
 
 /** Epoch ms → ISO 8601 (o formato que o Supabase grava em `timestamptz`). */
 fun epochMsToIso(ms: Long): String = Instant.fromEpochMilliseconds(ms).toString()
+
+/** Recordes de carga dos exercícios que vieram nas rotinas (sem repetir exercício), do mais pesado ao mais leve. */
+fun WatchRoutines.records(): List<WatchExercise> =
+    routines.flatMap { it.exercises }
+        .filter { (it.bestKg ?: 0.0) > 0 }
+        .distinctBy { it.id }
+        .sortedWith(compareByDescending<WatchExercise> { it.bestKg }.thenBy { it.name })

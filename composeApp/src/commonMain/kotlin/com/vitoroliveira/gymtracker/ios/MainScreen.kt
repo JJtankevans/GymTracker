@@ -278,6 +278,17 @@ private fun RecordsTab(vm: com.vitoroliveira.gymtracker.presentation.records.Rec
         if (s.isLoading && s.records.isEmpty()) item { CircularProgressIndicator() }
         s.errorMessage?.let { item { Text(it, color = MaterialTheme.colorScheme.error) } }
         if (!s.isLoading && s.records.isEmpty()) item { Text("Registre séries com carga para ver seus recordes.", color = Muted) }
+        if (s.plateaus.isNotEmpty()) item {
+            Panel {
+                Text("Estagnados", fontWeight = FontWeight.Bold)
+                Text("Sem recorde há 6+ semanas, mesmo treinando", color = Muted, fontSize = 12.sp)
+                s.plateaus.forEach { p ->
+                    Spacer(Modifier.height(8.dp))
+                    Text("${p.exerciseName} · ${com.vitoroliveira.gymtracker.watch.formatKg(p.bestKg)} kg", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text(p.tip, color = Muted, fontSize = 12.sp)
+                }
+            }
+        }
         items(s.records, key = { it.exerciseId }) { r ->
             val date = r.bestDate.let { if (it.length >= 10) "${it.substring(8, 10)}/${it.substring(5, 7)}" else it }
             Panel {
