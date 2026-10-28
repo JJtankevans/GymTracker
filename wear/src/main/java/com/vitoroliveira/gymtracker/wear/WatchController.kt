@@ -10,13 +10,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.vitoroliveira.gymtracker.watch.DEFAULT_MAX_HR
 import com.vitoroliveira.gymtracker.watch.HrZone
+import com.vitoroliveira.gymtracker.watch.IntervalPhase
 import com.vitoroliveira.gymtracker.watch.IntervalPlan
+import com.vitoroliveira.gymtracker.watch.IntervalState
 import com.vitoroliveira.gymtracker.watch.WatchOutbox
 import com.vitoroliveira.gymtracker.watch.WatchRoutine
 import com.vitoroliveira.gymtracker.watch.WatchRoutines
 import com.vitoroliveira.gymtracker.watch.WatchSession
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -401,9 +405,52 @@ class WatchController(
 
     // ───────────── timer de intervalos ─────────────
 
+    /** Agora (ms), atualizado pelo laço do timer: a tela do timer recompõe por ele. */
+    var intervalNow by mutableLongStateOf(System.currentTimeMillis()); private set
+    private var intervalJob: Job? = null
+
     fun startInterval(plan: IntervalPlan) {
         intervalRun = IntervalRun(plan.normalized(), System.currentTimeMillis())
+        runIntervalLoop()
         updateHeartRate()
+    }
+
+    /**
+     * O laço do timer fica aqui (e não na tela) para continuar vibrando quando a pessoa sai da tela do timer
+     * e vai para o início ou para outro lugar do app. Com o app fechado ele para (sem alarme).
+     */
+    private fun runIntervalLoop() {
+        intervalJob?.cancel()
+        intervalJob = scope.launch {
+            var last: IntervalState? = null
+            var lastSecond = -1L
+            while (true) {
+                val r = intervalRun ?: break
+                val now = System.currentTimeMillis()
+                intervalNow = now
+                val st = r.plan.stateAt(r.elapsed(now))
+                if (!r.paused) {
+                    val prev = last
+                    if (prev != null && !st.samePhaseAs(prev)) {
+                        when (st.phase) {
+                            IntervalPhase.WORK -> app.buzz(Buzz.GO)
+                            IntervalPhase.REST -> app.buzz(Buzz.PAUSE)
+                            IntervalPhase.DONE -> app.buzz(Buzz.REST_DONE)
+                            IntervalPhase.PREP -> Unit
+                        }
+                    } else {
+                        // 3, 2, 1 antes de começar o esforço
+                        val sec = (st.remainingMs + 999) / 1000
+                        val beforeWork = st.phase == IntervalPhase.PREP || st.phase == IntervalPhase.REST
+                        if (beforeWork && sec in 1..3 && sec != lastSecond) app.buzz(Buzz.TICK)
+                        lastSecond = sec
+                    }
+                }
+                last = st
+                if (st.phase == IntervalPhase.DONE) { onIntervalDone(); break }
+                delay(200)
+            }
+        }
     }
 
     fun toggleIntervalPause() {
@@ -422,6 +469,8 @@ class WatchController(
     }
 
     fun stopInterval() {
+        intervalJob?.cancel()
+        intervalJob = null
         intervalRun = null
         updateHeartRate()
     }

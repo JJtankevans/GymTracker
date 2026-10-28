@@ -117,9 +117,9 @@ fun WorkoutScreen(c: WatchController, accent: Color, onPlates: () -> Unit, onAdd
     }
 }
 
-/** Pede batimentos e notificações na primeira vez que um treino abre (uma vez só). */
+/** Pede batimentos e notificações na primeira vez que um treino ou o timer de intervalos abre (uma vez só). */
 @Composable
-private fun AskPermissionsOnce(c: WatchController) {
+internal fun AskPermissionsOnce(c: WatchController) {
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { c.onPermissionsAnswered() }
     LaunchedEffect(Unit) {
         if (c.shouldAskPermissions) {

@@ -21,14 +21,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -47,8 +45,6 @@ import com.vitoroliveira.gymtracker.watch.HrZone
 import com.vitoroliveira.gymtracker.watch.IntervalPhase
 import com.vitoroliveira.gymtracker.watch.IntervalPlan
 import com.vitoroliveira.gymtracker.watch.IntervalPresets
-import com.vitoroliveira.gymtracker.watch.IntervalState
-import kotlinx.coroutines.delay
 
 // ───────────────────────── timer de intervalos (HIIT, Tabata, EMOM) ─────────────────────────
 
@@ -105,7 +101,7 @@ fun IntervalMenuScreen(c: WatchController, accent: Color, onRun: () -> Unit, onE
         }
         item {
             Text(
-                "O timer vibra nas trocas. Deixe a tela aberta: ela fica acesa enquanto o timer roda.",
+                "O timer vibra nas trocas. A tela do timer fica acesa; fora dela o timer continua vibrando enquanto o app estiver aberto.",
                 color = Muted, fontSize = 10.sp, textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp)
             )
@@ -163,40 +159,13 @@ fun IntervalRunScreen(c: WatchController, accent: Color, onClose: () -> Unit) {
         LaunchedEffect(Unit) { onClose() }
         return
     }
-    val context = LocalContext.current
+    AskPermissionsOnce(c)
     val view = LocalView.current
     DisposableEffect(Unit) {
         view.keepScreenOn = true
         onDispose { view.keepScreenOn = false }
     }
-    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
-    var last by remember { mutableStateOf<IntervalState?>(null) }
-    var lastSecond by remember { mutableLongStateOf(-1L) }
-    LaunchedEffect(run) {
-        while (true) {
-            now = System.currentTimeMillis()
-            val st = run.plan.stateAt(run.elapsed(now))
-            if (!run.paused) {
-                val prev = last
-                if (prev != null && !st.samePhaseAs(prev)) {
-                    when (st.phase) {
-                        IntervalPhase.WORK -> context.buzz(Buzz.GO)
-                        IntervalPhase.REST -> context.buzz(Buzz.PAUSE)
-                        IntervalPhase.DONE -> context.buzz(Buzz.REST_DONE)
-                        IntervalPhase.PREP -> Unit
-                    }
-                } else {
-                    // 3, 2, 1 antes de começar o esforço
-                    val sec = (st.remainingMs + 999) / 1000
-                    if (st.phase != IntervalPhase.WORK && st.phase != IntervalPhase.DONE && sec in 1..3 && sec != lastSecond) context.buzz(Buzz.TICK)
-                    lastSecond = sec
-                }
-            }
-            last = st
-            if (st.phase == IntervalPhase.DONE) { c.onIntervalDone(); break }
-            delay(200)
-        }
-    }
+    val now = c.intervalNow
     val st = run.plan.stateAt(run.elapsed(now))
     val color = when (st.phase) {
         IntervalPhase.WORK -> WorkColor
