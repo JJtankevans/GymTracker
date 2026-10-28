@@ -38,12 +38,13 @@ class WatchGalleryTest {
         )
     )
 
-    private fun controller(session: WatchSession?): WatchController {
+    private fun controller(session: WatchSession?, rest: RestState? = null): WatchController {
         val ctx = ApplicationProvider.getApplicationContext<Context>()
         val store = WatchStore(ctx).apply {
             routines = WatchRoutines(true, 1L, listOf(peito, peito.copy(groupId = "g2", name = "Costas", colorHex = "#22E3FF")))
             routinesReceivedAt = System.currentTimeMillis()
             this.session = session
+            this.rest = rest
             askedPermissions = true
         }
         return WatchController(ctx, store, WatchSync(ctx), HeartRateMonitor(ctx), MainScope())
@@ -69,10 +70,7 @@ class WatchGalleryTest {
         rule.onRoot().captureRoboImage("build/outputs/watch-gallery/2_serie.png")
         // o descanso tem um laço de atualização: relógio do teste manual para não esperar "ficar parado" para sempre
         rule.mainClock.autoAdvance = false
-        rule.runOnIdle { c.registerSet() }
-        rule.mainClock.advanceTimeBy(600)
-        rule.onRoot().captureRoboImage("build/outputs/watch-gallery/3_descanso.png")
-        rule.runOnIdle { c.skipRest() }
+        rule.runOnIdle { c.registerSet(); c.skipRest() }
         rule.mainClock.advanceTimeBy(600)
         rule.onRoot().performTouchInput { swipeLeft() }
         rule.mainClock.advanceTimeBy(1500)
@@ -82,5 +80,18 @@ class WatchGalleryTest {
         rule.onRoot().performTouchInput { swipeRight() }
         rule.mainClock.advanceTimeBy(1500)
         rule.onRoot().captureRoboImage("build/outputs/watch-gallery/5_exercicios.png")
+    }
+
+    @Test
+    fun rest() {
+        val s = WatchSession.start("w", peito, System.currentTimeMillis() - 5 * 60_000).addSet(10, 40.0, 1L).session
+        // descanso já em andamento ao abrir: a tela do treino mostra o anel com a contagem
+        val c = controller(s, RestState(System.currentTimeMillis() + 75_000, 90))
+        rule.mainClock.autoAdvance = false
+        rule.setContent { WatchApp(c) }
+        rule.mainClock.advanceTimeBy(500)
+        rule.onNodeWithText("Continuar treino").performClick()
+        rule.mainClock.advanceTimeBy(1500)
+        rule.onRoot().captureRoboImage("build/outputs/watch-gallery/3_descanso.png")
     }
 }
