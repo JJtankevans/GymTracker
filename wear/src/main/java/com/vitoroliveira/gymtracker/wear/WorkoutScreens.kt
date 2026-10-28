@@ -165,7 +165,11 @@ private fun SetPage(c: WatchController, s: WatchSession, accent: Color, active: 
         )
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             val done = s.setsDone(ex.id)
-            Text(if (s.isQuick) "série ${done + 1}" else "série ${done + 1} de ${ex.sets}", fontSize = 11.sp, color = Muted)
+            when {
+                s.allDone -> Text("tudo feito · deslize p/ terminar", fontSize = 11.sp, color = Gold, fontWeight = FontWeight.Bold)
+                s.isQuick -> Text("série ${done + 1}", fontSize = 11.sp, color = Muted)
+                else -> Text("série ${done + 1} de ${ex.sets}", fontSize = 11.sp, color = Muted)
+            }
             c.heartRate?.let { HeartChip(it) }
         }
         Spacer(Modifier.height(4.dp))
