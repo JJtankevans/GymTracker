@@ -6,7 +6,7 @@ O Thiago pediu "a versão iOS" para distribuir a outras pessoas. Este arquivo di
 - **O módulo `:shared` é Kotlin Multiplatform** e já declara os alvos iOS (`iosX64`, `iosArm64`, `iosSimulatorArm64`, framework estático `shared`). Lá estão os modelos, os repositórios do Supabase (Ktor com motor `darwin` no iOS), os casos de uso, os ViewModels e as regras (treino, circuito, recordes, social, relógio).
 - **CI de iOS** (`.github/workflows/ios.yml`, criado em 28/10/2026): num Mac do GitHub (grátis, o repositório é público) compila o `:shared` para iPhone, roda os mesmos testes do Android no simulador de iOS e gera o framework. Depois compila o **app de iPhone**, abre no simulador, tira uma captura (artefato `iphone-captura`) e lê o texto da tela por OCR (aparece como aviso na execução). Roda sozinho quando `shared/`, `composeApp/` ou `iosApp/` mudam, ou à mão em Actions → "iOS (shared)" → Run workflow.
 - **App de iPhone mínimo** (28/10/2026, Compose Multiplatform):
-  - `composeApp/` (só alvos iOS; usa os ViewModels e repositórios do `:shared` sem Koin): Login/criar conta, Início (semana x meta, sequência, grupos com o sugerido destacado, treino livre), treino ativo (séries por exercício com a última carga e o recorde, descanso 60/90/120 s, terminar com resumo e recordes), Histórico e Perfil (sair). Tema escuro com acento limão.
+  - `composeApp/` (só alvos iOS; usa os ViewModels e repositórios do `:shared` sem Koin): Login/criar conta, Início (semana x meta, sequência, grupos com o sugerido destacado, treino livre), treino ativo (séries por exercício com a última carga e o recorde, descanso 60/90/120 s, terminar com resumo e recordes), Histórico, Recordes, Social (liga e feed com reações) e Perfil (sair). Tema escuro com acento limão.
   - `iosApp/`: casca SwiftUI; o projeto Xcode é gerado pelo **XcodeGen** a partir de `iosApp/project.yml` (o `.xcodeproj` não vai para o git). As chaves do Supabase vêm do `local.properties` ou das variáveis `SUPABASE_URL`/`SUPABASE_KEY` (no CI, os mesmos secrets do Android) e viram `AppConfig.kt` gerado.
   - Num Mac: `brew install xcodegen`, `cd iosApp && xcodegen generate`, abrir `GymTracker.xcodeproj` no Xcode e rodar no simulador (ou no próprio iPhone com o Apple ID).
 
@@ -30,7 +30,7 @@ O Thiago pediu "a versão iOS" para distribuir a outras pessoas. Este arquivo di
 ## Situação do build (28/10/2026, fim da noite)
 - `:shared` compila para iPhone e **todos os testes passam no simulador de iOS**.
 - O **app de iPhone compila** (precisa do **Xcode 26**: o Compose Multiplatform 1.11 usa APIs do iOS 26, ex.: `UIViewLayoutRegion`; o workflow escolhe o Xcode 26 do runner), **instala e abre no simulador e continua aberto depois de 35 s**. **A tela de login aparece**: o OCR da captura leu "GYMTRACKER · Entrar · E-mail · Senha · ENTRAR · Criar uma conta" (execução 40633914088). O resultado do OCR fica nos avisos de cada execução.
-- Abas: Início, Histórico, Recordes e Perfil, mais o treino ativo.
+- Abas: Início, Histórico, Recordes, Social (liga da semana e feed com reações) e Perfil, mais o treino ativo.
 
 ## Não testado
 Nada de iOS foi visto num iPhone de verdade, nem por uma pessoa no simulador (o CI só abre o app e tira uma captura). O login não foi exercitado no CI (não digitamos senha de conta real). Falta ver: entrar com a conta, carregar grupos/semana, registrar séries, terminar o treino e ver o resumo.
