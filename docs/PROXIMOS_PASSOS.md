@@ -158,6 +158,16 @@ Pendente / ideias:
 - **CI:** gera `gymtracker-wear-apk`, roda os testes de tela do `:wear` (sem derrubar a execução) e aceita o secret opcional `DEBUG_KEYSTORE_BASE64` (chave fixa).
 - **Não testado no aparelho:** nada disso (só compilação e testes no CI). Roteiro em `docs/RELOGIO.md`.
 
+## Décima oitava rodada (28/10/2026, 7ª sessão na nuvem, noite sem o Thiago) — temas, Play Protect, relógio, iOS
+- **Play Protect:** leitura de notificações removida (serviço, mini player, cor da música, gravação das músicas). O app só pede INTERNET, VIBRATE e POST_NOTIFICATIONS.
+- **Temas:** 12 Loucos novos (`ThemeDecorCrazy2.kt`: STORM, DISCO, KALEIDO, ABYSS, GALAXY, STATIC, HOLO, HAUNTED, FIREWORKS, BLOCKS, ECG, LASERS), total 40; botão de tema aleatório.
+- **Relógio:** semana/sequência/sugestão vindas do celular (`BuildWatchRoutines`), tile com "Treinar", complicação "treinos na semana", anilhas, 1RM no resumo, adicionar exercício fora do grupo; celular com `WatchBridge`, cartão "Relógio" no Perfil e publicação automática ao abrir o app.
+- **Correções:** erros 14–22 e 24–28 (`ERROS_CONHECIDOS.md`), migração 013 (horários protegidos, testada no Postgres local).
+- **Medidas na nuvem:** migração 014 + sincronização no `BodyRepository` (testes novos).
+- **Catálogo:** 93 exercícios (Cardio, Mobilidade, +11 de força).
+- **iOS:** `ios.yml` compila o `:shared` para iPhone e roda os testes no simulador (verde); `docs/IOS.md` com o plano (Compose Multiplatform).
+- **Não testado no aparelho:** nada.
+
 # Anexo: notas detalhadas das sessões de 21 a 27/10/2026 (movidas do CONTEXTO_SESSAO.md em 27/10/2026; retrato daquele momento, ex.: os PRs citados como abertos já foram mergeados)
 
 ### Sessão de 27/10/2026 (nuvem): compartilhar treinos, temas "Loucos" e mais — COMPILADO E TESTADO NO CI, NÃO VISTO NO APARELHO

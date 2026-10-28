@@ -1,4 +1,4 @@
-# GymTracker no relógio (Wear OS) — versão 2.0
+# GymTracker no relógio (Wear OS) — versão 2.0 (+ extras de 28/10/2026)
 
 ## O que o app do relógio faz
 - **Início:** os seus grupos de treino (vêm do celular), "Continuar treino", "Treino rápido", fila de envio, "Sincronizar" e "Ajustes".
@@ -11,6 +11,14 @@
 - **Tela sempre ligada (modo ambiente):** ao baixar o pulso, o app continua na tela em preto e branco ("Descanso até 14:32").
 - **Atalho no mostrador:** durante o treino aparece o ícone do halter com o cronômetro; tocar volta ao app.
 - **Ajustes:** 6 cores, descanso padrão (45 s a 4 min), passo da carga (1 / 2,5 / 5 kg), descanso automático, batimentos.
+- **Extras de 28/10/2026:**
+  - **Semana na tela inicial:** anel "2/4 treinos na semana" (meta do Perfil) e "N dias seguidos"; o grupo **sugerido** (rotação, igual ao "Sugerido" do celular) vem primeiro, marcado "Sugerido hoje".
+  - **Tile** (deslize a partir do mostrador e adicione "GymTracker"): semana, sequência, "Hoje: Peito" e botão **Treinar**, que já abre o treino desse grupo. Com treino aberto, mostra o treino e "Continuar".
+  - **Complicação** "Treinos na semana" para o mostrador (toque e segure o mostrador → Editar → Complicações): anel ou texto "2/4"; tocar abre o app.
+  - **Anilhas:** na tela da série, com a carga selecionada, toque em "anilhas" (aparece a partir de 20 kg): cada lado da barra desenhado com as cores olímpicas; toque na barra para trocar 20/15/10 kg.
+  - **Melhor série** no resumo final (1RM estimado, fórmula de Epley).
+  - **Adicionar exercício** fora do grupo durante o treino (lista de exercícios → "Adicionar exercício").
+  - O celular atualiza o relógio sozinho ao abrir o app (com relógio conectado, no máximo a cada 15 min); no **Perfil → Relógio** há "Sincronizar com o relógio".
 
 ## Como funciona a sincronização
 O relógio não fala com o Supabase. Ele conversa com o app do celular pela Data Layer do Wear OS:
@@ -68,6 +76,10 @@ Apps de celular como **Bugjaeger** ou **Wear Installer 2** instalam APK no reló
 7. Baixar o pulso: tela em preto e branco com "Descanso até ...". Sair para o mostrador: o ícone do halter com cronômetro aparece e volta ao app.
 8. Terminar → resumo "Salvo no celular"; no celular, o treino aparece no Histórico com as séries e a hora certa, e no feed.
 9. Modo avião no celular, terminar outro treino → "Na fila"; tirar do modo avião, abrir o app no relógio → a fila some e o treino aparece no Histórico.
+10. Tile: adicionar no carrossel, ver a semana e tocar em "Treinar" (deve abrir direto no treino do grupo sugerido).
+11. Complicação: colocar "Treinos na semana" num mostrador que aceite complicações (anel ou texto curto).
+12. Anilhas: carga 62,5 kg → cada lado 20 + 1,25 (barra 20); trocar a barra para 15.
+13. Adicionar um exercício de fora do grupo, registrar uma série e conferir no Histórico do celular.
 
 ## Chave de assinatura fixa (opcional, recomendado)
 Gere uma vez no PC (pasta qualquer, fora do repositório):

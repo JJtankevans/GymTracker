@@ -1,13 +1,27 @@
-# GymTracker — contexto para retomar (atualizado em 27/10/2026, 6ª sessão)
+# GymTracker — contexto para retomar (atualizado em 28/10/2026, 7ª sessão — noite)
 
 Leia isto primeiro. O histórico longo de decisões, rodada por rodada, está em `docs/PROXIMOS_PASSOS.md` (as notas detalhadas das sessões de 21 a 27/10 estão no anexo do fim); referências de design em `docs/REFERENCIAS_DESIGN.md`; visão geral do projeto no `README.md` da raiz.
 
 **Onde registrar cada coisa:** estado atual e próximos passos → este arquivo; o que foi feito em cada rodada → `PROXIMOS_PASSOS.md`; erros encontrados e como corrigir → `ERROS_CONHECIDOS.md`; tabelas/SQL → `app/docs/supabaseSchema.md` + `docs/supabase/`; social → `SOCIAL_DESIGN.md`; imagens → `IMAGENS_EXERCICIOS.md`. Regras de fim de sessão (avisar, atualizar este arquivo, pedir autorização para commit) estão no `CLAUDE.md` da raiz.
 
-## ⚠️ BLOQUEIO PARA INSTALAR: remover a leitura de notificações (pendente, 27/10/2026)
+## Sessão noturna de 28/10/2026 (7ª, nuvem, sem o Thiago): temas, Play Protect, relógio, iOS e correções — COMPILADO E TESTADO NO CI, NÃO VISTO NO APARELHO
+- **Pedido:** "gaste os tokens da noite fazendo melhorias, tanto no relógio quanto no app; 8 a 10 temas Loucos; iOS se der; faça o PR e o contexto; não me pergunte nada".
+- **Branch `claude/noite-melhorias`** (sai do `claude/relogio-v2`, então **contém o PR #11**). PR para o `master` aberto no fim da noite (ver "Estado atual"). CI Android verde em cada bloco (última verde: ver o PR); CI de iOS verde.
+- **Feito:**
+  1. **Leitura de notificações removida** (bloqueio do Play Protect, seção abaixo): saíram `MediaListenerService`, mini player, "Cores da música", gravação de músicas e o interruptor "Compartilhar músicas". O perfil de outra pessoa ainda mostra as músicas antigas que estiverem no banco. **Falta confirmar** instalando pelo WhatsApp.
+  2. **12 temas Loucos novos** (40 no total), cada um com decoração animada própria em `ui/theme/ThemeDecorCrazy2.kt`: Tempestade (chuva e raios), Discoteca (bola espelhada), Caleidoscópio, Abissal (águas-vivas), Galáxia, Fora do Ar (chuvisco de TV), Holográfico (o único claro), Assombrado (lua, morcegos, neblina), Réveillon (fogos), Blocos (peças caindo), Cardio (monitor cardíaco) e Rave (lasers). Botão de **tema aleatório** em Aparência.
+  3. **Relógio:** tela inicial com treinos na semana x meta e dias seguidos, grupo **sugerido** primeiro; **tile** "GymTracker" no carrossel (semana, sugestão e botão "Treinar" que já abre o treino); **complicação** "Treinos na semana" para o mostrador (anel ou texto 2/4); **anilhas** (toque em "anilhas" com a carga selecionada; barra 20/15/10); **melhor série com 1RM estimado** no resumo; **adicionar exercício** fora do grupo durante o treino. O celular manda a semana/sugestão (`BuildWatchRoutines` no `:shared`) e, ao abrir o app com relógio conectado, publica sozinho (no máximo a cada 15 min). **Cartão "Relógio" no Perfil** com "Sincronizar com o relógio".
+  4. **Erros de baixa prioridade 14 a 22 e 24 a 28 corrigidos** (detalhes em `ERROS_CONHECIDOS.md`), incluindo a migração **013** (horários do treino protegidos; testada no Postgres local).
+  5. **Medidas corporais na nuvem** (migração **014**): sincronizam como o peso e não se perdem mais ao sair da conta.
+  6. **Catálogo com 93 exercícios:** categorias novas **Cardio** (esteira, bike, elíptico, escada, remo, corda, burpee, polichinelo; repetições = minutos nas máquinas) e **Mobilidade**, mais 11 de força (Passada, Agachamento Sumô, Desenvolvimento Arnold...). Sem imagem: caem no ícone do equipamento.
+  7. **iOS, primeiro passo:** `.github/workflows/ios.yml` compila o `:shared` para iPhone num Mac do GitHub, roda os **278 testes no simulador de iOS (todos passando)** e gera o framework. Plano em **`docs/IOS.md`**.
+- **Pendente do Thiago:** rodar as migrações **013** e **014** no Supabase (sem elas o app funciona; a 014 só deixa as medidas fora da nuvem). Instalar os APKs (celular + relógio) da **mesma** execução do CI.
+- **Não testado no aparelho:** nada desta sessão. Roteiro: (a) instalar o APK pelo WhatsApp e ver se o Play Protect ainda bloqueia; (b) temas novos (fluidez: Estática desenha ~420 retângulos por quadro, Discoteca ~150 facetas; legibilidade do Holográfico, que é claro); (c) no relógio: tile, complicação, anilhas, adicionar exercício, cabeçalho da semana; (d) registrar uma medida, sair e entrar de novo (depois da 014); (e) tocar duas vezes rápido numa reação do feed.
+
+## ✅ BLOQUEIO PARA INSTALAR: leitura de notificações REMOVIDA em 28/10/2026 (falta confirmar no aparelho)
 - **O que aconteceu:** ao instalar o APK da execução 40512678834 (recebido pelo WhatsApp), o celular do Thiago mostrou **"Google Play Protect — O app foi bloqueado para proteger seu dispositivo"**, com "Esse app pode pedir acesso a dados sensíveis. Isso pode aumentar o risco de roubo de identidade ou fraude financeira." e só o botão "Entendi" (não há "Instalar mesmo assim").
 - **Causa (provável, não confirmada no aparelho):** a proteção reforçada contra fraudes do Play Protect bloqueia apps instalados fora da Play Store (WhatsApp, navegador, gerenciador de arquivos) que pedem permissões sensíveis; uma delas é a **leitura de notificações**. O GymTracker declara em `app/src/main/AndroidManifest.xml` o serviço `.ui.music.MediaListenerService` com `android.permission.BIND_NOTIFICATION_LISTENER_SERVICE` (classe vazia em `ui/music/MusicController.kt`), que existe só para ler a música que está tocando. É a única permissão sensível do app (INTERNET, VIBRATE e POST_NOTIFICATIONS não entram nessa regra).
-- **Decisão do Thiago: remover a leitura de notificações para o app poder ser instalado.** Fazer na próxima sessão.
+- **Decisão do Thiago: remover a leitura de notificações para o app poder ser instalado.** **Feito em 28/10/2026** (branch `claude/noite-melhorias`). O app agora só pede INTERNET, VIBRATE e POST_NOTIFICATIONS. Confirmar instalando pelo WhatsApp; se ainda bloquear, a causa é outra (ver a alternativa da Play Store abaixo).
 - **O que sai junto** (tudo depende dessa permissão): mini player (`ui/music/MiniPlayer.kt`, na Home, treino ativo e circuito), cor do tema reativa à capa da música ("Cores da música" em Aparência, `ThemePreferences.musicReactive` + `MainActivity`), gravação das músicas do treino (`WorkoutTrackRecorder`, `SocialPrefs.recordMusic`, envio para `workout_tracks`) e o que mostra música no Social (privacidade de música, "mais tocadas" no perfil). As tabelas/funções de música no banco podem ficar (só deixam de receber dados).
 - **Como fazer:** tirar o `<service>` do manifesto e a classe `MediaListenerService`; remover ou esconder `MusicController`, `MiniPlayer`, `TrackRecording`/`WorkoutTrackRecorder` e as opções de música nas telas (Aparência, Perfil/Social); limpar o Koin (`UiModule`) e o `MainActivity` (`music.refresh()` no `onResume`, `accent` da música no tema); conferir as galerias de captura em `app/src/test` que usam o mini player. Arquivos que usam música hoje (`grep -rln "MiniPlayer\|MusicController\|WorkoutTrackRecorder\|musicReactive\|recordMusic" app/src`): `MainActivity.kt`, `ui/UiModule.kt`, `ui/LocalUserDataImpl.kt` (`tracks.discard()`), `ui/music/{MusicController,MiniPlayer,WorkoutTrackRecorder}.kt`, `ui/theme/{ThemePreferences,ThemePickerScreen}.kt`, `ui/home/HomeScreen.kt`, `ui/workout/ActiveWorkoutScreen.kt`, `ui/circuit/CircuitScreen.kt` e o teste `MusicGalleryTest.kt`. Depois, gerar o APK pelo CI e instalar pelo WhatsApp de novo para confirmar que o bloqueio sumiu.
 - **Enquanto isso, para testar no próprio celular:** instalar pelo PC com `adb install -r app-debug.apk`, ou desligar o Play Protect por alguns minutos (Play Store → perfil → Play Protect → engrenagem), instalar e ligar de novo. Não serve para mandar a outras pessoas.
@@ -60,9 +74,9 @@ Leia isto primeiro. O histórico longo de decisões, rodada por rodada, está em
 - **Os 4 erros mais graves** (corrigidos na 3ª sessão, acima; detalhes em `ERROS_CONHECIDOS.md`): (1) dados corporais (peso, altura, medidas) ficam no aparelho sem separar por conta e são enviados para a conta que estiver logada — com as duas contas de teste no mesmo celular pode já ter havido mistura; (2) grupo com `/` no nome (ex.: "Peito/Tríceps") fecha o app ao iniciar o treino ou o circuito; (3) no circuito, séries acima de "padrão + 2" são descartadas sem aviso; (4) no circuito, a última série pode ficar fora do resumo e do post no feed.
 
 ## Estado atual
-- **Branch `claude/relogio-v2` sem PR** (relógio 2.0, CI verde). Os PRs #7 (erros 1 a 4 e 7) e #8 (erros 5 a 13) estão no `master`, ainda sem teste no aparelho.
+- **PR #11** (`claude/relogio-v2`, relógio 2.0) aberto; **branch `claude/noite-melhorias`** contém o #11 e tudo da noite de 28/10 (PR próprio, ver o fim deste arquivo). Dá para mergear só o PR da noite (ele inclui o #11). Os PRs #7 (erros 1 a 4 e 7) e #8 (erros 5 a 13) estão no `master`, ainda sem teste no aparelho.
 - **Branch `master` tem o resto.** Os PRs #5 (`claude/instrucoes-sessao`: nome do grupo no histórico, bottom sheet, desafios, catálogo de 70) e #6 (`claude/melhorias`: as 15 melhorias de 26/10 + compartilhar treinos, temas Loucos e extras de 27/10) foram **mergeados em 27/10/2026** sem o teste no aparelho que estava previsto. O CI do `master` (commit `dffb4af`) passou: APK gerado e os 242 testes do `:shared`. Os dois branches podem ser apagados.
-- **Supabase em dia:** todas as migrações até a `012` aplicadas (ver a tabela em "Supabase").
+- **Supabase:** migrações até a `012` aplicadas; **`013` e `014` pendentes** (ver a tabela em "Supabase").
 
 **Testado no celular (Xiaomi, adb) e funcionando** (até 21/10): login/cadastro, Home, treino ativo, seletor de temas (eram 21), catálogo de exercícios (eram 56) com seleção múltipla e favoritos, treinos prontos, Recordes com dado real, Circuito (anel, descanso, botões), exclusão de treino no Histórico (toque longo), ilustrações por exercício, Social com duas contas (perfil público, seguir, feed, reações, grupo por código, desafio e placar, editar post, privacidade, pedido de seguir em perfil "Só seguidores"), exercício em vários grupos (006), foto de perfil (007).
 
@@ -75,11 +89,11 @@ Leia isto primeiro. O histórico longo de decisões, rodada por rodada, está em
 ## O app em 5 linhas
 Android (Jetpack Compose) + módulo KMP `:shared` (regras, ViewModels, repositórios) + `:wear` (relógio; sincroniza com o celular pela Data Layer, ver `docs/RELOGIO.md`). Backend: Supabase (projeto `ygbrrypyydxnuskrobeu`). Login por e-mail/senha. Dono: Thiago (`thiagobrito74@gmail.com`). Repo: `github.com/JJtankevans/GymTracker`, branch `master`.
 
-## Números (27/10/2026)
-- Catálogo: **70 exercícios** (`shared/.../data/catalog/ExerciseCatalog.kt`, com apelidos para achar a imagem), **9 treinos prontos** (`WorkoutTemplates.kt`).
+## Números (28/10/2026)
+- Catálogo: **93 exercícios** (eram 70; +cardio, mobilidade e 11 de força) (`shared/.../data/catalog/ExerciseCatalog.kt`, com apelidos para achar a imagem), **9 treinos prontos** (`WorkoutTemplates.kt`).
 - Imagens: **41 de 70** em `app/src/main/res/drawable-nodpi/ex_<nome>.png`; as 29 que faltam (15 antigas + 14 novas) estão em `docs/PROMPTS_IMAGENS_EXERCICIOS.md` (`python3 tools/cortar_folha.py --faltando` confere). Sem imagem, cai no ícone do equipamento.
-- Temas: **28** em 4 categorias (Profissionais, Ousados, Abstratos, Loucos), 5 famílias de fonte, 6 layouts de Home e 2 de treino ativo (`ui/theme/Themes.kt`).
-- Testes: **272** `@Test` no `:shared` no branch `claude/relogio-v2` (260 no `master`; todos passando no CI em 27/10), **15** no `:app` (galerias Robolectric/Roborazzi, não rodam no CI) e **2** no `:wear` (galerias; rodam no CI sem derrubar a execução). Rodar: `./gradlew.bat :shared:testDebugUnitTest`; galerias: `./gradlew.bat :app:testDebugUnitTest -Proborazzi.test.record=true`.
+- Temas: **40** em 4 categorias (19 Loucos) (Profissionais, Ousados, Abstratos, Loucos), 5 famílias de fonte, 6 layouts de Home e 2 de treino ativo (`ui/theme/Themes.kt`).
+- Testes: **278** `@Test` no `:shared` no branch `claude/noite-melhorias` (260 no `master`), passando no CI Android **e no simulador de iOS**; **14** no `:app` (galerias Robolectric/Roborazzi, não rodam no CI; a de música saiu) e **2** no `:wear` (galerias; rodam no CI sem derrubar a execução). Rodar: `./gradlew.bat :shared:testDebugUnitTest`; galerias: `./gradlew.bat :app:testDebugUnitTest -Proborazzi.test.record=true`.
 
 ## Supabase
 | Migração | O que faz | Situação | Sem ela |
@@ -94,6 +108,8 @@ Android (Jetpack Compose) + módulo KMP `:shared` (regras, ViewModels, repositó
 | `010` | títulos de desafio | aplicada (27/10/2026) | — |
 | `011` | compartilhar treino por código | aplicada (27/10/2026) | — |
 | `012` | dia do treino no fuso de Brasília (progressão, recordes, dias ativos) | aplicada (27/10/2026) | — |
+| `013` | horários do treino protegidos (início não muda; fim só uma vez e não no futuro) | **pendente** (testada no Postgres local) | dá para "trapacear" horários pela API |
+| `014` | medidas corporais na nuvem (`body_measurements`) | **pendente** | as medidas ficam só no aparelho e se perdem ao sair |
 - Consultas só de leitura: `consulta_exercicios_de_todos_os_usuarios.sql`, `consulta_uso_do_storage.sql`. `test_social.sql` é para banco de teste.
 - O conector Supabase da sessão não enxerga esse projeto; só dá para sondar por REST com a chave publicável. Não dá para conferir RLS por aqui.
 - `local.properties` (fora do git) precisa de `SUPABASE_URL` e `SUPABASE_KEY` (chave `sb_publishable_...`).
@@ -125,6 +141,10 @@ A nuvem não compila (sem Android SDK), então `.github/workflows/android.yml` c
 - `build/` e `.kotlin/` estão no `.gitignore`, mas `.kotlin/` ainda está versionado (erro nº 26: `git rm -r --cached .kotlin`).
 
 ## Armadilhas já encontradas
+- Kotlin: funções `setX(...)` numa classe com propriedade `var x` dão "Platform declaration clash" na JVM (o setter gerado tem o mesmo nome). Use outro nome (`saveX`).
+- Extensão não se chama pelo nome completo (`by org.koin...inject()` não compila): importe a função.
+- Código comum (`commonMain`/`commonTest`) compila no Android com a biblioteca da JVM, então APIs só da JVM passam despercebidas e quebram no iOS (ex.: `MutableList.replaceAll`, `String.format`). O CI de iOS pega isso.
+- `ListenableFuture` (Health Services): o artefato `listenablefuture` que chega pelas dependências é a versão vazia `9999.0`; precisa da Guava inteira.
 - `import X as Y` esconde o nome original no arquivo → usar `typealias`.
 - Robolectric trava (`AppNotIdleException`) com `AlertDialog`; `ModalBottomSheet` funciona.
 - ViewModel: iniciar `loadX()` depois de setar erro apaga o erro (recarga assíncrona). Usar `loadExercises(clearError = false)`.
@@ -140,6 +160,7 @@ A nuvem não compila (sem Android SDK), então `.github/workflows/android.yml` c
 - Ambiente de nuvem (claude.ai/code): sem Android SDK e sem `dl.google.com`; quem compila é o GitHub Actions. Dá para testar SQL com o Postgres 16 em `/usr/lib/postgresql/16/bin` (iniciar como usuário `postgres` num diretório próprio, ex. `/var/tmp`). O contêiner é descartado: commit + push antes de encerrar.
 
 ## Próximos passos (ordem sugerida)
+- **Depois da noite de 28/10:** rodar 013 e 014; instalar celular + relógio da mesma execução do PR da noite; seguir os roteiros de `docs/RELOGIO.md` e da seção da 7ª sessão; mergear o PR (ele inclui o #11).
 - **Relógio:** instalar os dois APKs da execução 40572571656 (passo a passo em `docs/RELOGIO.md`) e seguir o roteiro de teste de lá; depois abrir o PR do `claude/relogio-v2`. Ideias seguintes: espelhar no relógio o treino iniciado no celular (hoje são independentes), tile de "Iniciar treino", complicação com o último treino.
 - **iOS (pedido do Thiago, não iniciado):** o `:shared` já tem alvos iOS configurados, mas as telas são Jetpack Compose só de Android. Precisa decidir: Compose Multiplatform (reaproveita parte das telas) ou SwiftUI; e ter Mac/Xcode ou runner macOS no CI, mais conta Apple para instalar no iPhone (ID grátis = 7 dias pelo Xcode; distribuir = Apple Developer US$ 99/ano + TestFlight). Primeiro passo possível daqui: job macOS no CI compilando o `:shared` para iOS.
 0. **Remover a leitura de notificações** (seção "⚠️ BLOQUEIO PARA INSTALAR" no topo): sem isso o Play Protect bloqueia a instalação do APK fora da Play Store. **Antes de distribuir o APK**, também decidir sobre "Confirm email" e SMTP próprio (seção acima) e sobre a chave de assinatura fixa (5ª sessão). Conferir `body_weights` por conta (erro nº 1).
@@ -168,7 +189,9 @@ Caminhos curtos: `shared/...` = `shared/src/commonMain/kotlin/com/vitoroliveira/
 - **Social:** modelos `data/model/Social.kt`, repositório `data/repository/SocialRepositoryImpl.kt`, regras `presentation/social/SocialRules.kt`, `SocialViewModel.kt`, `ChallengeMessages.kt`, `ProfileTitles.kt`; telas `ui/social/SocialScreen.kt`, `SocialDialogs.kt` (`ChallengeDialog`, `ChallengeSheet`), `ChallengeMessageCard.kt`, `TitleChip.kt`.
 - **Perfil e foto:** `presentation/viewmodel/ProfileViewModel.kt`, `domain/AvatarRules.kt`, `ProfileRepositoryImpl.uploadAvatar/removeAvatar`, `ui/profile/{ProfileScreen,UserAvatar,AvatarImageProcessor}.kt`.
 - **Relógio:** protocolo e regras em `shared/.../watch/` (`WatchProtocol.kt`, `WatchSession.kt`), gravação em `domain/usecase/ImportWatchWorkout.kt`; ponte no celular `app/.../wear/WearSyncService.kt`; app do relógio em `wear/src/main/java/.../wear/` (`WatchController` = estado, `WatchApp` = navegação/início/ajustes, `WorkoutScreens` = treino, `WatchSync` = Data Layer, `HeartRateMonitor`, `WatchAlerts` = vibração, alarme e atalho no mostrador).
-- **Música:** `ui/music/MusicController.kt` (sessão de mídia, cor da capa), `MiniPlayer.kt`, `WorkoutTrackRecorder.kt` (grava as faixas do treino, desligado por padrão).
+- **Música:** removida em 28/10/2026 (Play Protect). As tabelas `workout_tracks` e o `TrackRepository` continuam no `:shared`/banco, sem uso.
+- **Relógio (extras de 28/10):** `wear/.../WorkoutTileService.kt` (tile), `WeekComplicationService.kt` (complicação), `app/.../wear/WatchBridge.kt` (publicar/importar, usado pelo serviço e pelo `WatchSyncCard` do Perfil), `shared/.../domain/usecase/BuildWatchRoutines.kt`.
+- **iOS:** `.github/workflows/ios.yml`, plano em `docs/IOS.md`.
 - **Temas:** `ui/theme/Themes.kt` (lista), `ThemeSpec.kt`, `ThemeBuilders.kt`, `ThemeDecor.kt`, `ThemeDecorCrazy.kt` (Loucos), `ThemeFonts.kt`, `ThemePickerScreen.kt`, `ThemePreferences.kt`.
 - **Erros amigáveis:** `presentation/ErrorMessages.kt` (`toUserMessage`).
 - **SQL:** `docs/supabase/` (situação na tabela acima). Esquema base e views: `app/docs/supabaseSchema.md`. Imagens: `tools/cortar_folha.py`.
