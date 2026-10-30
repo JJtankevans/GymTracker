@@ -8,6 +8,7 @@ import com.vitoroliveira.gymtracker.ui.theme.ThemedTopAppBar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,6 +25,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.vitoroliveira.gymtracker.presentation.viewmodel.HistoryUiState
 import com.vitoroliveira.gymtracker.presentation.viewmodel.HistoryViewModel
+import com.vitoroliveira.gymtracker.presentation.viewmodel.filterHistory
+import com.vitoroliveira.gymtracker.presentation.viewmodel.historyGroupNames
 import com.vitoroliveira.gymtracker.presentation.viewmodel.WorkoutHistoryItem
 import com.vitoroliveira.gymtracker.ui.theme.GymTrackerTheme
 import kotlin.time.Instant
@@ -75,6 +78,9 @@ fun HistoryScreenContent(
         )
     }
     var pendingDelete by remember { mutableStateOf<WorkoutHistoryItem?>(null) }
+    val groupNames = remember(uiState.workouts) { historyGroupNames(uiState.workouts) }
+    var groupFilter by rememberSaveable { mutableStateOf<String?>(null) }
+    val shown = remember(uiState.workouts, groupFilter) { filterHistory(uiState.workouts, groupFilter) }
 
     LaunchedEffect(uiState.errorMessage) {
         uiState.errorMessage?.let {
@@ -107,6 +113,16 @@ fun HistoryScreenContent(
                 ) {
                     item(key = "recap") { MonthRecapCard(recap) }
                     item(key = "heatmap") { TrainingHeatmap(calendar) }
+                    if (groupNames.size > 1) item(key = "filters") {
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            item(key = "all") {
+                                FilterChip(selected = groupFilter == null || groupFilter !in groupNames, onClick = { groupFilter = null }, label = { Text("Todos") })
+                            }
+                            items(groupNames, key = { it }) { name ->
+                                FilterChip(selected = groupFilter == name, onClick = { groupFilter = name }, label = { Text(name) })
+                            }
+                        }
+                    }
                     item {
                         Text(
                             "Segure um treino para apagar.",
@@ -114,7 +130,7 @@ fun HistoryScreenContent(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    items(uiState.workouts, key = { it.workoutId }) { workout ->
+                    items(shown, key = { it.workoutId }) { workout ->
                         WorkoutHistoryCard(
                             item = workout,
                             onClick = { onWorkoutClick(workout.workoutId, workout.muscleGroupName) },

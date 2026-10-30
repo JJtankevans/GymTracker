@@ -60,9 +60,12 @@ class SocialAlertsWorker(context: Context, params: WorkerParameters) : Coroutine
             val week = runCatching { weekAlert(seen) }.getOrNull()
             val all = alerts.take(3) + listOfNotNull(week)
             if (all.isNotEmpty()) {
-                all.forEachIndexed { i, a -> notify(a.title, a.text, i) }
-                // guarda as chaves avisadas (as 200 mais recentes bastam)
-                prefs.edit().putStringSet(KEY_SEEN, (seen + all.map { it.key }).toList().takeLast(200).toSet()).apply()
+                // só marca como visto o que foi mesmo mostrado: sem a permissão de notificação, o aviso fica para depois
+                val shown = all.filterIndexed { i, a -> notify(a.title, a.text, i) }
+                if (shown.isNotEmpty()) {
+                    // guarda as chaves avisadas (as 200 mais recentes bastam)
+                    prefs.edit().putStringSet(KEY_SEEN, (seen + shown.map { it.key }).toList().takeLast(200).toSet()).apply()
+                }
             }
             Result.success()
         } catch (e: Exception) {
@@ -83,11 +86,12 @@ class SocialAlertsWorker(context: Context, params: WorkerParameters) : Coroutine
         return com.vitoroliveira.gymtracker.presentation.social.weekRecapAlert(sessions, goal, now, seen)
     }
 
-    private fun notify(title: String, text: String, index: Int) {
+    /** True se a notificação foi enviada ao sistema (false sem a permissão de notificação). */
+    private fun notify(title: String, text: String, index: Int): Boolean {
         val ctx = applicationContext
         if (Build.VERSION.SDK_INT >= 33 &&
             ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-        ) return
+        ) return false
         ctx.getSystemService(NotificationManager::class.java)
             ?.createNotificationChannel(NotificationChannel(CHANNEL, "Social (seguir e desafios)", NotificationManager.IMPORTANCE_DEFAULT))
         val open = PendingIntent.getActivity(
@@ -102,9 +106,11 @@ class SocialAlertsWorker(context: Context, params: WorkerParameters) : Coroutine
             .setAutoCancel(true)
             .setContentIntent(open)
             .build()
-        try {
+        return try {
             NotificationManagerCompat.from(ctx).notify(NOTIF_BASE + index, n)
+            true
         } catch (_: SecurityException) {
+            false
         }
     }
 
