@@ -62,7 +62,7 @@ fun FocusWorkoutBody(
     val exercises = uiState.exercises
     if (exercises.isEmpty()) {
         Box(modifier.fillMaxSize().padding(24.dp), Alignment.Center) {
-            Text("Cadastre exercícios nesse grupo para treinar aqui.", textAlign = TextAlign.Center, style = MaterialTheme.typography.bodyLarge)
+            Text("Cadastre exercícios nesse grupo para treinar aqui, ou toque em + (no topo) para adicionar um exercício só deste treino.", textAlign = TextAlign.Center, style = MaterialTheme.typography.bodyLarge)
         }
         return
     }
@@ -76,6 +76,12 @@ fun FocusWorkoutBody(
     Box(modifier.fillMaxSize()) {
     Column(Modifier.fillMaxSize()) {
         // faixa de exercícios (toque pra pular)
+        // exercício adicionado na hora (só desta sessão): o pager vai direto para o primeiro novo
+        var knownCount by remember { mutableIntStateOf(exercises.size) }
+        LaunchedEffect(exercises.size) {
+            if (exercises.size > knownCount) pager.animateScrollToPage(knownCount)
+            knownCount = exercises.size
+        }
         // a faixa acompanha o exercício atual: ao deslizar para o lado, o chip dele rola para o meio da faixa
         val chipScroll = rememberScrollState()
         val chipBounds = remember { mutableStateMapOf<Int, Pair<Int, Int>>() } // início e largura de cada chip, em px

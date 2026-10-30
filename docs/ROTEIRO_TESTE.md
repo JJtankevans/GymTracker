@@ -18,6 +18,9 @@ APK certo: os dois artefatos (`gymtracker-debug-apk` e `gymtracker-wear-apk`) da
 ## 1b. Treino ativo
 - [ ] Deslizar para o lado entre exercícios: o chip do exercício atual rola sozinho para o meio da faixa do topo (com 8+ exercícios, ida e volta). Tocar num chip também centraliza o chip.
 
+- [ ] **Exercício só desta sessão**: botão "+" na barra do treino. Escolher do catálogo (ou "Personalizado" com nome livre): o exercício aparece no fim da lista, o Foco vai direto para ele, registra séries normalmente e entra no resumo. Terminar o treino e abrir o grupo: o exercício NÃO está no grupo.
+- [ ] Digitar o nome de um exercício que você já tem (outra caixa/acento): reaproveita, com última carga e recorde. Fechar o app no meio e retomar o treino: o temporário volta (se já tinha série).
+
 ## 2. Evolução e Recordes
 - [ ] **Evolução → Equilíbrio do treino (7 dias)**: barras de Empurrar / Puxar / Pernas / Core e uma frase (só com 8+ séries na semana). Confira se a frase bate com o que você treinou.
 - [ ] Registrar uma medida (cintura), sair da conta, entrar de novo: a medida continua (depende da 014).

@@ -7,6 +7,7 @@ import com.vitoroliveira.gymtracker.data.model.ExerciseBaseline
 import com.vitoroliveira.gymtracker.data.model.Workout
 import com.vitoroliveira.gymtracker.data.model.WorkoutSet
 import com.vitoroliveira.gymtracker.domain.repository.ExerciseRepository
+import com.vitoroliveira.gymtracker.domain.usecase.addToGroups
 import com.vitoroliveira.gymtracker.domain.repository.WorkoutRepository
 import com.vitoroliveira.gymtracker.presentation.TimerManager
 import com.vitoroliveira.gymtracker.presentation.TimerState
@@ -165,11 +166,16 @@ class WorkoutViewModel(
     }
 
     private suspend fun openWorkout(workout: Workout, muscleGroupId: String?, sets: List<WorkoutSet>) {
-        val exercises = if (muscleGroupId != null) {
+        val inGroup = if (muscleGroupId != null) {
             exerciseRepository.getByMuscleGroup(muscleGroupId)
         } else {
             exerciseRepository.getAll()
         }
+        // treino retomado: exercícios "só desta sessão" (fora do grupo) voltam porque já têm séries registradas
+        val groupIds = inGroup.mapNotNull { it.id }.toSet()
+        val strayIds = sets.map { it.exerciseId }.filter { it !in groupIds }.distinct()
+        val exercises = if (muscleGroupId == null || strayIds.isEmpty()) inGroup
+        else inGroup + exerciseRepository.getAll().filter { it.id in strayIds }
         _uiState.value = _uiState.value.copy(
             isLoading = false,
             activeWorkout = workout,
@@ -189,6 +195,36 @@ class WorkoutViewModel(
             recordsBefore = baselines.mapValues { it.value.recordWeightKg }
             // treino retomado: séries de antes que já eram recorde aparecem como recorde (sem confete)
             _uiState.value = withRecords(_uiState.value.copy(baselines = baselines))
+        }
+    }
+
+    /**
+     * Exercícios só desta sessão ("decidi fazer um pump agora"): entram na lista do treino e aceitam séries, mas NÃO
+     * entram no grupo. Se o nome já existe nos exercícios da pessoa (ignorando caixa e acento) ele é reaproveitado, com
+     * o mesmo histórico e recorde; se não, é criado sem grupo. Ao retomar o treino eles reaparecem pelas séries.
+     */
+    fun addTemporaryExercises(drafts: List<Exercise>) {
+        val workoutId = _uiState.value.activeWorkout?.id ?: return
+        val clean = drafts.filter { it.name.isNotBlank() }.map { it.copy(id = null, name = it.name.trim(), groupIds = emptyList()) }
+        if (clean.isEmpty()) return
+        viewModelScope.launch {
+            try {
+                val known = exerciseRepository.getAll().toMutableList()
+                val added = mutableListOf<Exercise>()
+                for (draft in clean) {
+                    val exercise = exerciseRepository.addToGroups(draft, emptySet(), known).exercise
+                    val already = _uiState.value.exercises + added
+                    if (already.none { it.id == exercise.id }) added += exercise
+                }
+                if (added.isEmpty()) return@launch
+                _uiState.value = _uiState.value.copy(exercises = _uiState.value.exercises + added)
+                val baselines = loadBaselines(workoutId, added)
+                recordsBefore = recordsBefore + baselines.mapValues { it.value.recordWeightKg }
+                _uiState.value = withRecords(_uiState.value.copy(baselines = _uiState.value.baselines + baselines))
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                _uiState.value = _uiState.value.copy(errorMessage = e.toUserMessage("Erro ao adicionar o exercício"))
+            }
         }
     }
 

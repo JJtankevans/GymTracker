@@ -82,6 +82,7 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.saveable.rememberSaveable
+import com.vitoroliveira.gymtracker.ui.exercise.ExerciseCatalogSheet
 import androidx.lifecycle.Lifecycle
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -174,6 +175,7 @@ fun ActiveWorkoutScreen(
             onResumeWorkout = { viewModel.resumeWorkout(it) },
             onDiscardWorkout = { viewModel.discardAndStartNew(muscleGroupId) },
             onToggleExerciseFinished = { viewModel.toggleExerciseFinished(it) },
+            onAddTemporaryExercises = { viewModel.addTemporaryExercises(it) },
             onSummaryDone = onWorkoutFinished,
             onShareSummary = {
                 val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
@@ -210,9 +212,13 @@ fun ActiveWorkoutScreenContent(
     onDeleteSet: (setId: String) -> Unit = {},
     onSummaryDone: () -> Unit = {},
     onShareSummary: () -> Unit = {},
+    /** Exercícios só desta sessão (não entram no grupo). */
+    onAddTemporaryExercises: (List<Exercise>) -> Unit = {},
     topSlot: @Composable () -> Unit = {}
 ) {
     var showFinishDialog by remember { mutableStateOf(false) }
+    var showTemporaryCatalog by remember { mutableStateOf(false) }
+    var showTemporaryName by remember { mutableStateOf(false) }
     var editingSet by remember { mutableStateOf<WorkoutSet?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -249,6 +255,10 @@ fun ActiveWorkoutScreenContent(
                     }
                 },
                 actions = {
+                    IconButton(
+                        onClick = { showTemporaryCatalog = true },
+                        enabled = uiState.activeWorkout != null && !uiState.isWorkoutFinished
+                    ) { Icon(Icons.Default.Add, contentDescription = "Adicionar exercício só deste treino") }
                     Button(
                         onClick = { showFinishDialog = true },
                         enabled = uiState.activeWorkout != null && !uiState.isWorkoutFinished,
@@ -335,6 +345,43 @@ fun ActiveWorkoutScreenContent(
                 item { Spacer(modifier = Modifier.height(16.dp)) }
             }
         }
+    }
+
+    if (showTemporaryCatalog) {
+        // exercício só desta sessão: entra no treino e aceita séries, mas não é guardado no grupo
+        fun draft(c: com.vitoroliveira.gymtracker.data.catalog.CatalogExercise) =
+            Exercise(name = c.name, defaultSets = c.sets, defaultReps = c.reps, notes = c.hint)
+        ExerciseCatalogSheet(
+            existingNames = uiState.exercises.map { it.name },
+            onPickOne = { onAddTemporaryExercises(listOf(draft(it))); showTemporaryCatalog = false },
+            onPickMany = { onAddTemporaryExercises(it.map(::draft)); showTemporaryCatalog = false },
+            onCustom = { showTemporaryCatalog = false; showTemporaryName = true },
+            onDismiss = { showTemporaryCatalog = false }
+        )
+    }
+
+    if (showTemporaryName) {
+        var name by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { showTemporaryName = false },
+            title = { Text("Exercício só deste treino") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Nome (ex.: Pump de bíceps)") }, singleLine = true)
+                    Text(
+                        "Fica só nesta sessão: não entra no grupo. Se você já tem um exercício com esse nome, ele é reaproveitado com o histórico.",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(enabled = name.isNotBlank(), onClick = {
+                    onAddTemporaryExercises(listOf(Exercise(name = name.trim(), defaultSets = 4, defaultReps = 12)))
+                    showTemporaryName = false
+                }) { Text("Adicionar") }
+            },
+            dismissButton = { TextButton(onClick = { showTemporaryName = false }) { Text("Cancelar") } }
+        )
     }
 
     if (showFinishDialog) {
