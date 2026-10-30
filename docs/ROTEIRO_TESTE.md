@@ -15,6 +15,9 @@ APK certo: os dois artefatos (`gymtracker-debug-apk` e `gymtracker-wear-apk`) da
   - [ ] Tocar num chip filtra a lista; "Todos" volta.
   - [ ] Apagar (toque longo) o último treino de um grupo filtrado: a lista não fica vazia, volta a mostrar tudo.
 
+## 1b. Treino ativo
+- [ ] Deslizar para o lado entre exercícios: o chip do exercício atual rola sozinho para o meio da faixa do topo (com 8+ exercícios, ida e volta). Tocar num chip também centraliza o chip.
+
 ## 2. Evolução e Recordes
 - [ ] **Evolução → Equilíbrio do treino (7 dias)**: barras de Empurrar / Puxar / Pernas / Core e uma frase (só com 8+ séries na semana). Confira se a frase bate com o que você treinou.
 - [ ] Registrar uma medida (cintura), sair da conta, entrar de novo: a medida continua (depende da 014).

@@ -17,6 +17,10 @@ import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -72,12 +76,26 @@ fun FocusWorkoutBody(
     Box(modifier.fillMaxSize()) {
     Column(Modifier.fillMaxSize()) {
         // faixa de exercícios (toque pra pular)
-        Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        // a faixa acompanha o exercício atual: ao deslizar para o lado, o chip dele rola para o meio da faixa
+        val chipScroll = rememberScrollState()
+        val chipBounds = remember { mutableStateMapOf<Int, Pair<Int, Int>>() } // início e largura de cada chip, em px
+        var stripWidth by remember { mutableIntStateOf(0) }
+        val stripPadding = with(LocalDensity.current) { 16.dp.roundToPx() }
+        LaunchedEffect(pager.currentPage, chipBounds[pager.currentPage], stripWidth) {
+            val (left, width) = chipBounds[pager.currentPage] ?: return@LaunchedEffect
+            chipScroll.animateScrollTo((stripPadding + left + width / 2 - stripWidth / 2).coerceAtLeast(0))
+        }
+        Row(
+            Modifier.onSizeChanged { stripWidth = it.width }.horizontalScroll(chipScroll).padding(horizontal = 16.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             exercises.forEachIndexed { i, e ->
                 val done = uiState.activeWorkout?.finishedExerciseIds?.contains(e.id) == true
                 val sel = pager.currentPage == i
                 Row(
-                    Modifier.clip(CircleShape)
+                    Modifier
+                        .onGloballyPositioned { chipBounds[i] = it.positionInParent().x.toInt() to it.size.width }
+                        .clip(CircleShape)
                         .background(if (sel) cs.primary else cs.surfaceContainerHighest)
                         .border(1.dp, if (sel) cs.primary else cs.outlineVariant, CircleShape)
                         .clickable { scope.launch { pager.animateScrollToPage(i) } }
