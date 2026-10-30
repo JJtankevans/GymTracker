@@ -105,7 +105,11 @@ class WorkoutViewModel(
 
     // ───────────────────────── Início / retomada ─────────────────────────
 
-    fun startWorkout(muscleGroupId: String?) {
+    /**
+     * [resumeIfActive]: se já existe um treino em andamento, entra nele direto em vez de oferecer "continuar ou
+     * descartar" (vindo do aviso da Home, a pessoa já escolheu continuar).
+     */
+    fun startWorkout(muscleGroupId: String?, resumeIfActive: Boolean = false) {
         val s = _uiState.value
         // Idempotente: girar a tela ou recompor não deve iniciar (nem oferecer retomar) de novo.
         if (s.activeWorkout != null || s.isLoading || s.activeWorkoutToRecover != null) return
@@ -115,6 +119,11 @@ class WorkoutViewModel(
             try {
                 val active = workoutRepository.getActiveWorkout()
                 if (active != null) {
+                    val activeId = active.id
+                    if (resumeIfActive && activeId != null) {
+                        openWorkout(active, active.muscleGroupId, workoutRepository.getSetsForWorkout(activeId))
+                        return@launch
+                    }
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         activeWorkoutToRecover = active
@@ -490,6 +499,8 @@ class WorkoutViewModel(
     fun pauseTimer() = timerManager.pause()
     fun resumeTimer() = timerManager.resume()
     fun cancelTimer() = timerManager.cancel()
+    /** Recalcula o descanso na hora (a tela chama ao voltar do bloqueio e enquanto o descanso corre). */
+    fun refreshTimer() = timerManager.refresh()
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(errorMessage = null)

@@ -84,6 +84,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.vitoroliveira.gymtracker.ui.exercise.ExerciseCatalogSheet
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import org.koin.compose.viewmodel.koinViewModel
@@ -96,6 +97,8 @@ fun ActiveWorkoutScreen(
     muscleGroupId: String?,
     muscleGroupName: String?,
     onWorkoutFinished: () -> Unit,
+    /** Veio do aviso "treino em andamento" da Home: entra no treino que já existe sem perguntar. */
+    resumeIfActive: Boolean = false,
     onBack: () -> Unit = {},
     viewModel: WorkoutViewModel = koinViewModel()
 ) {
@@ -107,7 +110,7 @@ fun ActiveWorkoutScreen(
 
     // Inicia o treino ao abrir a tela (o ViewModel ignora chamadas repetidas, ex.: ao girar a tela)
     LaunchedEffect(Unit) {
-        viewModel.startWorkout(muscleGroupId)
+        viewModel.startWorkout(muscleGroupId, resumeIfActive)
     }
 
     // Tela ligada durante o treino: ninguém quer desbloquear com a mão suada entre as séries.
@@ -146,6 +149,19 @@ fun ActiveWorkoutScreen(
         }
     }
     DisposableEffect(Unit) { onDispose { restNotifier.cancel() } }
+
+    // Voltando do bloqueio de tela o descanso podia ficar parado na tela até um toque (a contagem seguia, o desenho não).
+    // Enquanto a tela está visível: recalcula o descanso do prazo (também religa a contagem se ela tiver parado) e
+    // força o redesenho 4 vezes por segundo; ao voltar, o primeiro ajuste acontece na hora.
+    LaunchedEffect(viewModel, lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            while (true) {
+                viewModel.refreshTimer()
+                if (viewModel.uiState.value.timerState.isRunning) view.invalidate()
+                kotlinx.coroutines.delay(250)
+            }
+        }
+    }
 
     // Treino retomado de outro grupo: o nome vem do treino, não da rota (erro nº 20)
     val groupsRepo: com.vitoroliveira.gymtracker.domain.repository.MuscleGroupRepository = org.koin.compose.koinInject()

@@ -6,7 +6,9 @@ import com.vitoroliveira.gymtracker.presentation.toUserMessage
 import kotlin.coroutines.cancellation.CancellationException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.vitoroliveira.gymtracker.data.model.MuscleGroup
 import com.vitoroliveira.gymtracker.data.model.Workout
+import com.vitoroliveira.gymtracker.presentation.workout.ActiveWorkoutInfo
 import com.vitoroliveira.gymtracker.presentation.DashboardCalculator
 import com.vitoroliveira.gymtracker.presentation.WeekBucket
 import com.vitoroliveira.gymtracker.domain.repository.MuscleGroupRepository
@@ -45,6 +47,8 @@ data class HomeUiState(
     /** Minha posição na liga da semana (1 = primeiro) e quantos estão nela; null sem liga (migração 015) ou sozinho. */
     val leaguePosition: Int? = null,
     val leagueSize: Int = 0,
+    /** Treino iniciado e não terminado (a Home oferece continuar ou descartar); null se não há. */
+    val activeWorkout: ActiveWorkoutInfo? = null,
     val errorMessage: String? = null
 )
 
@@ -88,8 +92,10 @@ class HomeViewModel(
                 val lastWorkoutGroupName = lastWorkout?.resolveGroupName(muscleGroups.associateBy { it.id })
 
                 val league = leagueQuietly()
+                val active = activeWorkoutQuietly(muscleGroups.associateBy { it.id })
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
+                    activeWorkout = active,
                     leaguePosition = league?.first,
                     leagueSize = league?.second ?: 0,
                     weeklyCount = weeklyCount,
@@ -127,6 +133,38 @@ class HomeViewModel(
         val day = date.dayOfMonth.toString().padStart(2, '0')
         val month = date.monthNumber.toString().padStart(2, '0')
         return "$day/$month"
+    }
+
+    /** Treino em andamento é um aviso: se a consulta falhar, a Home segue sem ele. */
+    private suspend fun activeWorkoutQuietly(groups: Map<String?, MuscleGroup>): ActiveWorkoutInfo? {
+        return try {
+            val w = workoutRepository.getActiveWorkout() ?: return null
+            val id = w.id ?: return null
+            val started = w.startedAt?.let { runCatching { Instant.parse(it) }.getOrNull() }
+            ActiveWorkoutInfo(
+                workoutId = id,
+                groupId = w.muscleGroupId,
+                groupName = w.resolveGroupName(groups) ?: "Treino livre",
+                minutes = started?.let { (Clock.System.now() - it).inWholeMinutes.coerceAtLeast(0) } ?: 0
+            )
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            null
+        }
+    }
+
+    /** Cancela o treino em andamento (apaga ele e as séries); se falhar, o aviso continua e aparece o erro. */
+    fun discardActiveWorkout() {
+        val id = _uiState.value.activeWorkout?.workoutId ?: return
+        viewModelScope.launch {
+            try {
+                workoutRepository.deleteWorkout(id)
+                _uiState.value = _uiState.value.copy(activeWorkout = null)
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                _uiState.value = _uiState.value.copy(errorMessage = e.toUserMessage("Erro ao descartar o treino"))
+            }
+        }
     }
 
     /** (minha posição, tamanho) na liga da semana; null se não há liga, se estou sozinho ou se falhar. */

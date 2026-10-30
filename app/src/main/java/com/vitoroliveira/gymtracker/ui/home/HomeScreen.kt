@@ -29,6 +29,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.vitoroliveira.gymtracker.presentation.viewmodel.HomeUiState
+import com.vitoroliveira.gymtracker.presentation.workout.ActiveWorkoutInfo
+import com.vitoroliveira.gymtracker.presentation.workout.formatElapsedSince
 import com.vitoroliveira.gymtracker.presentation.viewmodel.HomeViewModel
 import com.vitoroliveira.gymtracker.ui.theme.GymTrackerTheme
 import org.koin.compose.viewmodel.koinViewModel
@@ -39,6 +41,7 @@ fun HomeScreen(
     onNavigateToHistory: () -> Unit,
     onNavigateToProfile: () -> Unit,
     onStartWorkoutClick: () -> Unit,
+    onResumeWorkout: (groupId: String?, groupName: String?) -> Unit = { _, _ -> },
     onNavigateToThemes: () -> Unit = {},
     onNavigateToEvolution: () -> Unit = {},
     onNavigateToRecords: () -> Unit = {},
@@ -65,10 +68,53 @@ fun HomeScreen(
         onNavigateToSocial = onNavigateToSocial,
         onClearError = { viewModel.clearError() },
         topSlot = {
-            val pos = uiState.leaguePosition
-            if (pos != null) LeagueChip(pos, uiState.leagueSize, onNavigateToSocial)
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                uiState.activeWorkout?.let { active ->
+                    ActiveWorkoutBanner(
+                        info = active,
+                        onContinue = { onResumeWorkout(active.groupId, active.groupName) },
+                        onDiscard = { viewModel.discardActiveWorkout() }
+                    )
+                }
+                val pos = uiState.leaguePosition
+                if (pos != null) LeagueChip(pos, uiState.leagueSize, onNavigateToSocial)
+            }
         }
     )
+}
+
+/** "Treino em andamento": quem saiu do treino sem terminar volta nele daqui, ou cancela. */
+@Composable
+private fun ActiveWorkoutBanner(info: ActiveWorkoutInfo, onContinue: () -> Unit, onDiscard: () -> Unit) {
+    var confirmDiscard by remember { mutableStateOf(false) }
+    ThemedCard(Modifier.fillMaxWidth(), containerColor = MaterialTheme.colorScheme.primaryContainer) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.PlayArrow, null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                Spacer(Modifier.width(8.dp))
+                Column(Modifier.weight(1f)) {
+                    Text("Treino em andamento", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    Text(
+                        "${info.groupName} · começou ${if (info.minutes < 1) "agora mesmo" else "há ${formatElapsedSince(info.minutes)}"}",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Button(onClick = onContinue, modifier = Modifier.weight(1f)) { Text("Continuar treino") }
+                TextButton(onClick = { confirmDiscard = true }) { Text("Cancelar", color = MaterialTheme.colorScheme.error) }
+            }
+        }
+    }
+    if (confirmDiscard) {
+        AlertDialog(
+            onDismissRequest = { confirmDiscard = false },
+            title = { Text("Cancelar o treino?") },
+            text = { Text("O treino de ${info.groupName} em andamento e as séries já registradas nele serão apagados. Não dá para desfazer.") },
+            confirmButton = { TextButton(onClick = { confirmDiscard = false; onDiscard() }) { Text("Apagar treino", color = MaterialTheme.colorScheme.error) } },
+            dismissButton = { TextButton(onClick = { confirmDiscard = false }) { Text("Voltar") } }
+        )
+    }
 }
 
 /** "2º de 5 na liga da semana" (você e quem você segue); toque abre o Social. */

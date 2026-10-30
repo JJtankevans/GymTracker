@@ -28,6 +28,9 @@ APK certo: os dois artefatos (`gymtracker-debug-apk` e `gymtracker-wear-apk`) da
   - [ ] No **Insano**, o "soco" nos números ao registrar e o pulso das bolinhas/anel estão bons ou exagerados?
   - [ ] Os estilos funcionam com os exercícios extras ("+") e com a faixa de chips que acompanha o exercício.
 
+- [ ] **Treino em andamento na Home**: iniciar um treino, registrar uma série, voltar para a Home pela seta. Aparece o cartão "Treino em andamento" com o grupo e o tempo. "Continuar treino" entra direto (sem a pergunta, com a série que você já fez). "Cancelar" pede confirmação e apaga o treino. Terminar o treino faz o cartão sumir.
+- [ ] **Descanso depois do bloqueio**: registrar uma série (descanso rodando), bloquear o celular por ~20 s, desbloquear e voltar ao app: o tempo deve estar certo na hora e seguir contando sem precisar tocar. Repetir com o descanso acabando enquanto a tela está bloqueada (deve mostrar "BORA!").
+
 ## 2. Evolução e Recordes
 - [ ] **Evolução → Equilíbrio do treino (7 dias)**: barras de Empurrar / Puxar / Pernas / Core e uma frase (só com 8+ séries na semana). Confira se a frase bate com o que você treinou.
 - [ ] Registrar uma medida (cintura), sair da conta, entrar de novo: a medida continua (depende da 014).

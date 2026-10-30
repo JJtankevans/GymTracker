@@ -337,4 +337,32 @@ class WorkoutViewModelTest {
         vm.resumeWorkout(com.vitoroliveira.gymtracker.data.model.Workout(id = "w1", muscleGroupId = "g1", startedAt = "2026-10-20T10:00:00Z"))
         assertEquals(listOf("Supino", "Crucifixo", "Rosca Direta"), vm.uiState.value.exercises.map { it.name })
     }
+
+    // ---- entrar direto no treino em andamento (aviso da Home) ----
+    @Test fun resumeIfActiveEntraNoTreinoSemPerguntar() {
+        workouts.activeWorkout = com.vitoroliveira.gymtracker.data.model.Workout(id = "velho", startedAt = "2026-10-20T10:00:00Z")
+        workouts.sets += com.vitoroliveira.gymtracker.data.model.WorkoutSet(id = "s0", workoutId = "velho", exerciseId = "e1", setNumber = 1, reps = 10, weightKg = 60.0)
+        val vm = vm()
+        vm.startWorkout(null, resumeIfActive = true)
+        val s = vm.uiState.value
+        assertEquals("velho", s.activeWorkout?.id)
+        assertNull(s.activeWorkoutToRecover)
+        assertEquals(1, s.completedSets.size)
+        assertEquals(0, workouts.startCalls)   // não criou outro treino
+    }
+
+    @Test fun semResumeIfActiveContinuaPerguntando() {
+        workouts.activeWorkout = com.vitoroliveira.gymtracker.data.model.Workout(id = "velho")
+        val vm = vm()
+        vm.startWorkout(null)
+        assertEquals("velho", vm.uiState.value.activeWorkoutToRecover?.id)
+        assertNull(vm.uiState.value.activeWorkout)
+    }
+
+    @Test fun resumeIfActiveSemTreinoAtivoInicia() {
+        val vm = vm()
+        vm.startWorkout(null, resumeIfActive = true)
+        assertNotNull(vm.uiState.value.activeWorkout)
+        assertEquals(1, workouts.startCalls)
+    }
 }
