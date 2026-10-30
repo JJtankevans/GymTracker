@@ -171,6 +171,17 @@ Pendente / ideias:
 - **Ideias que ficaram:** salvar o timer de intervalos como treino (precisaria de um exercício "Intervalos"); timer de intervalos vibrar com o app fechado (alarme como o do descanso); zonas também no Histórico do celular (hoje o treino só leva média/máximo); metas de carga na nuvem e no relógio.
 - **Não testado no aparelho:** nada.
 
+## Décima nona rodada (30/10/2026, 8ª sessão na nuvem, com o Thiago acompanhando) — equilíbrio, avisos, segurança e excluir conta
+- **Evolução:** cartão "Equilíbrio do treino (7 dias)" (empurrar x puxar x pernas x core, `MuscleBalance.kt`).
+- **Home:** semanas seguidas batendo a meta (`DashboardCalculator.weekStreak`). **Histórico:** filtro por grupo (`HistoryFilter.kt`).
+- **Avisos:** lembrete "Sua sequência está em risco" (`streakRiskAlert`), canal "Lembretes de treino"; correção do aviso marcado como visto sem permissão de notificação; sem histórico (rede) não avisa "semana sem treino".
+- **Segurança:** CSV com apóstrofo em textos que começam com `=`, `+`, `-` ou `@`; limite de 60 exercícios, 80 caracteres de nome e 500 de anotação ao importar treino por código.
+- **Excluir minha conta:** migração 016 (`delete_my_account()`), `AuthRepository.deleteAccount`, botão no Perfil com confirmação digitada.
+- **Limpeza:** erro 23 (`FinishedWorkoutSummary`). **Docs:** `ROTEIRO_TESTE.md`.
+- **CI:** Android verde em cada commit (um falhou por import e foi corrigido). **Não testado no aparelho:** nada.
+
+
+
 # Anexo: notas detalhadas das sessões de 21 a 27/10/2026 (movidas do CONTEXTO_SESSAO.md em 27/10/2026; retrato daquele momento, ex.: os PRs citados como abertos já foram mergeados)
 
 ### Sessão de 27/10/2026 (nuvem): compartilhar treinos, temas "Loucos" e mais — COMPILADO E TESTADO NO CI, NÃO VISTO NO APARELHO
