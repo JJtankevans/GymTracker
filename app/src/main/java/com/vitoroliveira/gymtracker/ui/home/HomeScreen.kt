@@ -210,6 +210,14 @@ fun WeeklyHistoryCard(uiState: HomeUiState) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            if (uiState.weekStreak > 0) {
+                Text(
+                    if (uiState.weekStreak == 1) "1 semana seguida batendo a meta" else "${uiState.weekStreak} semanas seguidas batendo a meta",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
             Spacer(Modifier.height(8.dp))
             BarChart(
                 values = uiState.weeklyHistory.map { it.count },

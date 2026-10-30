@@ -30,6 +30,8 @@ data class HomeUiState(
     val weeklyCount: Int = 0,
     val weeklyGoal: Int = 3,
     val streakDays: Int = 0,
+    /** Semanas seguidas batendo a meta semanal (a atual conta se já bateu). */
+    val weekStreak: Int = 0,
     /** Últimas 8 semanas (mais antiga primeiro) para o gráfico de frequência. */
     val weeklyHistory: List<WeekBucket> = emptyList(),
     val totalWorkouts: Int = 0,
@@ -79,6 +81,7 @@ class HomeViewModel(
                 val today = Clock.System.todayIn(timeZone)
                 val weeklyCount = DashboardCalculator.weeklyCount(workoutDates, today)
                 val streakDays = DashboardCalculator.streak(workoutDates, today)
+                val weekStreak = DashboardCalculator.weekStreak(workoutDates, today, profile.weeklyGoal)
                 val weeklyHistory = DashboardCalculator.weeklyBuckets(workoutDates, today, weeks = 8)
 
                 val lastWorkout = history.firstOrNull()
@@ -92,6 +95,7 @@ class HomeViewModel(
                     weeklyCount = weeklyCount,
                     weeklyGoal = profile.weeklyGoal,
                     streakDays = streakDays,
+                    weekStreak = weekStreak,
                     weeklyHistory = weeklyHistory,
                     totalWorkouts = history.size,
                     suggestedGroupId = suggestNextGroup(muscleGroups, history),

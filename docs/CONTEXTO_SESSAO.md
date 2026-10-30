@@ -4,10 +4,11 @@ Leia isto primeiro. O histórico longo de decisões, rodada por rodada, está em
 
 **Onde registrar cada coisa:** estado atual e próximos passos → este arquivo; o que foi feito em cada rodada → `PROXIMOS_PASSOS.md`; erros encontrados e como corrigir → `ERROS_CONHECIDOS.md`; tabelas/SQL → `app/docs/supabaseSchema.md` + `docs/supabase/`; social → `SOCIAL_DESIGN.md`; imagens → `IMAGENS_EXERCICIOS.md`. Regras de fim de sessão (avisar, atualizar este arquivo, pedir autorização para commit) estão no `CLAUDE.md` da raiz.
 
-## Sessão de 30/10/2026 (8ª, nuvem): equilíbrio muscular e limpeza — SEM COMPILAR AINDA (precisa do CI)
+## Sessão de 30/10/2026 (8ª, nuvem): equilíbrio muscular, semanas seguidas e limpeza — COMPILADO E TESTADO NO CI, NÃO VISTO NO APARELHO
 - **Pedido:** "trabalha em melhorias para gastar os tokens, pode avançar sem parar". Os PRs #11 e #12 continuam abertos (Thiago ainda não mergeou).
-- **Feito (local, ainda sem commit/CI):** (1) cartão **"Equilíbrio do treino (7 dias)"** na Evolução: empurrar x puxar x pernas x core, com observação quando puxar/empurrar fica abaixo de 70% do outro ou pernas abaixo de 20% das séries de força; regra em `presentation/body/MuscleBalance.kt`, testes em `MuscleBalanceTest.kt`, UI em `ui/body/EvolutionScreen.kt`; (2) erro **23** corrigido (`FinishedWorkoutSummary`).
-- **Não testado:** nada compilado nem rodado (o contêiner não compila). Os testes novos só rodam no CI.
+- **Autorização:** Thiago autorizou commit/push na `claude/noite-melhorias` (PR #12) nesta sessão. Android verde no commit `8ab3c36` (execução 41133843942).
+- **Feito:** (1) cartão **"Equilíbrio do treino (7 dias)"** na Evolução: empurrar x puxar x pernas x core, com observação quando puxar/empurrar fica abaixo de 70% do outro ou pernas abaixo de 20% das séries de força; regra em `presentation/body/MuscleBalance.kt`, testes em `MuscleBalanceTest.kt`, UI em `ui/body/EvolutionScreen.kt`; (2) erro **23** corrigido (`FinishedWorkoutSummary`); (3) **semanas seguidas batendo a meta** no cartão "Frequência" da Home (`DashboardCalculator.weekStreak`, a semana em andamento não quebra a sequência; `HomeUiState.weekStreak`; testes em `DashboardCalculatorTest`).
+- **Não testado no aparelho:** o cartão de equilíbrio (confira com séries reais de empurrar/puxar) e a linha "N semanas seguidas batendo a meta" na Home.
 - **APK certo para testar o PR #12:** execução **40655080077** (artefatos `gymtracker-debug-apk` e `gymtracker-wear-apk`, sempre os dois da mesma execução). O APK do `master` é de 27/10 e não tem as novidades.
 
 ## Sessão noturna de 28/10/2026 (7ª, nuvem, sem o Thiago): temas, Play Protect, relógio, iOS e correções — COMPILADO E TESTADO NO CI, NÃO VISTO NO APARELHO
