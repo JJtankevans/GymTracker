@@ -19,7 +19,12 @@ enum class ThemeCategory(val label: String, val blurb: String) {
 }
 
 /** Estrutura da Home. Cada tema escolhe a sua: não é só cor, é composição. */
-enum class WorkoutLayout { LIST, FOCUS }
+enum class WorkoutLayout(val label: String, val blurb: String) {
+    LIST("Lista", "Todos os exercícios numa lista rolável, com campos para digitar."),
+    FOCUS("Foco", "Um exercício por vez, números grandes e botões de mais e menos."),
+    ARENA("Arena", "Sem rolagem, para o polegar: bolinhas de série, números que mudam arrastando e o botão de registrar que vira a barra de descanso."),
+    RING("Anel", "Um anel no centro: cada segmento é uma série, o anel de dentro conta o descanso e tocar no meio registra.")
+}
 
 enum class HomeLayout { CLASSIC, BENTO, POSTER, TERMINAL, ORBIT, EDITORIAL }
 
@@ -127,3 +132,5 @@ val LocalThemeExtras = compositionLocalOf { ThemeExtras() }
 /** Relógio compartilhado (0..1 a cada 60s) pra a decoração não "reiniciar" ao trocar de tela. */
 val LocalThemeClock = compositionLocalOf<() -> Float> { { 0f } }
 
+/** Estilo de treino escolhido pela pessoa em Aparência; null = o que o tema define. */
+val LocalWorkoutStyle = androidx.compose.runtime.compositionLocalOf<WorkoutLayout?> { null }

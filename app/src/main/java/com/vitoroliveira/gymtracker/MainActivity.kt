@@ -30,11 +30,13 @@ class MainActivity : ComponentActivity() {
             val prefs: ThemePreferences = koinInject()
             val themeId by prefs.themeId.collectAsState()
             val intensity by prefs.intensity.collectAsState()
+            val workoutStyle by prefs.workoutStyle.collectAsState()
             val bodyData by koinInject<com.vitoroliveira.gymtracker.presentation.body.BodyRepository>().data.collectAsState()
             // a cor da capa da música saiu junto com a leitura de notificações (bloqueio do Play Protect, 28/10/2026)
             GymTrackerTheme(spec = AppThemes.byId(themeId), accent = null, intensity = intensity) {
                 androidx.compose.runtime.CompositionLocalProvider(
-                    com.vitoroliveira.gymtracker.ui.components.LocalBodyData provides bodyData
+                    com.vitoroliveira.gymtracker.ui.components.LocalBodyData provides bodyData,
+                    com.vitoroliveira.gymtracker.ui.theme.LocalWorkoutStyle provides workoutStyle
                 ) { GymTrackerNavHost() }
             }
         }

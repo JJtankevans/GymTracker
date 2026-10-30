@@ -284,9 +284,11 @@ fun ActiveWorkoutScreenContent(
                 CircularProgressIndicator()
             }
         } else {
-            if (com.vitoroliveira.gymtracker.ui.theme.LocalThemeExtras.current.workoutLayout ==
-                com.vitoroliveira.gymtracker.ui.theme.WorkoutLayout.FOCUS) {
+            val layout = com.vitoroliveira.gymtracker.ui.theme.LocalWorkoutStyle.current
+                ?: com.vitoroliveira.gymtracker.ui.theme.LocalThemeExtras.current.workoutLayout
+            if (layout != com.vitoroliveira.gymtracker.ui.theme.WorkoutLayout.LIST) {
                 FocusWorkoutBody(
+                    style = layout,
                     uiState = uiState,
                     onAddSet = onAddSet,
                     onStartTimer = onStartTimer,

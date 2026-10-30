@@ -51,6 +51,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun FocusWorkoutBody(
     uiState: WorkoutUiState,
+    /** FOCUS (padrão), ARENA ou RING: só muda o desenho de cada página de exercício. */
+    style: com.vitoroliveira.gymtracker.ui.theme.WorkoutLayout = com.vitoroliveira.gymtracker.ui.theme.WorkoutLayout.FOCUS,
     onAddSet: (exerciseId: String, reps: Int, weightKg: Double) -> Unit,
     onStartTimer: (Int) -> Unit,
     onCancelTimer: () -> Unit,
@@ -125,6 +127,25 @@ fun FocusWorkoutBody(
             val (reps, kg) = inputs[id] ?: Pair(base?.lastReps ?: e.defaultReps, base?.lastWeightKg ?: suggestion?.weightKg ?: 0.0)
             val newRecord = e.id in uiState.newRecordExerciseIds
 
+            if (style == com.vitoroliveira.gymtracker.ui.theme.WorkoutLayout.ARENA || style == com.vitoroliveira.gymtracker.ui.theme.WorkoutLayout.RING) {
+                val data = PageData(
+                    exercise = e, sets = sets, baseline = base, suggestion = suggestion, reps = reps, kg = kg,
+                    newRecord = newRecord, saving = e.id in uiState.savingExerciseIds,
+                    finished = uiState.activeWorkout?.finishedExerciseIds?.contains(e.id) == true,
+                    rest = rest, timer = timer
+                )
+                val actions = PageActions(
+                    setInput = { r, k -> inputs[id] = Pair(r, k) },
+                    register = { e.id?.let { exerciseId -> onAddSet(exerciseId, reps, kg); onStartTimer(rest) } },
+                    editSet = onEditSet,
+                    toggleFinished = { e.id?.let(onToggleExerciseFinished) },
+                    setRest = { rest = it },
+                    cancelTimer = onCancelTimer
+                )
+                if (style == com.vitoroliveira.gymtracker.ui.theme.WorkoutLayout.ARENA) ArenaPage(data, actions) else RingPage(data, actions)
+                return@HorizontalPager
+            }
+
             Column(
                 Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -140,6 +161,8 @@ fun FocusWorkoutBody(
                 if (suggestion != null && suggestion.weightKg != kg) {
                     LoadSuggestionChip(suggestion, onApply = { inputs[id] = reps to it })
                 }
+                com.vitoroliveira.gymtracker.presentation.workout.compareSet(kg, reps, base?.lastWeightKg, base?.lastReps, base?.recordWeightKg)
+                    ?.let { CompareChip(it) }
                 if (newRecord) Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.EmojiEvents, null, tint = cs.tertiary); Spacer(Modifier.width(6.dp))
                     Text("Novo recorde de carga!", color = cs.tertiary, fontWeight = FontWeight.Bold)

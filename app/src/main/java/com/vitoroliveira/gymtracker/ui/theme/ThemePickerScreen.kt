@@ -89,6 +89,7 @@ fun ThemePickerScreen(onBack: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 item(key = "intensity") { IntensityCard(prefs) }
+                item(key = "workout-style") { WorkoutStyleCard(prefs) }
                 ThemeCategory.entries.forEach { category ->
                     val themes = AppThemes.available.filter { it.category == category }
                     if (themes.isEmpty()) return@forEach
@@ -231,6 +232,28 @@ private fun IntensityCard(prefs: ThemePreferences) {
                 }
             }
             Text(current.blurb, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+/** Como a tela de treino ativo é desenhada, independente do tema. */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun WorkoutStyleCard(prefs: ThemePreferences) {
+    val current by prefs.workoutStyle.collectAsState()
+    ThemedCard(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Estilo do treino", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                androidx.compose.material3.FilterChip(current == null, { prefs.setWorkoutStyle(null) }, { Text("Automático") })
+                WorkoutLayout.entries.forEach { l ->
+                    androidx.compose.material3.FilterChip(current == l, { prefs.setWorkoutStyle(l) }, { Text(l.label) })
+                }
+            }
+            Text(
+                current?.blurb ?: "Segue o tema escolhido. Os temas Loucos já usam o Foco.",
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

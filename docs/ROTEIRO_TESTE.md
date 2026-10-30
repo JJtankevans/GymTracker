@@ -21,6 +21,13 @@ APK certo: os dois artefatos (`gymtracker-debug-apk` e `gymtracker-wear-apk`) da
 - [ ] **Exercício só desta sessão**: botão "+" na barra do treino. Escolher do catálogo (ou "Personalizado" com nome livre): o exercício aparece no fim da lista, o Foco vai direto para ele, registra séries normalmente e entra no resumo. Terminar o treino e abrir o grupo: o exercício NÃO está no grupo.
 - [ ] Digitar o nome de um exercício que você já tem (outra caixa/acento): reaproveita, com última carga e recorde. Fechar o app no meio e retomar o treino: o temporário volta (se já tinha série).
 
+- [ ] **Estilo do treino** (Perfil → Aparência → "Estilo do treino"): Automático / Lista / Foco / Arena / Anel. Veja `docs/DESIGN_TREINO_ATIVO.md`.
+  - [ ] **Arena**: cabe tudo sem rolar (teste também com o teclado fechado e em tela pequena)? Arrastar o número para cima/baixo muda o valor com vibração? A comparação ("+2,5 kg vs. última") muda ao mexer na carga? REGISTRAR vira a barra de descanso e tocar nela pula?
+  - [ ] **Anel**: os segmentos acendem a cada série e o anel de dentro conta o descanso? Tocar no meio registra (e, no descanso, pula)? O tamanho do anel está bom?
+  - [ ] **Foco**: a comparação com a última vez e o recorde aparece acima do campo de reps/kg.
+  - [ ] No **Insano**, o "soco" nos números ao registrar e o pulso das bolinhas/anel estão bons ou exagerados?
+  - [ ] Os estilos funcionam com os exercícios extras ("+") e com a faixa de chips que acompanha o exercício.
+
 ## 2. Evolução e Recordes
 - [ ] **Evolução → Equilíbrio do treino (7 dias)**: barras de Empurrar / Puxar / Pernas / Core e uma frase (só com 8+ séries na semana). Confira se a frase bate com o que você treinou.
 - [ ] Registrar uma medida (cintura), sair da conta, entrar de novo: a medida continua (depende da 014).
