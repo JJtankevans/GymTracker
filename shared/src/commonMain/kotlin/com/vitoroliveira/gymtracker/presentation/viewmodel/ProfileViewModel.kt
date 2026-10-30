@@ -30,7 +30,9 @@ data class ProfileUiState(
     /** Meu título de desafio (honra ou falha), se houver. */
     val title: ProfileTitle? = null,
     /** Saindo da conta (enviando o que falta, encerrando a sessão e apagando os dados do aparelho). */
-    val isSigningOut: Boolean = false
+    val isSigningOut: Boolean = false,
+    /** Excluindo a conta de vez (foto, dados no servidor e no aparelho). */
+    val isDeletingAccount: Boolean = false
 )
 
 class ProfileViewModel(
@@ -179,6 +181,34 @@ class ProfileViewModel(
             quietly { authRepository.signOut() }
             quietly { localData?.clear() }
             _uiState.value = _uiState.value.copy(isSigningOut = false, isSignedOut = true)
+        }
+    }
+
+    /**
+     * Exclui a conta de vez: remove a foto do Storage (o banco não apaga arquivos), depois a conta e os dados no servidor
+     * (migração 016) e por fim os dados do aparelho. Se o servidor recusar (sem internet, migração 016 não rodada),
+     * nada além da foto é apagado, a pessoa continua logada e vê o motivo. A tela só chama isto depois de uma confirmação digitada.
+     */
+    fun deleteAccount() {
+        val s = _uiState.value
+        if (s.isDeletingAccount || s.isSigningOut || s.isSignedOut) return
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isDeletingAccount = true, errorMessage = null)
+            try {
+                if (_uiState.value.profile?.avatarUrl != null) quietly { profileRepository.removeAvatar() }
+                authRepository.deleteAccount()
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                val missing = "delete_my_account" in e.message.orEmpty() || "could not find the function" in e.message.orEmpty().lowercase()
+                _uiState.value = _uiState.value.copy(
+                    isDeletingAccount = false,
+                    errorMessage = if (missing) "A exclusão de conta ainda não está ativada no servidor (falta rodar a migração 016)."
+                    else e.toUserMessage("Não foi possível excluir a conta. Seus dados continuam como estavam; confira a internet e tente de novo.")
+                )
+                return@launch
+            }
+            quietly { localData?.clear() }
+            _uiState.value = _uiState.value.copy(isDeletingAccount = false, isSignedOut = true)
         }
     }
 

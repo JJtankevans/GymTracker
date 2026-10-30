@@ -7,6 +7,7 @@ import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.OtpType
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
+import io.github.jan.supabase.postgrest.postgrest
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -44,6 +45,12 @@ class AuthRepositoryImpl(
             if (e is CancellationException) throw e
             supabase.auth.clearSession()
         }
+    }
+
+    /** O servidor apaga o usuário (e tudo em cascata); depois só resta esquecer a sessão salva neste aparelho. */
+    override suspend fun deleteAccount() {
+        supabase.postgrest.rpc("delete_my_account")
+        supabase.auth.clearSession()
     }
 
     override suspend fun awaitSession(): Boolean {

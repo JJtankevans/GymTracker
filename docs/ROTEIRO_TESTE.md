@@ -5,7 +5,7 @@ APK certo: os dois artefatos (`gymtracker-debug-apk` e `gymtracker-wear-apk`) da
 
 ## 0. Antes de tudo
 - [ ] Instalou o APK do celular. Se instalou pelo WhatsApp: o Play Protect bloqueou? (a leitura de notificações foi removida; se bloquear de novo, a causa é outra)
-- [ ] Rodou as migrações **013**, **014** e **015** no Supabase (`docs/supabase/`). Sem elas o app funciona, mas medidas não vão para a nuvem e a liga da semana fica escondida.
+- [ ] Rodou as migrações **013**, **014**, **015** e **016** no Supabase (`docs/supabase/`). Sem elas o app funciona, mas medidas não vão para a nuvem, a liga da semana fica escondida e "Excluir minha conta" avisa que falta a 016.
 - [ ] Entrou na conta e a Home carregou.
 
 ## 1. Home e Histórico
@@ -25,6 +25,11 @@ APK certo: os dois artefatos (`gymtracker-debug-apk` e `gymtracker-wear-apk`) da
 - [ ] Fechamento da semana: domingo depois das 18h ou segunda.
 - [ ] **Sequência em risco**: com 3+ dias seguidos terminando ontem e nenhum treino hoje, depois das 18h chega "Sua sequência está em risco" (uma vez por dia; canal "Lembretes de treino" nas configurações de notificação do Android). Treinou hoje: não avisa.
 - [ ] Negou a permissão antes, depois permitiu: os avisos pendentes devem aparecer (corrigido nesta sessão).
+
+## 3b. Excluir conta (APAGA DE VERDADE)
+- [ ] **Só com uma conta de teste criada para isso, nunca a sua de verdade.** Perfil → "Excluir minha conta": o botão "Excluir tudo" só habilita depois de digitar EXCLUIR.
+- [ ] Com a 016 rodada: volta para a tela de login, e entrar de novo com o mesmo e-mail/senha falha. A foto de perfil some do Storage.
+- [ ] Sem internet (modo avião): mostra o erro de conexão e continua logado, com os dados intactos.
 
 ## 4. Temas (Perfil → Aparência)
 - [ ] 52 temas, 31 Loucos, selo **NOVO** nos 6 últimos; botão de tema aleatório.
