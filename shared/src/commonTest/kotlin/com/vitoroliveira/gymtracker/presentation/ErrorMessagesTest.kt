@@ -46,4 +46,16 @@ class ErrorMessagesTest {
         val msg = RuntimeException("java.lang.NullPointerException at Foo.kt:12").toUserMessage(fb)
         assertEquals(fb, msg)
     }
+
+    @Test fun migracaoDeExcluirContaFaltando() =
+        assertEquals(
+            "A exclusão de conta ainda não está ativada no servidor (falta rodar a migração 016).",
+            RuntimeException("Could not find the function public.delete_my_account without parameters in the schema cache").toUserMessage(fb)
+        )
+
+    @Test fun timeoutNaChamadaDeExcluirContaContinuaSendoErroDeRede() =
+        assertEquals(
+            "Sem conexão com a internet. Verifique sua rede e tente de novo.",
+            RuntimeException("Request timeout has expired [url=https://x.supabase.co/rest/v1/rpc/delete_my_account, request_timeout=30000 ms]").toUserMessage(fb)
+        )
 }

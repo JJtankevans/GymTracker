@@ -199,11 +199,9 @@ class ProfileViewModel(
                 authRepository.deleteAccount()
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
-                val missing = "delete_my_account" in e.message.orEmpty() || "could not find the function" in e.message.orEmpty().lowercase()
                 _uiState.value = _uiState.value.copy(
                     isDeletingAccount = false,
-                    errorMessage = if (missing) "A exclusão de conta ainda não está ativada no servidor (falta rodar a migração 016)."
-                    else e.toUserMessage("Não foi possível excluir a conta. Seus dados continuam como estavam; confira a internet e tente de novo.")
+                    errorMessage = e.toUserMessage("Não foi possível excluir a conta. Seus dados continuam como estavam; confira a internet e tente de novo.")
                 )
                 return@launch
             }

@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
@@ -28,6 +29,8 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -51,6 +54,7 @@ import com.vitoroliveira.gymtracker.presentation.viewmodel.MuscleGroupViewModel
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import com.vitoroliveira.gymtracker.presentation.toUserMessage
 
 private enum class Tab(val label: String) { HOME("Início"), HISTORY("Histórico"), RECORDS("Recordes"), SOCIAL("Social"), PROFILE("Perfil") }
 
@@ -246,6 +250,10 @@ private fun ProfileTab(onSignedOut: () -> Unit) {
     val scope = rememberCoroutineScope()
     var name by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(Unit) { name = runCatching { Services.profiles.getCurrentProfile().username }.getOrNull() }
+    var showDelete by remember { mutableStateOf(false) }
+    var typed by remember { mutableStateOf("") }
+    var deleting by remember { mutableStateOf(false) }
+    var deleteError by remember { mutableStateOf<String?>(null) }
     Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text("Perfil", fontSize = 30.sp, fontWeight = FontWeight.Black)
         Panel {
@@ -258,6 +266,44 @@ private fun ProfileTab(onSignedOut: () -> Unit) {
                 onSignedOut()
             }
         }, modifier = Modifier.fillMaxWidth()) { Text("Sair da conta") }
+        // a App Store exige poder excluir a conta dentro do app
+        TextButton(onClick = { typed = ""; showDelete = true }, enabled = !deleting, modifier = Modifier.fillMaxWidth()) {
+            Text(if (deleting) "Excluindo a conta..." else "Excluir minha conta", color = MaterialTheme.colorScheme.error)
+        }
+        deleteError?.let { Text(it, color = MaterialTheme.colorScheme.error, fontSize = 13.sp) }
+    }
+    if (showDelete) {
+        val confirmed = typed.trim().equals("EXCLUIR", ignoreCase = true)
+        AlertDialog(
+            onDismissRequest = { showDelete = false },
+            title = { Text("Excluir minha conta") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Isto apaga de vez, e não dá para desfazer: treinos, grupos, exercícios, recordes, peso, medidas, posts, seguidores e desafios. Desafios e grupos que você criou somem para todos.")
+                    Text("Para confirmar, digite EXCLUIR:")
+                    OutlinedTextField(value = typed, onValueChange = { typed = it }, singleLine = true)
+                }
+            },
+            confirmButton = {
+                TextButton(enabled = confirmed, onClick = {
+                    showDelete = false
+                    scope.launch {
+                        deleting = true
+                        deleteError = null
+                        try {
+                            Services.auth.deleteAccount()
+                            onSignedOut()
+                        } catch (e: Exception) {
+                            if (e is kotlin.coroutines.cancellation.CancellationException) throw e
+                            deleteError = e.toUserMessage("Não foi possível excluir a conta. Seus dados continuam como estavam; confira a internet e tente de novo.")
+                        } finally {
+                            deleting = false
+                        }
+                    }
+                }) { Text("Excluir tudo", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = { TextButton(onClick = { showDelete = false }) { Text("Cancelar") } }
+        )
     }
 }
 

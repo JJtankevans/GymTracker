@@ -176,7 +176,7 @@ Pendente / ideias:
 - **Home:** semanas seguidas batendo a meta (`DashboardCalculator.weekStreak`). **Histórico:** filtro por grupo (`HistoryFilter.kt`).
 - **Avisos:** lembrete "Sua sequência está em risco" (`streakRiskAlert`), canal "Lembretes de treino"; correção do aviso marcado como visto sem permissão de notificação; sem histórico (rede) não avisa "semana sem treino".
 - **Segurança:** CSV com apóstrofo em textos que começam com `=`, `+`, `-` ou `@`; limite de 60 exercícios, 80 caracteres de nome e 500 de anotação ao importar treino por código.
-- **Excluir minha conta:** migração 016 (`delete_my_account()`), `AuthRepository.deleteAccount`, botão no Perfil com confirmação digitada.
+- **Excluir minha conta:** migração 016 (`delete_my_account()`), `AuthRepository.deleteAccount`, botão no Perfil (celular e iPhone) com confirmação digitada.
 - **Limpeza:** erro 23 (`FinishedWorkoutSummary`). **Docs:** `ROTEIRO_TESTE.md`.
 - **CI:** Android verde em cada commit (um falhou por import e foi corrigido). **Não testado no aparelho:** nada.
 

@@ -32,6 +32,10 @@ fun Throwable.toUserMessage(fallback: String): String {
         "jwt expired" in text || "refresh_token" in text || "not authenticated" in text ||
             "não autenticado" in text -> "Sua sessão expirou. Entre novamente."
 
+        // Função do servidor que ainda não foi criada (migração não rodada)
+        ("could not find the function" in text || "pgrst202" in text) && "delete_my_account" in text ->
+            "A exclusão de conta ainda não está ativada no servidor (falta rodar a migração 016)."
+
         // Banco
         "duplicate key" in text || "23505" in text || "already exists" in text ->
             "Já existe um item com esse nome."
