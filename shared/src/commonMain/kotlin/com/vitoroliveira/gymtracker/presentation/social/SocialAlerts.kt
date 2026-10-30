@@ -72,3 +72,23 @@ fun weekRecapAlert(sessions: List<Pair<LocalDate, Long?>>, goal: Int, now: Local
     }
     return SocialAlert(key, "Sua semana", text)
 }
+
+/** Menor sequência (em dias) que vale um lembrete; abaixo disso não há muito o que proteger. */
+const val STREAK_ALERT_MIN_DAYS = 3
+
+/** Hora a partir da qual o lembrete aparece (antes disso ainda dá tempo de treinar sem pressa). */
+const val STREAK_ALERT_FROM_HOUR = 18
+
+/**
+ * Lembrete de sequência em risco: tem uma sequência de [STREAK_ALERT_MIN_DAYS] dias ou mais terminando ontem e hoje
+ * ainda não teve treino, depois das [STREAK_ALERT_FROM_HOUR]h. Uma vez por dia. [workoutDates] = dias com treino.
+ */
+fun streakRiskAlert(workoutDates: List<LocalDate>, now: LocalDateTime, seen: Set<String>): SocialAlert? {
+    val today = now.date
+    if (now.hour < STREAK_ALERT_FROM_HOUR || today in workoutDates) return null
+    val streak = DashboardCalculator.streak(workoutDates, today)
+    if (streak < STREAK_ALERT_MIN_DAYS) return null
+    val key = "sequencia:$today"
+    if (key in seen) return null
+    return SocialAlert(key, "Sua sequência está em risco", "Você treinou $streak dias seguidos. Um treino hoje mantém a sequência.")
+}

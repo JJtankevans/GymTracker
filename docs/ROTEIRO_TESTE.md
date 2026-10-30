@@ -23,6 +23,7 @@ APK certo: os dois artefatos (`gymtracker-debug-apk` e `gymtracker-wear-apk`) da
 ## 3. Avisos
 - [ ] Permitir notificações. Pedido de seguir e fim de desafio avisam em até ~6 h (o app confere de tempos em tempos, não é instantâneo).
 - [ ] Fechamento da semana: domingo depois das 18h ou segunda.
+- [ ] **Sequência em risco**: com 3+ dias seguidos terminando ontem e nenhum treino hoje, depois das 18h chega "Sua sequência está em risco" (uma vez por dia; canal "Lembretes de treino" nas configurações de notificação do Android). Treinou hoje: não avisa.
 - [ ] Negou a permissão antes, depois permitiu: os avisos pendentes devem aparecer (corrigido nesta sessão).
 
 ## 4. Temas (Perfil → Aparência)

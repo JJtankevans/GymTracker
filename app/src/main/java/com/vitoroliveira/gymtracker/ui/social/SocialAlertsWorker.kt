@@ -31,7 +31,8 @@ import java.util.concurrent.TimeUnit
 import kotlin.time.Clock
 
 /**
- * Confere o Social a cada ~6 h (com internet) e avisa por notificação: pedido para seguir e desafio que terminou.
+ * Confere o Social a cada ~6 h (com internet) e avisa por notificação: pedido para seguir, desafio que terminou,
+ * fechamento da semana e sequência de treinos em risco (depois das 18h, se ainda não treinou hoje).
  * Sem servidor de push: o próprio app olha. Cada aviso aparece uma vez só (chaves guardadas no aparelho).
  */
 class SocialAlertsWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params), KoinComponent {
@@ -56,12 +57,17 @@ class SocialAlertsWorker(context: Context, params: WorkerParameters) : Coroutine
                 seen = seen,
                 now = Clock.System.now()
             )
-            // fechamento da semana (domingo à noite ou segunda), mesmo sem nada do Social
-            val week = runCatching { weekAlert(seen) }.getOrNull()
-            val all = alerts.take(3) + listOfNotNull(week)
+            // lembretes de treino (mesmo sem nada do Social): fechamento da semana e sequência em risco.
+            // Sem o histórico (rede falhou) não avisa nada: uma lista vazia diria "semana sem treino" por engano.
+            val sessions = runCatching { trainingSessions() }.getOrNull()
+            val now = Clock.System.now().toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault())
+            val goal = runCatching { profiles.getCurrentProfile().weeklyGoal }.getOrDefault(0)
+            val week = sessions?.let { com.vitoroliveira.gymtracker.presentation.social.weekRecapAlert(it, goal, now, seen) }
+            val streak = sessions?.let { com.vitoroliveira.gymtracker.presentation.social.streakRiskAlert(it.map { s -> s.first }, now, seen) }
+            val all = alerts.take(3) + listOfNotNull(week, streak)
             if (all.isNotEmpty()) {
                 // só marca como visto o que foi mesmo mostrado: sem a permissão de notificação, o aviso fica para depois
-                val shown = all.filterIndexed { i, a -> notify(a.title, a.text, i) }
+                val shown = all.filterIndexed { i, a -> notify(a.title, a.text, i, reminder = a.key.startsWith("semana:") || a.key.startsWith("sequencia:")) }
                 if (shown.isNotEmpty()) {
                     // guarda as chaves avisadas (as 200 mais recentes bastam)
                     prefs.edit().putStringSet(KEY_SEEN, (seen + shown.map { it.key }).toList().takeLast(200).toSet()).apply()
@@ -74,31 +80,32 @@ class SocialAlertsWorker(context: Context, params: WorkerParameters) : Coroutine
         }
     }
 
-    private suspend fun weekAlert(seen: Set<String>): com.vitoroliveira.gymtracker.presentation.social.SocialAlert? {
+    /** Treinos como (dia, minutos) no fuso do aparelho, para os lembretes. */
+    private suspend fun trainingSessions(): List<Pair<kotlinx.datetime.LocalDate, Long?>> {
         val zone = kotlinx.datetime.TimeZone.currentSystemDefault()
-        val now = Clock.System.now().toLocalDateTime(zone)
-        val sessions = workouts.getHistory().mapNotNull { w ->
+        return workouts.getHistory().mapNotNull { w ->
             val start = w.startedAt?.let { runCatching { kotlin.time.Instant.parse(it) }.getOrNull() } ?: return@mapNotNull null
             val end = w.finishedAt?.let { runCatching { kotlin.time.Instant.parse(it) }.getOrNull() }
             start.toLocalDateTime(zone).date to end?.let { (it - start).inWholeMinutes }
         }
-        val goal = runCatching { profiles.getCurrentProfile().weeklyGoal }.getOrDefault(0)
-        return com.vitoroliveira.gymtracker.presentation.social.weekRecapAlert(sessions, goal, now, seen)
     }
 
     /** True se a notificação foi enviada ao sistema (false sem a permissão de notificação). */
-    private fun notify(title: String, text: String, index: Int): Boolean {
+    private fun notify(title: String, text: String, index: Int, reminder: Boolean): Boolean {
         val ctx = applicationContext
         if (Build.VERSION.SDK_INT >= 33 &&
             ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
         ) return false
-        ctx.getSystemService(NotificationManager::class.java)
-            ?.createNotificationChannel(NotificationChannel(CHANNEL, "Social (seguir e desafios)", NotificationManager.IMPORTANCE_DEFAULT))
+        val channel = if (reminder) CHANNEL_REMINDERS else CHANNEL
+        ctx.getSystemService(NotificationManager::class.java)?.apply {
+            createNotificationChannel(NotificationChannel(CHANNEL, "Social (seguir e desafios)", NotificationManager.IMPORTANCE_DEFAULT))
+            createNotificationChannel(NotificationChannel(CHANNEL_REMINDERS, "Lembretes de treino", NotificationManager.IMPORTANCE_DEFAULT))
+        }
         val open = PendingIntent.getActivity(
             ctx, 70, Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
-        val n = NotificationCompat.Builder(ctx, CHANNEL)
+        val n = NotificationCompat.Builder(ctx, channel)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(title)
             .setContentText(text)
@@ -116,6 +123,7 @@ class SocialAlertsWorker(context: Context, params: WorkerParameters) : Coroutine
 
     companion object {
         private const val CHANNEL = "social"
+        private const val CHANNEL_REMINDERS = "lembretes"
         private const val NOTIF_BASE = 300
         private const val PREFS = "social_alerts"
         private const val KEY_SEEN = "seen"

@@ -59,4 +59,36 @@ class SocialAlertsTest {
         assertEquals("1 treino · 40 min. Faltou 3 para a meta de 4.",
             weekRecapAlert(listOf(d(10, 20) to 40L), 4, kotlinx.datetime.LocalDateTime(2026, 10, 26, 9, 0), emptySet())?.text)
     }
+
+    // ---- sequência em risco ----
+    private fun dia(dia: Int, mes: Int = 10) = kotlinx.datetime.LocalDate(2026, mes, dia)
+    private val tresDias = listOf(dia(25), dia(26), dia(27)) // domingo a terça
+    private fun quarta(h: Int) = kotlinx.datetime.LocalDateTime(2026, 10, 28, h, 0)
+
+    @Test fun avisaSequenciaEmRiscoDepoisDas18() {
+        val a = streakRiskAlert(tresDias, quarta(19), emptySet())
+        assertEquals("sequencia:2026-10-28", a?.key)
+        assertEquals("Você treinou 3 dias seguidos. Um treino hoje mantém a sequência.", a?.text)
+    }
+
+    @Test fun naoAvisaDeManhaNemDeTardeCedo() {
+        assertEquals(null, streakRiskAlert(tresDias, quarta(9), emptySet()))
+        assertEquals(null, streakRiskAlert(tresDias, quarta(17), emptySet()))
+    }
+
+    @Test fun naoAvisaSeJaTreinouHoje() {
+        assertEquals(null, streakRiskAlert(tresDias + dia(28), quarta(20), emptySet()))
+    }
+
+    @Test fun naoAvisaSequenciaCurtaOuJaQuebrada() {
+        assertEquals(null, streakRiskAlert(listOf(dia(26), dia(27)), quarta(20), emptySet()))      // só 2 dias
+        assertEquals(null, streakRiskAlert(tresDias, kotlinx.datetime.LocalDateTime(2026, 10, 29, 20, 0), emptySet())) // terminou anteontem
+        assertEquals(null, streakRiskAlert(emptyList(), quarta(20), emptySet()))
+    }
+
+    @Test fun avisaUmaVezPorDia() {
+        assertEquals(null, streakRiskAlert(tresDias, quarta(21), setOf("sequencia:2026-10-28")))
+        // dois dias depois, sem treino no meio: a sequência quebrou, nada a proteger
+        assertEquals(null, streakRiskAlert(tresDias + dia(28), kotlinx.datetime.LocalDateTime(2026, 10, 30, 20, 0), emptySet()))
+    }
 }
