@@ -40,7 +40,7 @@ fun setLimitMessage(exercise: Exercise): String =
         "(${exercise.defaultSets} do plano + $EXTRA_SETS_ALLOWED extras)."
 
 /** Resumo mostrado ao terminar o treino. */
-data class WorkoutSummary(
+data class FinishedWorkoutSummary(
     val durationMinutes: Long,
     val totalSets: Int,
     val totalReps: Int,
@@ -63,7 +63,7 @@ data class WorkoutUiState(
     val baselines: Map<String, ExerciseBaseline> = emptyMap(),
     /** Exercícios em que o usuário já bateu recorde neste treino (recalculado a cada série registrada, editada ou apagada). */
     val newRecordExerciseIds: Set<String> = emptySet(),
-    val summary: WorkoutSummary? = null,
+    val summary: FinishedWorkoutSummary? = null,
     /** Exercícios com série sendo gravada agora: o botão "Registrar série" fica desligado (evita série duplicada no toque duplo). */
     val savingExerciseIds: Set<String> = emptySet(),
     /** Sobe 1 cada vez que uma série registrada ou editada AGORA bate um recorde novo: dispara o confete (retomar o treino não dispara). */
@@ -411,10 +411,10 @@ class WorkoutViewModel(
         }
     }
 
-    private fun buildSummary(state: WorkoutUiState): WorkoutSummary {
+    private fun buildSummary(state: WorkoutUiState): FinishedWorkoutSummary {
         val sets = state.completedSets
         val names = state.exercises.associate { it.id to it.name }
-        return WorkoutSummary(
+        return FinishedWorkoutSummary(
             durationMinutes = _elapsedSeconds.value / 60,
             totalSets = sets.size,
             totalReps = sets.sumOf { it.reps },

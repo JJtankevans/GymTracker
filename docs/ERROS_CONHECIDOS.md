@@ -23,11 +23,10 @@ Os itens desta seção (5 a 13) foram resolvidos em 27/10/2026; ver "Corrigidos"
 
 ## Baixa prioridade
 
-Corrigidos em 28/10/2026 (branch `claude/noite-melhorias`): 14 a 22 e 24 a 28 (ver "Corrigidos"). Restam:
+Corrigidos em 28/10/2026 (branch `claude/noite-melhorias`): 14 a 22 e 24 a 28; o 23 em 30/10/2026 (ver "Corrigidos"). Não resta nenhum.
 
 | # | Problema | Onde | Como corrigir |
 |---|----------|------|---------------|
-| 23 | Duas classes `WorkoutSummary` (fim do treino e detalhe do treino) em pacotes diferentes | `presentation/viewmodel/WorkoutViewModel.kt:29`, `presentation/workout/WorkoutSummary.kt:12` | renomear a do fim do treino (ex.: `FinishedWorkoutSummary`); só organização |
 
 ## Configuração e limpeza do repositório
 
@@ -114,3 +113,6 @@ Compilados e testados no CI; **ainda não vistos no aparelho**.
 
 #### 7. "Sair da conta" sem internet podia fechar o app
 - **Correção:** `ProfileViewModel.signOut` trata as falhas de cada etapa, e `AuthRepositoryImpl.signOut` apaga a sessão salva no aparelho (`clearSession`) quando o pedido de logout ao servidor falha; assim a tela de abertura não entra de novo na conta.
+
+### Baixa prioridade (30/10/2026)
+- **23:** a classe do fim do treino (`presentation/viewmodel/WorkoutViewModel.kt`) agora se chama `FinishedWorkoutSummary`; `WorkoutSummary` ficou só para o detalhe do treino (`presentation/workout/WorkoutSummary.kt`). Só renomeação.

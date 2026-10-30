@@ -1,8 +1,14 @@
-# GymTracker — contexto para retomar (atualizado em 28/10/2026, 7ª sessão — noite)
+# GymTracker — contexto para retomar (atualizado em 30/10/2026, 8ª sessão)
 
 Leia isto primeiro. O histórico longo de decisões, rodada por rodada, está em `docs/PROXIMOS_PASSOS.md` (as notas detalhadas das sessões de 21 a 27/10 estão no anexo do fim); referências de design em `docs/REFERENCIAS_DESIGN.md`; visão geral do projeto no `README.md` da raiz.
 
 **Onde registrar cada coisa:** estado atual e próximos passos → este arquivo; o que foi feito em cada rodada → `PROXIMOS_PASSOS.md`; erros encontrados e como corrigir → `ERROS_CONHECIDOS.md`; tabelas/SQL → `app/docs/supabaseSchema.md` + `docs/supabase/`; social → `SOCIAL_DESIGN.md`; imagens → `IMAGENS_EXERCICIOS.md`. Regras de fim de sessão (avisar, atualizar este arquivo, pedir autorização para commit) estão no `CLAUDE.md` da raiz.
+
+## Sessão de 30/10/2026 (8ª, nuvem): equilíbrio muscular e limpeza — SEM COMPILAR AINDA (precisa do CI)
+- **Pedido:** "trabalha em melhorias para gastar os tokens, pode avançar sem parar". Os PRs #11 e #12 continuam abertos (Thiago ainda não mergeou).
+- **Feito (local, ainda sem commit/CI):** (1) cartão **"Equilíbrio do treino (7 dias)"** na Evolução: empurrar x puxar x pernas x core, com observação quando puxar/empurrar fica abaixo de 70% do outro ou pernas abaixo de 20% das séries de força; regra em `presentation/body/MuscleBalance.kt`, testes em `MuscleBalanceTest.kt`, UI em `ui/body/EvolutionScreen.kt`; (2) erro **23** corrigido (`FinishedWorkoutSummary`).
+- **Não testado:** nada compilado nem rodado (o contêiner não compila). Os testes novos só rodam no CI.
+- **APK certo para testar o PR #12:** execução **40655080077** (artefatos `gymtracker-debug-apk` e `gymtracker-wear-apk`, sempre os dois da mesma execução). O APK do `master` é de 27/10 e não tem as novidades.
 
 ## Sessão noturna de 28/10/2026 (7ª, nuvem, sem o Thiago): temas, Play Protect, relógio, iOS e correções — COMPILADO E TESTADO NO CI, NÃO VISTO NO APARELHO
 - **Pedido:** "gaste os tokens da noite fazendo melhorias, tanto no relógio quanto no app; 8 a 10 temas Loucos; iOS se der; faça o PR e o contexto; não me pergunte nada".

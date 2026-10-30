@@ -64,7 +64,7 @@ import com.vitoroliveira.gymtracker.data.model.ExerciseBaseline
 import com.vitoroliveira.gymtracker.data.model.Workout
 import com.vitoroliveira.gymtracker.data.model.WorkoutSet
 import com.vitoroliveira.gymtracker.presentation.TimerState
-import com.vitoroliveira.gymtracker.presentation.viewmodel.WorkoutSummary
+import com.vitoroliveira.gymtracker.presentation.viewmodel.FinishedWorkoutSummary
 import com.vitoroliveira.gymtracker.presentation.viewmodel.WorkoutUiState
 import com.vitoroliveira.gymtracker.presentation.viewmodel.WorkoutViewModel
 import com.vitoroliveira.gymtracker.ui.theme.GymTrackerTheme
@@ -743,7 +743,7 @@ private fun EditSetDialog(
 }
 
 @Composable
-fun WorkoutSummaryDialog(summary: WorkoutSummary, onDone: () -> Unit, onShare: (() -> Unit)? = null) {
+fun WorkoutSummaryDialog(summary: FinishedWorkoutSummary, onDone: () -> Unit, onShare: (() -> Unit)? = null) {
     AlertDialog(
         onDismissRequest = { },
         title = { Text("Treino concluído!") },
