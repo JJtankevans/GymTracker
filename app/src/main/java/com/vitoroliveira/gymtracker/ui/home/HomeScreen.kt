@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -77,7 +78,10 @@ fun HomeScreen(
                     )
                 }
                 val pos = uiState.leaguePosition
-                if (pos != null) LeagueChip(pos, uiState.leagueSize, onNavigateToSocial)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    uiState.rank?.let { RankChip(it, onNavigateToSocial) }
+                    if (pos != null) LeagueChip(pos, uiState.leagueSize, onNavigateToSocial)
+                }
             }
         }
     )
@@ -115,6 +119,17 @@ private fun ActiveWorkoutBanner(info: ActiveWorkoutInfo, onContinue: () -> Unit,
             dismissButton = { TextButton(onClick = { confirmDiscard = false }) { Text("Voltar") } }
         )
     }
+}
+
+/** "Ouro II · 62 RP": o elo na ranqueada, na cor do elo; toque abre o Social. */
+@Composable
+private fun RankChip(rank: com.vitoroliveira.gymtracker.presentation.ranked.Rank, onClick: () -> Unit) {
+    val color = androidx.compose.ui.graphics.Color(rank.tier.colorHex)
+    androidx.compose.material3.AssistChip(
+        onClick = onClick,
+        label = { Text(if (rank.isTop) "${rank.label} · ${rank.rp} RP" else "${rank.label} · ${rank.rpInDivision} RP", fontWeight = FontWeight.Bold) },
+        leadingIcon = { Icon(Icons.Default.Shield, contentDescription = null, tint = color) }
+    )
 }
 
 /** "2º de 5 na liga da semana" (você e quem você segue); toque abre o Social. */

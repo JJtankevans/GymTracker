@@ -49,6 +49,8 @@ data class HomeUiState(
     val leagueSize: Int = 0,
     /** Treino iniciado e não terminado (a Home oferece continuar ou descartar); null se não há. */
     val activeWorkout: ActiveWorkoutInfo? = null,
+    /** Meu elo na ranqueada (migração 018); null se não entrei ou se a migração não rodou. */
+    val rank: com.vitoroliveira.gymtracker.presentation.ranked.Rank? = null,
     val errorMessage: String? = null
 )
 
@@ -56,7 +58,8 @@ class HomeViewModel(
     private val workoutRepository: WorkoutRepository,
     private val profileRepository: ProfileRepository,
     private val muscleGroupRepository: MuscleGroupRepository,
-    private val socialRepository: com.vitoroliveira.gymtracker.domain.repository.SocialRepository? = null
+    private val socialRepository: com.vitoroliveira.gymtracker.domain.repository.SocialRepository? = null,
+    private val rankedRepository: com.vitoroliveira.gymtracker.domain.repository.RankedRepository? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -93,9 +96,11 @@ class HomeViewModel(
 
                 val league = leagueQuietly()
                 val active = activeWorkoutQuietly(muscleGroups.associateBy { it.id })
+                val rank = rankQuietly()
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     activeWorkout = active,
+                    rank = rank,
                     leaguePosition = league?.first,
                     leagueSize = league?.second ?: 0,
                     weeklyCount = weeklyCount,
@@ -164,6 +169,17 @@ class HomeViewModel(
                 if (e is CancellationException) throw e
                 _uiState.value = _uiState.value.copy(errorMessage = e.toUserMessage("Erro ao descartar o treino"))
             }
+        }
+    }
+
+    /** O elo é um enfeite: sem entrar na ranqueada ou sem a migração 018, a Home segue sem o chip. */
+    private suspend fun rankQuietly(): com.vitoroliveira.gymtracker.presentation.ranked.Rank? {
+        val repo = rankedRepository ?: return null
+        return try {
+            repo.player()?.let { com.vitoroliveira.gymtracker.presentation.ranked.rankFor(it.rp) }
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            null
         }
     }
 

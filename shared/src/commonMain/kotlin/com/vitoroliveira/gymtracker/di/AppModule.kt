@@ -51,7 +51,7 @@ fun appModule(supabaseClient: SupabaseClient) = module {
     // LocalUserData vem do módulo do app (dados guardados no aparelho, apagados ao sair da conta)
     viewModel { ProfileViewModel(get(), get(), get(), get()) }
     viewModel { WorkoutViewModel(get(), get()) }
-    viewModel { HomeViewModel(get(), get(), get(), get()) }
+    viewModel { HomeViewModel(get(), get(), get(), get(), get()) }
     viewModel { HistoryViewModel(get(), get()) }
     viewModel { com.vitoroliveira.gymtracker.presentation.records.RecordsViewModel(get(), get()) }
     viewModel { com.vitoroliveira.gymtracker.presentation.social.SocialViewModel(get()) }
