@@ -305,21 +305,21 @@ class SocialViewModel(
 
     fun loadGroupBoard(id: String) {
         viewModelScope.launch {
-            try { update { copy(groupBoards = groupBoards + (id to repo.groupBoard(id))) } }
+            try { val rows = repo.groupBoard(id); update { copy(groupBoards = groupBoards + (id to rows)) } }
             catch (e: Exception) { if (e is CancellationException) throw e }
         }
     }
 
     fun loadGroupStreak(id: String) {
         viewModelScope.launch {
-            try { update { copy(groupStreaks = groupStreaks + (id to repo.groupStreak(id))) } }
+            try { val weeks = repo.groupStreak(id); update { copy(groupStreaks = groupStreaks + (id to weeks)) } }
             catch (e: Exception) { if (e is CancellationException) throw e }
         }
     }
 
     fun loadGroupMessages(id: String) {
         viewModelScope.launch {
-            try { update { copy(groupMessages = groupMessages + (id to repo.groupMessages(id))) } }
+            try { val list = repo.groupMessages(id); update { copy(groupMessages = groupMessages + (id to list)) } }
             catch (e: Exception) { if (e is CancellationException) throw e }
         }
     }
