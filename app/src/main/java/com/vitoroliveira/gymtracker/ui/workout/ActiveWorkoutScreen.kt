@@ -134,8 +134,11 @@ fun ActiveWorkoutScreen(
             val visible = lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
             when {
                 t.isFinished && prev?.isFinished != true -> {
-                    context.restFinishedFeedback()
-                    if (visible) restNotifier.cancel() else restNotifier.showFinished()
+                    // quem avisa primeiro (este código ou o alarme do sistema) avisa; o outro não repete
+                    val first = RestAlarm.claim(RestAlarm.scheduledEndsAt)
+                    RestAlarm.cancel(context)
+                    if (first) context.restFinishedFeedback()
+                    if (visible) restNotifier.cancel() else if (first) restNotifier.showFinished()
                 }
                 t.isRunning && (prev == null || !prev.isRunning || t.totalSeconds != prev.totalSeconds || t.remainingSeconds > prev.remainingSeconds) -> {
                     if (Build.VERSION.SDK_INT >= 33 && !restNotifier.canNotify() && !askedNotificationPermission) {
@@ -143,12 +146,27 @@ fun ActiveWorkoutScreen(
                         notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
                     }
                     restNotifier.showCountdown(t.remainingSeconds)
+                    RestAlarm.schedule(context, t.remainingSeconds) // acorda o celular no fim, mesmo bloqueado
                 }
-                !t.isRunning && !t.isFinished -> restNotifier.cancel() // pausado ou cancelado
+                !t.isRunning && !t.isFinished -> { restNotifier.cancel(); RestAlarm.cancel(context) } // pausado ou cancelado
             }
         }
     }
-    DisposableEffect(Unit) { onDispose { restNotifier.cancel() } }
+    DisposableEffect(Unit) { onDispose { restNotifier.cancel(); RestAlarm.cancel(context) } }
+
+    // O treino está na tela? Com ele visível o próprio app avisa o fim do descanso; o alarme só vale com a tela bloqueada/fora do app.
+    DisposableEffect(lifecycleOwner) {
+        RestAlarm.screenVisible = lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_RESUME -> RestAlarm.screenVisible = true
+                Lifecycle.Event.ON_PAUSE -> RestAlarm.screenVisible = false
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer); RestAlarm.screenVisible = false }
+    }
 
     // Voltando do bloqueio de tela o descanso podia ficar parado na tela até um toque (a contagem seguia, o desenho não).
     // Enquanto a tela está visível: recalcula o descanso do prazo (também religa a contagem se ela tiver parado) e

@@ -29,6 +29,7 @@ APK certo: os dois artefatos (`gymtracker-debug-apk` e `gymtracker-wear-apk`) da
   - [ ] Os estilos funcionam com os exercícios extras ("+") e com a faixa de chips que acompanha o exercício.
 
 - [ ] **Treino em andamento na Home**: iniciar um treino, registrar uma série, voltar para a Home pela seta. Aparece o cartão "Treino em andamento" com o grupo e o tempo. "Continuar treino" entra direto (sem a pergunta, com a série que você já fez). "Cancelar" pede confirmação e apaga o treino. Terminar o treino faz o cartão sumir.
+- [ ] **Alarme do fim do descanso**: registrar uma série (descanso de 60 s), **bloquear o celular e deixar parado**. No fim do descanso o celular deve **vibrar** (padrão longo) e mostrar "Descanso acabou" na tela de bloqueio, mesmo se estiver no silencioso. Repetir com o app fechado pelo recentes. Com o treino aberto na tela, deve avisar uma vez só (sem vibrar em dobro). Pular o descanso (ou pausar) antes do fim: o alarme não pode tocar depois.
 - [ ] **Descanso depois do bloqueio**: registrar uma série (descanso rodando), bloquear o celular por ~20 s, desbloquear e voltar ao app: o tempo deve estar certo na hora e seguir contando sem precisar tocar. Repetir com o descanso acabando enquanto a tela está bloqueada (deve mostrar "BORA!").
 
 ## 2. Evolução e Recordes

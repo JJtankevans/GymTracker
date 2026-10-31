@@ -8,6 +8,9 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <!-- aviso de fim do descanso com a tela bloqueada (pedida só na primeira vez que o timer roda) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- alarme do fim do descanso com a tela bloqueada: exato quando o sistema permite (no Android 13+ o USE_EXACT_ALARM vem concedido) -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
 
     <application
         android:name=".GymTrackerApplication"
@@ -32,6 +35,9 @@
                 <data android:scheme="wear" android:host="*" android:pathPrefix="/gymtracker/treino/" />
             </intent-filter>
         </service>
+        <receiver
+            android:name=".ui.workout.RestAlarmReceiver"
+            android:exported="false" />
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.files"
