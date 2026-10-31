@@ -201,7 +201,7 @@ internal fun DrawScope.drawNeonSign(colors: List<Color>, t: Float, level: Int) {
             drawPath(path, c.a(al * f), style = Stroke(wd.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
         }
     }
-    fun poly(vararg pts: Offset, closed: Boolean = false) = Path().apply {
+    fun poly(pts: List<Offset>, closed: Boolean = false) = Path().apply {
         pts.forEachIndexed { i, p -> if (i == 0) moveTo(p.x, p.y) else lineTo(p.x, p.y) }
         if (closed) close()
     }
@@ -210,18 +210,18 @@ internal fun DrawScope.drawNeonSign(colors: List<Color>, t: Float, level: Int) {
     tube(Path().apply { addOval(Rect(Offset(w * 0.78f, h * 0.17f + bob), w * 0.10f)) }, pink, flick(0))
     // raio
     val bx = w * 0.20f; val by = h * 0.26f - bob
-    tube(poly(Offset(bx + 18.dp.toPx(), by - 40.dp.toPx()), Offset(bx - 8.dp.toPx(), by + 4.dp.toPx()), Offset(bx + 10.dp.toPx(), by + 4.dp.toPx()), Offset(bx - 12.dp.toPx(), by + 44.dp.toPx())), cyan, flick(1))
+    tube(poly(listOf(Offset(bx + 18.dp.toPx(), by - 40.dp.toPx()), Offset(bx - 8.dp.toPx(), by + 4.dp.toPx()), Offset(bx + 10.dp.toPx(), by + 4.dp.toPx()), Offset(bx - 12.dp.toPx(), by + 44.dp.toPx()))), cyan, flick(1))
     // triângulo
     val tx = w * 0.80f; val ty = h * 0.60f + bob
-    tube(poly(Offset(tx, ty - 36.dp.toPx()), Offset(tx + 34.dp.toPx(), ty + 26.dp.toPx()), Offset(tx - 34.dp.toPx(), ty + 26.dp.toPx()), closed = true), cyan, flick(2))
+    tube(poly(listOf(Offset(tx, ty - 36.dp.toPx()), Offset(tx + 34.dp.toPx(), ty + 26.dp.toPx()), Offset(tx - 34.dp.toPx(), ty + 26.dp.toPx())), closed = true), cyan, flick(2))
     // batimento no rodapé
     val zy = h * 0.88f
-    tube(poly(Offset(w * 0.08f, zy), Offset(w * 0.30f, zy), Offset(w * 0.36f, zy - 26.dp.toPx()), Offset(w * 0.42f, zy + 22.dp.toPx()), Offset(w * 0.48f, zy), Offset(w * 0.92f, zy)), pink, flick(3))
+    tube(poly(listOf(Offset(w * 0.08f, zy), Offset(w * 0.30f, zy), Offset(w * 0.36f, zy - 26.dp.toPx()), Offset(w * 0.42f, zy + 22.dp.toPx()), Offset(w * 0.48f, zy), Offset(w * 0.92f, zy))), pink, flick(3))
     if (level >= 1) tube(Path().apply { addOval(Rect(Offset(w * 0.25f, h * 0.76f - bob), w * 0.07f)) }, cyan, flick(4))
     if (level >= 2) {
         val sx = w * 0.55f; val sy = h * 0.48f
         val star = (0..10).map { k -> val a = (-90f + k * 144f) * PI.toFloat() / 180f; Offset(sx + cos(a) * 30.dp.toPx(), sy + sin(a) * 30.dp.toPx()) }
-        tube(poly(*star.toTypedArray()), pink, flick(5))
+        tube(poly(star), pink, flick(5))
     }
 }
 
