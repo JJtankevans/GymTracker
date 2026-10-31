@@ -36,6 +36,10 @@ fun Throwable.toUserMessage(fallback: String): String {
         ("could not find the function" in text || "pgrst202" in text) && "delete_my_account" in text ->
             "A exclusão de conta ainda não está ativada no servidor (falta rodar a migração 016)."
 
+        // Coluna de uma migração que ainda não rodou (PostgREST: "Could not find the 'cover' column of 'groups'...")
+        "could not find the" in text && "column" in text && listOf("cover", "accent_hex", "icon", "pinned_message", "weekly_goal", "prize").any { "'$it'" in text } ->
+            "A personalização de grupos e desafios ainda não está ativada no servidor (falta rodar a migração 017)."
+
         // Banco
         "duplicate key" in text || "23505" in text || "already exists" in text ->
             "Já existe um item com esse nome."

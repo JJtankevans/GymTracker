@@ -58,4 +58,10 @@ class ErrorMessagesTest {
             "Sem conexão com a internet. Verifique sua rede e tente de novo.",
             RuntimeException("Request timeout has expired [url=https://x.supabase.co/rest/v1/rpc/delete_my_account, request_timeout=30000 ms]").toUserMessage(fb)
         )
+
+    @Test fun migracaoDePersonalizacaoFaltando() =
+        assertEquals(
+            "A personalização de grupos e desafios ainda não está ativada no servidor (falta rodar a migração 017).",
+            RuntimeException("Could not find the 'accent_hex' column of 'groups' in the schema cache").toUserMessage(fb)
+        )
 }

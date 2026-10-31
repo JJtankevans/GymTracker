@@ -111,15 +111,22 @@ fun GroupDialog(onConfirm: (GroupForm) -> Unit, onDismiss: () -> Unit) {
     var description by remember { mutableStateOf("") }
     var isPublic by remember { mutableStateOf(false) }
     var maxText by remember { mutableStateOf("") }
+    var look by remember { mutableStateOf(com.vitoroliveira.gymtracker.presentation.social.Look()) }
+    var goalText by remember { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Novo grupo") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                IdentityPicker(look, onChange = { look = it })
                 OutlinedTextField(name, { name = it.take(60) }, label = { Text("Nome") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 OutlinedTextField(description, { description = it.take(500) }, label = { Text("Descrição (opcional)") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
                 OutlinedTextField(
                     maxText, { maxText = it.filter(Char::isDigit).take(3) }, label = { Text("Limite de membros (opcional)") },
+                    singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    goalText, { goalText = it.filter(Char::isDigit).take(3) }, label = { Text("Meta de treinos do grupo por semana (opcional)") },
                     singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth()
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -134,7 +141,7 @@ fun GroupDialog(onConfirm: (GroupForm) -> Unit, onDismiss: () -> Unit) {
                 }
             }
         },
-        confirmButton = { Button({ onConfirm(GroupForm(name, description, isPublic, maxText.toIntOrNull())) }) { Text("Criar") } },
+        confirmButton = { Button({ onConfirm(GroupForm(name, description, isPublic, maxText.toIntOrNull(), look, goalText.toIntOrNull())) }) { Text("Criar") } },
         dismissButton = { TextButton(onDismiss) { Text("Cancelar") } }
     )
 }
@@ -169,6 +176,8 @@ fun ChallengeDialog(myGroups: List<SocialGroup>, onConfirm: (ChallengeForm) -> U
     var teamsText by remember { mutableStateOf("") }
     var failText by remember { mutableStateOf("") }
     var streakText by remember { mutableStateOf("") }
+    var look by remember { mutableStateOf(com.vitoroliveira.gymtracker.presentation.social.Look()) }
+    var prize by remember { mutableStateOf("") }
     var metricOpen by remember { mutableStateOf(false) }
     var groupOpen by remember { mutableStateOf(false) }
     var exOpen by remember { mutableStateOf(false) }
@@ -178,7 +187,9 @@ fun ChallengeDialog(myGroups: List<SocialGroup>, onConfirm: (ChallengeForm) -> U
         title = { Text("Novo desafio") },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                IdentityPicker(look, onChange = { look = it })
                 OutlinedTextField(title, { title = it.take(80) }, label = { Text("Título") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(prize, { prize = it.take(120) }, label = { Text("Prêmio (opcional): quem perder paga o açaí...") }, singleLine = true, modifier = Modifier.fillMaxWidth())
 
                 ExposedDropdownMenuBox(metricOpen, { metricOpen = it }) {
                     OutlinedTextField(
@@ -260,7 +271,9 @@ fun ChallengeDialog(myGroups: List<SocialGroup>, onConfirm: (ChallengeForm) -> U
                         target = target.toDoubleOrNull(),
                         teams = teamsText.split(",").map { it.trim() }.filter { it.isNotEmpty() },
                         failThreshold = failText.toIntOrNull(),
-                        streakGoal = streakText.toIntOrNull()
+                        streakGoal = streakText.toIntOrNull(),
+                        look = look,
+                        prize = prize
                     )
                 )
             }) { Text("Criar") }
@@ -296,7 +309,18 @@ fun ChallengeSheet(
             Modifier.fillMaxWidth().navigationBarsPadding().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(c.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            if (c.cover != null || c.accentHex != null || c.icon != null) {
+                CoverBox(c.look, Modifier.fillMaxWidth().height(130.dp), animated = true) {
+                    Row(Modifier.align(Alignment.BottomStart).padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                        IdentityBadge(c.look, 48.dp)
+                        Spacer(Modifier.width(12.dp))
+                        Text(c.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black, color = androidx.compose.ui.graphics.Color.White)
+                    }
+                }
+            } else Text(c.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            c.prize?.takeIf { it.isNotBlank() }?.let {
+                Text("Prêmio: $it", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.tertiary, fontWeight = FontWeight.Bold)
+            }
             Text(
                 (item.metric?.label ?: c.metric) + (c.exerciseName?.let { " · $it" } ?: ""),
                 style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant

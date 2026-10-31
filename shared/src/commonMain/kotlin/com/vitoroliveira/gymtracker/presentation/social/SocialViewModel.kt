@@ -64,6 +64,8 @@ data class SocialUiState(
     val myProfile: SocialProfile? = null,
     /** Liga da semana (eu + quem eu sigo). Vazia sem a migração 015 ou sem ninguém. */
     val league: List<com.vitoroliveira.gymtracker.data.model.LeagueRow> = emptyList(),
+    /** Treinos da semana de cada grupo (por id); só dos grupos abertos. Vazio sem a migração 017. */
+    val groupProgress: Map<String, GroupWeekProgress> = emptyMap(),
     val profileView: ProfileView? = null,
     val message: String? = null,
     val error: String? = null,
@@ -282,6 +284,26 @@ class SocialViewModel(
     fun joinGroupByCode(code: String) {
         if (code.isBlank()) { update { copy(error = "Digite o código do convite.") }; return }
         act("Erro ao entrar com o código", "Você entrou no grupo", then = { loadGroups() }) { repo.joinGroupByCode(code.trim()) }
+    }
+
+    /** O dono edita identidade, aviso fixado e meta semanal. */
+    fun updateGroup(id: String, form: GroupEditForm) {
+        val edit = try { form.toEdit() } catch (e: IllegalArgumentException) {
+            update { copy(error = e.message) }; return
+        }
+        act("Erro ao salvar o grupo", "Grupo atualizado", then = { loadGroups(); loadGroupProgress(id) }) { repo.updateGroup(id, edit) }
+    }
+
+    /** Treinos do grupo na semana. É um extra: se a função não existir (migração 017), o grupo só não mostra a meta. */
+    fun loadGroupProgress(id: String) {
+        viewModelScope.launch {
+            try {
+                val p = repo.groupProgress(id) ?: return@launch
+                update { copy(groupProgress = groupProgress + (id to p)) }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+            }
+        }
     }
 
     fun leaveGroup(id: String) = act("Erro ao sair do grupo", "Você saiu do grupo", then = { loadGroups(); loadChallenges() }) { repo.leaveGroup(id) }

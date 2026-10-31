@@ -86,6 +86,8 @@ class SocialActions(
     val react: (String, ReactionKind) -> Unit = { _, _ -> },
     val editPost: (String, String?, String) -> Unit = { _, _, _ -> },
     val createGroup: (com.vitoroliveira.gymtracker.presentation.social.GroupForm) -> Unit = {},
+    val updateGroup: (String, com.vitoroliveira.gymtracker.presentation.social.GroupEditForm) -> Unit = { _, _ -> },
+    val loadGroupProgress: (String) -> Unit = {},
     val joinGroup: (String) -> Unit = {},
     val joinCode: (String) -> Unit = {},
     val leaveGroup: (String) -> Unit = {},
@@ -100,7 +102,7 @@ class SocialActions(
 private fun SocialViewModel.actions() = SocialActions(
     refresh = ::refresh, clear = ::clearMessages, saveSettings = ::saveSettings,
     follow = ::follow, unfollow = ::unfollow, acceptFollower = ::acceptFollower, rejectFollower = ::rejectFollower,
-    react = ::toggleReaction, editPost = ::editPost, createGroup = ::createGroup, joinGroup = ::joinGroup, joinCode = ::joinGroupByCode,
+    react = ::toggleReaction, editPost = ::editPost, createGroup = ::createGroup, updateGroup = ::updateGroup, loadGroupProgress = ::loadGroupProgress, joinGroup = ::joinGroup, joinCode = ::joinGroupByCode,
     leaveGroup = ::leaveGroup, createChallenge = ::createChallenge, joinChallenge = ::joinChallenge,
     leaveChallenge = ::leaveChallenge, loadStandings = ::loadStandings,
     openProfile = ::openProfile, closeProfile = ::closeProfile
@@ -120,6 +122,8 @@ fun SocialContent(state: SocialUiState, a: SocialActions, onBack: () -> Unit) {
     var showCodeDialog by remember { mutableStateOf(false) }
     var showChallengeDialog by remember { mutableStateOf(false) }
     var openChallenge by remember { mutableStateOf<ChallengeItem?>(null) }
+    var openGroupId by remember { mutableStateOf<String?>(null) }
+    var editGroupId by remember { mutableStateOf<String?>(null) }
     val snackbar = remember { SnackbarHostState() }
 
     LaunchedEffect(state.message, state.error) {
@@ -149,7 +153,7 @@ fun SocialContent(state: SocialUiState, a: SocialActions, onBack: () -> Unit) {
                 Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
             } else when (tab) {
                 0 -> FeedTab(state, a, onOpenSettings = { showSettings = true })
-                1 -> GroupsTab(state, a, onCreate = { showGroupDialog = true }, onCode = { showCodeDialog = true })
+                1 -> GroupsTab(state, a, onCreate = { showGroupDialog = true }, onCode = { showCodeDialog = true }, onOpen = { openGroupId = it.id })
                 2 -> ChallengesTab(state, a, onCreate = { showChallengeDialog = true }, onOpen = { openChallenge = it })
                 else -> PeopleTab(state, a)
             }
@@ -167,6 +171,28 @@ fun SocialContent(state: SocialUiState, a: SocialActions, onBack: () -> Unit) {
         onConfirm = { a.createChallenge(it); showChallengeDialog = false },
         onDismiss = { showChallengeDialog = false }
     )
+    openGroupId?.let { gid ->
+        val group = (state.myGroups + state.publicGroups).firstOrNull { it.id == gid }
+        if (group == null) openGroupId = null else {
+            val mine = state.myGroups.any { it.id == gid }
+            GroupSheet(
+                group = group, mine = mine, isOwner = group.ownerId == state.me, progress = state.groupProgress[gid],
+                onLoad = { a.loadGroupProgress(gid) },
+                onEdit = { editGroupId = gid },
+                onJoin = { a.joinGroup(gid); openGroupId = null },
+                onLeave = { a.leaveGroup(gid); openGroupId = null },
+                onDismiss = { openGroupId = null }
+            )
+        }
+    }
+    editGroupId?.let { gid ->
+        val group = state.myGroups.firstOrNull { it.id == gid }
+        if (group == null) editGroupId = null else GroupEditDialog(
+            group = group,
+            onSave = { a.updateGroup(gid, it); editGroupId = null },
+            onDismiss = { editGroupId = null }
+        )
+    }
     state.profileView?.let { pv ->
         // relação atualizada (seguir/deixar de seguir muda o botão sem fechar a folha)
         val live = state.people.firstOrNull { it.profile.id == pv.person.profile.id }
@@ -299,7 +325,7 @@ private fun ReactionKind.icon(): ImageVector = when (this) {
 // ───────────────────────── Grupos ─────────────────────────
 
 @Composable
-private fun GroupsTab(state: SocialUiState, a: SocialActions, onCreate: () -> Unit, onCode: () -> Unit) {
+private fun GroupsTab(state: SocialUiState, a: SocialActions, onCreate: () -> Unit, onCode: () -> Unit, onOpen: (SocialGroup) -> Unit) {
     LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         item(key = "actions") {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -313,27 +339,35 @@ private fun GroupsTab(state: SocialUiState, a: SocialActions, onCreate: () -> Un
         }
         items(state.myGroups, key = { "m" + it.id }) { g ->
             GroupCard(g, mine = true, isOwner = g.ownerId == state.me,
-                onAction = { a.leaveGroup(g.id) })
+                onAction = { a.leaveGroup(g.id) }, onOpen = { onOpen(g) })
         }
         item(key = "pub-title") { Spacer(Modifier.height(6.dp)); Text("Grupos públicos", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
         if (state.publicGroups.isEmpty()) item(key = "pub-empty") {
             Text("Nenhum grupo público por aqui ainda.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        items(state.publicGroups, key = { "p" + it.id }) { g -> GroupCard(g, mine = false, isOwner = false, onAction = { a.joinGroup(g.id) }) }
+        items(state.publicGroups, key = { "p" + it.id }) { g -> GroupCard(g, mine = false, isOwner = false, onAction = { a.joinGroup(g.id) }, onOpen = { onOpen(g) }) }
     }
 }
 
 @Composable
-private fun GroupCard(g: SocialGroup, mine: Boolean, isOwner: Boolean, onAction: () -> Unit) {
-    ThemedCard(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
+private fun GroupCard(g: SocialGroup, mine: Boolean, isOwner: Boolean, onAction: () -> Unit, onOpen: () -> Unit) {
+    ThemedCard(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium, onClick = onOpen) {
+        // capa do grupo (quadro parado, para a lista não pesar) com o ícone e o nome
+        CoverBox(g.look, Modifier.fillMaxWidth().height(76.dp), shape = androidx.compose.ui.graphics.RectangleShape) {
+            Row(Modifier.align(Alignment.BottomStart).padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                IdentityBadge(g.look, 36.dp)
+                Spacer(Modifier.width(10.dp))
+                Text(g.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Black, color = androidx.compose.ui.graphics.Color.White, maxLines = 1)
+            }
+        }
         Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(g.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                 Text(
-                    (if (g.isPublic) "Público" else "Por convite") + (g.maxMembers?.let { " · até $it membros" } ?: ""),
+                    (if (g.isPublic) "Público" else "Por convite") + (g.maxMembers?.let { " · até $it membros" } ?: "") +
+                        (g.weeklyGoal?.let { " · meta $it treinos/semana" } ?: ""),
                     style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                g.description?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+                g.description?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodySmall, maxLines = 2) }
                 if (isOwner && g.inviteCode != null) Text(
                     "Código de convite: ${g.inviteCode}", style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary
@@ -364,9 +398,20 @@ private fun ChallengesTab(state: SocialUiState, a: SocialActions, onCreate: () -
 @Composable
 private fun ChallengeCard(item: ChallengeItem, onClick: () -> Unit, onJoin: () -> Unit) {
     ThemedCard(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium, onClick = onClick) {
+        val look = item.challenge.look
+        if (look.cover != null || look.accentHex != null || look.icon != null) {
+            CoverBox(look, Modifier.fillMaxWidth().height(60.dp), shape = androidx.compose.ui.graphics.RectangleShape) {
+                Row(Modifier.align(Alignment.BottomStart).padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                    IdentityBadge(look, 30.dp)
+                    Spacer(Modifier.width(8.dp))
+                    Text(item.challenge.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Black, color = androidx.compose.ui.graphics.Color.White, maxLines = 1)
+                }
+            }
+        }
         Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(item.challenge.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                if (look.cover == null && look.accentHex == null && look.icon == null) Text(item.challenge.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                item.challenge.prize?.takeIf { it.isNotBlank() }?.let { Text("Prêmio: $it", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.tertiary, fontWeight = FontWeight.Bold) }
                 Text(
                     (item.metric?.label ?: item.challenge.metric) + (item.challenge.exerciseName?.let { " · $it" } ?: ""),
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant

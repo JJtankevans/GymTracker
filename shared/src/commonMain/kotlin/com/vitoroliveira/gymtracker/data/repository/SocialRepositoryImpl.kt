@@ -8,6 +8,7 @@ import com.vitoroliveira.gymtracker.data.model.FeedPost
 import com.vitoroliveira.gymtracker.data.model.Follow
 import com.vitoroliveira.gymtracker.data.model.GroupMember
 import com.vitoroliveira.gymtracker.data.model.NewChallenge
+import com.vitoroliveira.gymtracker.data.model.GroupEdit
 import com.vitoroliveira.gymtracker.data.model.NewGroup
 import com.vitoroliveira.gymtracker.data.model.PostReaction
 import com.vitoroliveira.gymtracker.data.model.ProfileStats
@@ -176,6 +177,14 @@ class SocialRepositoryImpl(private val supabase: SupabaseClient) : SocialReposit
             filter { eq("group_id", groupId); eq("profile_id", me()) }
         }
     }
+
+    override suspend fun updateGroup(groupId: String, edit: GroupEdit) {
+        supabase.postgrest["groups"].update(edit) { filter { eq("id", groupId) } }
+    }
+
+    override suspend fun groupProgress(groupId: String): com.vitoroliveira.gymtracker.presentation.social.GroupWeekProgress? =
+        supabase.postgrest.rpc("group_week_progress", buildJsonObject { put("p_group", groupId) })
+            .decodeList<com.vitoroliveira.gymtracker.presentation.social.GroupWeekProgress>().firstOrNull()
 
     // ── desafios ──
 

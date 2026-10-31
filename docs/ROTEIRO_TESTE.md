@@ -47,8 +47,16 @@ APK certo: os dois artefatos (`gymtracker-debug-apk` e `gymtracker-wear-apk`) da
 - [ ] Com a 016 rodada: volta para a tela de login, e entrar de novo com o mesmo e-mail/senha falha. A foto de perfil some do Storage.
 - [ ] Sem internet (modo avião): mostra o erro de conexão e continua logado, com os dados intactos.
 
+## 3c. Grupos e desafios personalizados (precisa da migração 017)
+- [ ] Social → Grupos → Criar grupo: escolher capa (20 opções com o fundo animado de um tema), cor, ícone, meta semanal. O cartão do grupo mostra a faixa de capa com o ícone e o nome.
+- [ ] Tocar no grupo abre a folha: capa animada, descrição, aviso fixado, **meta da semana** com barra (treinos de todos os membros, segunda a domingo) e, se for o dono, o código de convite e "Personalizar grupo".
+- [ ] Dono: Personalizar grupo → trocar capa/cor/ícone, escrever o aviso fixado e a meta. Outro membro vê o aviso e a barra.
+- [ ] Desafio novo com capa, cor, ícone e **prêmio**: o cartão e o placar mostram a faixa e "Prêmio: ...".
+- [ ] Sem rodar a 017: criar grupo/desafio **sem** personalizar continua funcionando; personalizar mostra o aviso de que falta a 017.
+
 ## 4. Temas (Perfil → Aparência)
 - [ ] 52 temas, 31 Loucos, selo **NOVO** nos 6 últimos; botão de tema aleatório.
+- [ ] **Temas antigos renovados** (Carbon, Oceano, Studio, Tinta, Papel, Blueprint, Brutal, Neon, Terminal, Arena, Ouro, Aurora, Synthwave, Confete, Magma, Nórdico, Obsidiana, Cobalto, Floresta, Ártico, Sistema): cada um tem um cenário animado só dele. Conferir em **Calmo / Normal / Insano** se a riqueza muda (Calmo discreto, Insano cheio) e se o texto continua legível. Atenção nos claros (Tinta, Papel, Brutal, Nórdico, Confete, Studio).
 - [ ] Fluidez: Estática (~420 retângulos por quadro), Discoteca, Matrix. Se travar, anote o nome.
 - [ ] Legibilidade do **Holográfico**, **Sakura** e **Origami** (claros).
 

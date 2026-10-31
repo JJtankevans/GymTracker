@@ -4,6 +4,7 @@ import com.vitoroliveira.gymtracker.data.model.Challenge
 import com.vitoroliveira.gymtracker.data.model.ChallengeParticipant
 import com.vitoroliveira.gymtracker.data.model.FeedPost
 import com.vitoroliveira.gymtracker.data.model.Follow
+import com.vitoroliveira.gymtracker.data.model.GroupEdit
 import com.vitoroliveira.gymtracker.data.model.GroupMember
 import com.vitoroliveira.gymtracker.data.model.NewChallenge
 import com.vitoroliveira.gymtracker.data.model.NewGroup
@@ -53,6 +54,12 @@ interface SocialRepository {
     suspend fun joinGroup(groupId: String)
     suspend fun joinGroupByCode(code: String): String
     suspend fun leaveGroup(groupId: String)
+    /** O dono muda identidade, aviso fixado e meta semanal (migração 017). */
+    suspend fun updateGroup(groupId: String, edit: GroupEdit) {
+        throw UnsupportedOperationException("Editar o grupo não é possível aqui")
+    }
+    /** Treinos dos membros na semana (migração 017); null sem a função no banco. */
+    suspend fun groupProgress(groupId: String): com.vitoroliveira.gymtracker.presentation.social.GroupWeekProgress? = null
 
     // Desafios
     suspend fun challenges(): List<Challenge>

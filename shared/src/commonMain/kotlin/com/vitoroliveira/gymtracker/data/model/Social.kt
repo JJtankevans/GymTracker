@@ -47,11 +47,31 @@ data class SocialGroup(
     val privacy: String = "invite",
     @SerialName("invite_code") val inviteCode: String? = null,
     @SerialName("max_members") val maxMembers: Int? = null,
-    @SerialName("created_at") val createdAt: String? = null
+    @SerialName("created_at") val createdAt: String? = null,
+    /** Identidade visual e extras (migração 017). Ficam null se a migração ainda não rodou. */
+    val cover: String? = null,
+    @SerialName("accent_hex") val accentHex: String? = null,
+    val icon: String? = null,
+    @SerialName("pinned_message") val pinnedMessage: String? = null,
+    @SerialName("weekly_goal") val weeklyGoal: Int? = null
 ) {
     val isPublic: Boolean get() = privacy == "public"
+    val look: com.vitoroliveira.gymtracker.presentation.social.Look
+        get() = com.vitoroliveira.gymtracker.presentation.social.Look(cover, accentHex, icon)
 }
 
+/** Edição de um grupo pelo dono (identidade, aviso fixado e meta semanal). Null limpa o campo. */
+@Serializable
+data class GroupEdit(
+    val description: String? = null,
+    val cover: String? = null,
+    @SerialName("accent_hex") val accentHex: String? = null,
+    val icon: String? = null,
+    @SerialName("pinned_message") val pinnedMessage: String? = null,
+    @SerialName("weekly_goal") val weeklyGoal: Int? = null
+)
+
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class NewGroup(
     @SerialName("owner_id") val ownerId: String,
@@ -60,7 +80,12 @@ data class NewGroup(
     val privacy: String,
     @SerialName("max_members") val maxMembers: Int?,
     /** Gerado pelo app: o INSERT não pode pedir a linha de volta (a política de leitura só vale depois do trigger que põe o dono como membro). */
-    val id: String = ""
+    val id: String = "",
+    /** Só vão no INSERT quando definidos: assim criar grupo continua funcionando se a migração 017 ainda não rodou. */
+    @EncodeDefault(EncodeDefault.Mode.NEVER) val cover: String? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("accent_hex") val accentHex: String? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER) val icon: String? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("weekly_goal") val weeklyGoal: Int? = null
 )
 
 @Serializable
@@ -92,8 +117,16 @@ data class Challenge(
     /** Título de falha: quem tiver MAIS que isso de treinos abaixo do mínimo de minutos (migração 010). Null = sem título de falha. */
     @SerialName("fail_threshold") val failThreshold: Int? = null,
     /** Dias seguidos para o título Alpha (2x Chad, 3x Giga Chad, 4x Mr. Olimpia). Null = sem títulos de honra. */
-    @SerialName("streak_goal") val streakGoal: Int? = null
-)
+    @SerialName("streak_goal") val streakGoal: Int? = null,
+    /** Identidade visual e prêmio (migração 017). */
+    val cover: String? = null,
+    @SerialName("accent_hex") val accentHex: String? = null,
+    val icon: String? = null,
+    val prize: String? = null
+) {
+    val look: com.vitoroliveira.gymtracker.presentation.social.Look
+        get() = com.vitoroliveira.gymtracker.presentation.social.Look(cover, accentHex, icon)
+}
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
@@ -117,7 +150,11 @@ data class NewChallenge(
     @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("fail_threshold") val failThreshold: Int? = null,
     @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("streak_goal") val streakGoal: Int? = null,
     /** Gerado pelo app, pelo mesmo motivo de [NewGroup.id]. */
-    val id: String = ""
+    val id: String = "",
+    @EncodeDefault(EncodeDefault.Mode.NEVER) val cover: String? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("accent_hex") val accentHex: String? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER) val icon: String? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER) val prize: String? = null
 )
 
 @Serializable
