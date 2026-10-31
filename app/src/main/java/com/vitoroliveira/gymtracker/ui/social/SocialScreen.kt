@@ -72,7 +72,7 @@ import com.vitoroliveira.gymtracker.ui.theme.ThemedScaffold
 import com.vitoroliveira.gymtracker.ui.theme.ThemedTopAppBar
 import org.koin.compose.viewmodel.koinViewModel
 
-private val TABS = listOf("Feed", "Grupos", "Desafios", "Pessoas")
+private val TABS = listOf("Feed", "Grupos", "Desafios", "Pessoas", "Ranqueada")
 
 /** O que a tela pode pedir ao ViewModel. Separado pra a parte visual poder ser testada sem rede. */
 class SocialActions(
@@ -111,11 +111,11 @@ private fun SocialViewModel.actions() = SocialActions(
 @Composable
 fun SocialScreen(onBack: () -> Unit, vm: SocialViewModel = koinViewModel()) {
     val state by vm.state.collectAsState()
-    SocialContent(state, vm.actions(), onBack)
+    SocialContent(state, vm.actions(), onBack, rankedSlot = { com.vitoroliveira.gymtracker.ui.ranked.RankedScreen() })
 }
 
 @Composable
-fun SocialContent(state: SocialUiState, a: SocialActions, onBack: () -> Unit) {
+fun SocialContent(state: SocialUiState, a: SocialActions, onBack: () -> Unit, rankedSlot: @Composable () -> Unit = {}) {
     var tab by remember { mutableIntStateOf(0) }
     var showSettings by remember { mutableStateOf(false) }
     var showGroupDialog by remember { mutableStateOf(false) }
@@ -155,7 +155,8 @@ fun SocialContent(state: SocialUiState, a: SocialActions, onBack: () -> Unit) {
                 0 -> FeedTab(state, a, onOpenSettings = { showSettings = true })
                 1 -> GroupsTab(state, a, onCreate = { showGroupDialog = true }, onCode = { showCodeDialog = true }, onOpen = { openGroupId = it.id })
                 2 -> ChallengesTab(state, a, onCreate = { showChallengeDialog = true }, onOpen = { openChallenge = it })
-                else -> PeopleTab(state, a)
+                3 -> PeopleTab(state, a)
+                else -> rankedSlot()
             }
         }
     }

@@ -40,6 +40,10 @@ fun Throwable.toUserMessage(fallback: String): String {
         "could not find the" in text && "column" in text && listOf("cover", "accent_hex", "icon", "pinned_message", "weekly_goal", "prize").any { "'$it'" in text } ->
             "A personalização de grupos e desafios ainda não está ativada no servidor (falta rodar a migração 017)."
 
+        // Ranqueada: tabelas/funções da migração 018 que ainda não existem
+        "ranked_" in text && ("could not find" in text || "does not exist" in text || "schema cache" in text) ->
+            "A ranqueada ainda não está ativada no servidor (falta rodar a migração 018)."
+
         // Banco
         "duplicate key" in text || "23505" in text || "already exists" in text ->
             "Já existe um item com esse nome."

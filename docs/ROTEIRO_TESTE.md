@@ -54,6 +54,14 @@ APK certo: os dois artefatos (`gymtracker-debug-apk` e `gymtracker-wear-apk`) da
 - [ ] Desafio novo com capa, cor, ícone e **prêmio**: o cartão e o placar mostram a faixa e "Prêmio: ...".
 - [ ] Sem rodar a 017: criar grupo/desafio **sem** personalizar continua funcionando; personalizar mostra o aviso de que falta a 017.
 
+## 3d. Ranqueada (precisa da migração 018; veja `docs/RANQUEADA_DESIGN.md`)
+- [ ] Social → aba **Ranqueada** → "Entrar na ranqueada": aparece o cartão do elo (Ferro III, emblema desenhado, barra de RP) e a **rodada da semana** com seus pontos.
+- [ ] Treinar (20 min ou mais) e voltar: os pontos sobem (100 + esforço + séries; só o melhor treino do dia). 3 dias de treino dão +50.
+- [ ] A **turma** aparece com posição, elo e pontos de cada um; faixas verde (sobe) e vermelha (desce); "Faltam N pontos para a zona de subida".
+- [ ] **x1**: com 2 contas no mesmo elo, o botão "x1" aparece ao lado da pessoa na turma. Desafiar (valendo RP ou amistoso), aceitar na outra conta, acompanhar o placar ao vivo e, depois de 7 dias (ou ajustando as datas no banco), ver o resultado e o RP.
+- [ ] Sem a 018: a aba mostra "falta rodar a migração 018" com "Tentar de novo".
+- [ ] Fechamento da semana: na segunda, abrir a aba mostra "Semana passada: Nº de X · pts · ±RP" (só funciona depois de uma segunda-feira real ou de forçar `ranked_settle_week` no SQL).
+
 ## 4. Temas (Perfil → Aparência)
 - [ ] 52 temas, 31 Loucos, selo **NOVO** nos 6 últimos; botão de tema aleatório.
 - [ ] **Temas antigos renovados** (Carbon, Oceano, Studio, Tinta, Papel, Blueprint, Brutal, Neon, Terminal, Arena, Ouro, Aurora, Synthwave, Confete, Magma, Nórdico, Obsidiana, Cobalto, Floresta, Ártico, Sistema): cada um tem um cenário animado só dele. Conferir em **Calmo / Normal / Insano** se a riqueza muda (Calmo discreto, Insano cheio) e se o texto continua legível. Atenção nos claros (Tinta, Papel, Brutal, Nórdico, Confete, Studio).
