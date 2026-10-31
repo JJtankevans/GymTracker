@@ -64,6 +64,36 @@ class ChallengeMessagesTest {
         assertNull(challengeMood(ativo, null, null, "eu"))
     }
 
+    @Test fun segundaLevaEntraNoSorteioSemMexerNasDoThiago() {
+        // as originais continuam do mesmo tamanho (os títulos de perfil e os testes dependem delas)
+        assertEquals(5, ChallengeMessages.behind.size); assertEquals(4, ChallengeMessages.failed.size)
+        ChallengeMood.entries.forEach { mood ->
+            val pool = ChallengeMessages.pool(mood)
+            val extra = when (mood) {
+                ChallengeMood.BEHIND -> ChallengeMessages.behindMore
+                ChallengeMood.FAILED -> ChallengeMessages.failedMore
+                ChallengeMood.LEADING -> ChallengeMessages.leadingMore
+                ChallengeMood.GOAL_REACHED -> ChallengeMessages.goalReachedMore
+            }
+            assertTrue(extra.isNotEmpty() && extra.all { it in pool }, "$mood: faltou a segunda leva no sorteio")
+        }
+    }
+
+    @Test fun frasesSemRepeticaoSemVaziasECabemNoCartao() {
+        ChallengeMood.entries.forEach { mood ->
+            val pool = ChallengeMessages.pool(mood)
+            assertEquals(pool.size, pool.toSet().size, "$mood tem frase repetida")
+            pool.forEach { assertTrue(it.isNotBlank() && it.length <= 90, "$mood: frase vazia ou longa demais (${it.length}): $it") }
+        }
+    }
+
+    @Test fun osQuatroClimasTemMuitaVariedade() {
+        assertTrue(ChallengeMessages.pool(ChallengeMood.BEHIND).size >= 20)
+        assertTrue(ChallengeMessages.pool(ChallengeMood.FAILED).size >= 20)
+        assertTrue(ChallengeMessages.pool(ChallengeMood.LEADING).size >= 10)
+        assertTrue(ChallengeMessages.pool(ChallengeMood.GOAL_REACHED).size >= 10)
+    }
+
     @Test fun mesmaSementeDaMesmaFraseEOLayoutCombinaComOClima() {
         val a = ChallengeMessages.pick(ChallengeMood.BEHIND, 123)
         assertEquals(a, ChallengeMessages.pick(ChallengeMood.BEHIND, 123))

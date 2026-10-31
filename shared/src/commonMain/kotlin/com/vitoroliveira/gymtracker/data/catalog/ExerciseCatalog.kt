@@ -4,7 +4,8 @@ package com.vitoroliveira.gymtracker.data.catalog
 enum class CatalogMuscle(val label: String) {
     PEITO("Peito"), COSTAS("Costas"), OMBROS("Ombros"), BICEPS("Bíceps"), TRICEPS("Tríceps"),
     QUADRICEPS("Quadríceps"), POSTERIOR("Posterior"), GLUTEOS("Glúteos"),
-    PANTURRILHA("Panturrilha"), ABDOMEN("Abdômen")
+    PANTURRILHA("Panturrilha"), ABDOMEN("Abdômen"),
+    CARDIO("Cardio"), MOBILIDADE("Mobilidade")
 }
 
 enum class Equipment(val label: String) {
@@ -136,7 +137,33 @@ object ExerciseCatalog {
         e("Abdominal Supra", M.ABDOMEN, Q.PESO_CORPO, 3, 20),
         e("Elevação de Pernas", M.ABDOMEN, Q.PESO_CORPO, 3, 12),
         e("Prancha", M.ABDOMEN, Q.PESO_CORPO, 3, 30, "Repetições = segundos por série"),
-        e("Abdominal na Polia", M.ABDOMEN, Q.POLIA, 3, 15)
+        e("Abdominal na Polia", M.ABDOMEN, Q.POLIA, 3, 15),
+        e("Abdominal Infra", M.ABDOMEN, Q.PESO_CORPO, 3, 15),
+        e("Abdominal Oblíquo", M.ABDOMEN, Q.PESO_CORPO, 3, 15),
+        e("Giro Russo", M.ABDOMEN, Q.PESO_CORPO, 3, 20, aliases = listOf("Russian Twist")),
+        // Mais força (28/10/2026)
+        e("Puxada Supinada", M.COSTAS, Q.POLIA, 3, 10),
+        e("Remada Alta", M.OMBROS, Q.BARRA, 3, 12),
+        e("Desenvolvimento Arnold", M.OMBROS, Q.HALTERES, 3, 10),
+        e("Tríceps no Banco", M.TRICEPS, Q.PESO_CORPO, 3, 12, aliases = listOf("Triceps Banco")),
+        e("Passada", M.QUADRICEPS, Q.HALTERES, 3, 12, aliases = listOf("Avanço", "Afundo Caminhando")),
+        e("Leg Press Horizontal", M.QUADRICEPS, Q.MAQUINA, 3, 12),
+        e("Agachamento Sumô", M.GLUTEOS, Q.HALTERES, 3, 12, aliases = listOf("Agachamento Sumo")),
+        e("Kettlebell Swing", M.GLUTEOS, Q.HALTERES, 3, 15),
+        // Cardio: na máquina, repetições = minutos e carga = nível/velocidade (opcional)
+        e("Esteira", M.CARDIO, Q.MAQUINA, 1, 20, "Repetições = minutos; carga = velocidade (km/h), se quiser", aliases = listOf("Corrida na Esteira")),
+        e("Bicicleta Ergométrica", M.CARDIO, Q.MAQUINA, 1, 20, "Repetições = minutos; carga = nível", aliases = listOf("Bike")),
+        e("Elíptico", M.CARDIO, Q.MAQUINA, 1, 20, "Repetições = minutos; carga = nível", aliases = listOf("Transport")),
+        e("Simulador de Escada", M.CARDIO, Q.MAQUINA, 1, 15, "Repetições = minutos; carga = nível", aliases = listOf("Escada")),
+        e("Remo Ergômetro", M.CARDIO, Q.MAQUINA, 1, 10, "Repetições = minutos; carga = nível"),
+        e("Pular Corda", M.CARDIO, Q.PESO_CORPO, 5, 60, "Repetições = segundos por série"),
+        e("Burpee", M.CARDIO, Q.PESO_CORPO, 3, 12),
+        e("Polichinelo", M.CARDIO, Q.PESO_CORPO, 3, 30),
+        // Mobilidade e alongamento: repetições = segundos
+        e("Alongamento de Posterior", M.MOBILIDADE, Q.PESO_CORPO, 2, 30, "Repetições = segundos por lado"),
+        e("Alongamento de Peitoral", M.MOBILIDADE, Q.PESO_CORPO, 2, 30, "Repetições = segundos por lado"),
+        e("Mobilidade de Quadril", M.MOBILIDADE, Q.PESO_CORPO, 2, 10, "Repetições por lado, devagar"),
+        e("Rotação Torácica", M.MOBILIDADE, Q.PESO_CORPO, 2, 10, "Repetições por lado, devagar")
     )
 
     /** Procura sem diferenciar maiúsculas nem acentos no nome, músculo e equipamento. */
@@ -170,9 +197,10 @@ object ExerciseCatalog {
     /** Já existe um exercício com esse nome (ignorando caixa e acento)? */
     fun isSameName(a: String, b: String) = a.normalized() == b.normalized()
 
-    private fun String.normalized(): String = lowercase().trim()
-        .replace('á', 'a').replace('à', 'a').replace('â', 'a').replace('ã', 'a')
-        .replace('é', 'e').replace('ê', 'e').replace('í', 'i')
-        .replace('ó', 'o').replace('ô', 'o').replace('õ', 'o')
-        .replace('ú', 'u').replace('ç', 'c')
+    /** Mesma tabela de acentos do [slug] (antes faltavam è, ü, ñ, î...). */
+    private fun String.normalized(): String {
+        val from = "áàâãäéèêëíìîïóòôõöúùûüçñ"
+        val to = "aaaaaeeeeiiiiooooouuuucn"
+        return lowercase().trim().map { ch -> from.indexOf(ch).let { if (it >= 0) to[it] else ch } }.joinToString("")
+    }
 }

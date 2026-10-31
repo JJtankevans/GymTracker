@@ -1,0 +1,132 @@
+# Versão iOS: compila o módulo :shared (regras, repositórios, ViewModels, relógio) para iPhone, roda os mesmos testes
+# do Android no simulador de iOS e compila o app de iPhone (composeApp + iosApp), abrindo-o no simulador para uma
+# captura de tela (lida por OCR no próprio Mac). Ver docs/IOS.md.
+# Roda num Mac do GitHub (grátis em repositório público) quando o :shared muda, ou à mão (Actions > iOS > Run workflow).
+name: iOS (shared)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "shared/**"
+      - "composeApp/**"
+      - "iosApp/**"
+      - "gradle/**"
+      - "*.gradle.kts"
+      - ".github/workflows/ios.yml"
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  shared-ios:
+    runs-on: macos-15
+    timeout-minutes: 75
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # o Compose Multiplatform 1.11 usa APIs do iOS 26 (ex.: UIViewLayoutRegion): precisa do SDK do Xcode 26
+      - name: Xcode mais novo
+        run: |
+          ls -d /Applications/Xcode*.app
+          XC=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -n 1)
+          if [ -n "$XC" ]; then sudo xcode-select -s "$XC"; fi
+          xcodebuild -version
+          echo "::notice title=Xcode::$(xcodebuild -version | head -n 1) / SDKs: $(xcodebuild -showsdks | grep -o 'iphonesimulator[0-9.]*' | tr '\n' ' ')"
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # o :shared também tem o alvo Android, então o Gradle precisa achar o Android SDK (já vem no runner)
+      - name: Android SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          printf 'sdk.dir=%s\n' "$ANDROID_HOME" > local.properties
+          chmod +x ./gradlew
+
+      - name: Compilar o :shared para iOS
+        run: |
+          ./gradlew :shared:compileKotlinIosSimulatorArm64 :shared:compileKotlinIosArm64 --continue --stacktrace > build-ios.log 2>&1 || {
+            msg=$(grep -E '^e: |error:|What went wrong' -A3 build-ios.log | grep -v '^> Task' | head -n 40)
+            [ -z "$msg" ] && msg=$(tail -n 40 build-ios.log)
+            echo "::error title=Falha ao compilar o shared para iOS::$(echo "$msg" | awk '{printf "%s%%0A", $0}')"
+            exit 1
+          }
+
+      - name: Testes do :shared no simulador de iOS
+        run: |
+          ./gradlew :shared:iosSimulatorArm64Test --stacktrace > test-ios.log 2>&1 || {
+            echo "::error title=Falha nos testes do shared no iOS::$(grep -E '^e: |FAILED|What went wrong|Exception|expected' test-ios.log | grep -v '^> Task' | head -n 30 | awk '{printf "%s%%0A", $0}')"
+            exit 1
+          }
+
+      - name: Framework do :shared (para um app iOS usar)
+        run: |
+          ./gradlew :shared:linkDebugFrameworkIosSimulatorArm64 --stacktrace > link-ios.log 2>&1 || {
+            echo "::warning title=Framework iOS::$(grep -E '^e: |error:|What went wrong' -A2 link-ios.log | grep -v '^> Task' | head -n 20 | awk '{printf "%s%%0A", $0}')"
+            exit 1
+          }
+
+      - name: App de iPhone (compilar)
+        run: |
+          brew install xcodegen > /dev/null 2>&1 || true
+          (cd iosApp && xcodegen generate)
+          xcodebuild -project iosApp/GymTracker.xcodeproj -target GymTracker -configuration Debug -sdk iphonesimulator \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=NO build > xcode.log 2>&1 || {
+            msg=$(grep -v 'ld: warning' xcode.log | grep -E "Undefined symbol|^ld: |not found|referenced from|^e: |error:|What went wrong|FAILED" -A4 | grep -v '^--$' | head -n 60)
+            [ -z "$msg" ] && msg=$(tail -n 40 xcode.log)
+            echo "::error title=Falha ao compilar o app de iPhone::$(echo "$msg" | head -n 3 | awk '{printf "%s%%0A", $0}')"
+            # símbolos que faltaram no link, um aviso por linha (o aviso único cortava a lista)
+            grep -A14 'Undefined symbols' xcode.log | head -n 30 | sed 's/%/%25/g' | while IFS= read -r line; do echo "::warning title=ld::$line"; done
+            exit 1
+          }
+          ls -d iosApp/build/Debug-iphonesimulator/GymTracker.app
+
+      - name: App de iPhone no simulador (captura + OCR)
+        continue-on-error: true
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print(next(x['udid'] for k,v in d.items() if 'iOS' in k for x in v if x['name'].startswith('iPhone')))")
+          echo "simulador: $UDID"
+          xcrun simctl boot "$UDID" || true
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl install "$UDID" iosApp/build/Debug-iphonesimulator/GymTracker.app
+          xcrun simctl launch "$UDID" com.vitoroliveira.gymtracker
+          sleep 35
+          xcrun simctl io "$UDID" screenshot iphone-tela-inicial.png
+          swift iosApp/ocr.swift iphone-tela-inicial.png ocr-entrada.png 2>/dev/null > ocr.txt || true
+          # o Vision não lê texto na máquina virtual do CI: o Tesseract lê (na cópia invertida, texto escuro em fundo claro)
+          brew install tesseract > /dev/null 2>&1 || true
+          echo "tesseract: $(tesseract ocr-entrada.png - 2>/dev/null | tr -s ' \n' ' ' | cut -c1-300)" >> ocr.txt || true
+          echo "::notice title=Tela do app de iPhone (texto lido por OCR)::$(head -n 25 ocr.txt | sed 's/%/%25/g' | tr '\n' '|')"
+          # o app ainda está vivo? (se fechou sozinho, o launchctl não lista)
+          if xcrun simctl spawn "$UDID" launchctl list | grep -q gymtracker; then
+            echo "::notice title=App de iPhone::continua aberto depois de 35 s"
+          else
+            echo "::warning title=App de iPhone::não está mais rodando (pode ter fechado sozinho)"
+          fi
+
+      - name: Captura do iPhone
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: iphone-captura
+          path: iphone-tela-inicial.png
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Relatório dos testes iOS
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-testes-ios
+          path: shared/build/reports/tests/
+          retention-days: 14
+          if-no-files-found: ignore

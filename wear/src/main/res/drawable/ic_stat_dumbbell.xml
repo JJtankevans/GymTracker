@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Halter (ícone do aviso e do atalho no mostrador) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M1,10.5h2v3H1z M3.5,8h2.5v8H3.5z M6.5,6.5h2.5v11H6.5z M9,11h6v2H9z M15,6.5h2.5v11H15z M18,8h2.5v8H18z M21,10.5h2v3h-2z" />
+</vector>

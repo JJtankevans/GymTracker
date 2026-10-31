@@ -68,7 +68,7 @@ class AchievementsTest {
     @Test fun viewModelJuntaHistoricoMetaERecordes() {
         val repo = FakeWorkoutRepository().apply {
             history += (1..4).map { Workout(id = "w$it", startedAt = "2026-10-0${it}T10:00:00Z", finishedAt = "2026-10-0${it}T11:00:00Z") }
-            recordsSummary = listOf(RecordSummary("e1", "Supino", 80.0, "2026-10-01", 100.0, null, 3))
+            recordsSummary = listOf(RecordSummary("e1", "Supino", 80.0, "2026-10-01", 100.0, 70.0, 3)) // superou 70 kg: conta como recorde
         }
         val vm = AchievementsViewModel(repo, GoalProfiles(goal = 2), social = null, zone = TimeZone.UTC)
         val s = vm.state.value

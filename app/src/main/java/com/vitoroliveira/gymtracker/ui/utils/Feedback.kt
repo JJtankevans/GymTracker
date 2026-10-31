@@ -17,7 +17,19 @@ fun Context.restFinishedFeedback() {
             @Suppress("DEPRECATION")
             getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
         }
-        vibrator?.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 220, 120, 220, 120, 380), -1))
+        val effect = VibrationEffect.createWaveform(longArrayOf(0, 220, 120, 220, 120, 380), -1)
+        // uso "alarme": vibra mesmo com o celular no silencioso/Não perturbe e com a tela bloqueada
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            vibrator?.vibrate(effect, android.os.VibrationAttributes.createForUsage(android.os.VibrationAttributes.USAGE_ALARM))
+        } else {
+            @Suppress("DEPRECATION")
+            vibrator?.vibrate(
+                effect,
+                android.media.AudioAttributes.Builder()
+                    .setUsage(android.media.AudioAttributes.USAGE_ALARM)
+                    .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION).build()
+            )
+        }
     } catch (_: Exception) { /* sem vibrador: tudo bem */ }
 
     try {

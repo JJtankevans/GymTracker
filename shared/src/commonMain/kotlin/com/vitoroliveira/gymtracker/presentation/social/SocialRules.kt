@@ -1,6 +1,7 @@
 package com.vitoroliveira.gymtracker.presentation.social
 
 import com.vitoroliveira.gymtracker.data.model.Challenge
+import com.vitoroliveira.gymtracker.data.model.GroupEdit
 import com.vitoroliveira.gymtracker.data.model.NewChallenge
 import com.vitoroliveira.gymtracker.data.model.NewGroup
 import com.vitoroliveira.gymtracker.data.model.PostReaction
@@ -77,7 +78,11 @@ data class ChallengeForm(
     /** Mais que isso de treinos abaixo do mínimo de minutos = título de falha no perfil. Null = desligado. */
     val failThreshold: Int? = null,
     /** Dias seguidos para o título Alpha (Chad 2x, Giga Chad 3x, Mr. Olimpia 4x). Null = desligado. */
-    val streakGoal: Int? = null
+    val streakGoal: Int? = null,
+    /** Capa, cor e ícone do desafio (opcionais). */
+    val look: Look = Look(),
+    /** Prêmio combinado entre a galera ("quem perder paga o açaí"), até 120 caracteres. */
+    val prize: String? = null
 )
 
 /** Valida e monta o desafio. Lança [IllegalArgumentException] com a mensagem pro usuário. */
@@ -97,6 +102,9 @@ fun ChallengeForm.toNew(creatorId: String, now: Instant): NewChallenge {
     val teamNames = teams.map { it.trim() }.filter { it.isNotEmpty() }.distinctBy { it.lowercase() }
     require(teamNames.isEmpty() || teamNames.size in 2..6) { "Use de 2 a 6 equipes (nomes diferentes)." }
     require(teamNames.all { it.length <= 20 }) { "Cada nome de equipe pode ter até 20 caracteres." }
+    val prizeText = prize?.trim()?.takeIf { it.isNotEmpty() }
+    require(prizeText == null || prizeText.length <= 120) { "O prêmio passou de 120 caracteres." }
+    val look = Identity.clean(look)
     return NewChallenge(
         creatorId = creatorId,
         groupId = groupId,
@@ -114,21 +122,56 @@ fun ChallengeForm.toNew(creatorId: String, now: Instant): NewChallenge {
         maxWorkoutsPerDay = maxWorkoutsPerDay,
         maxParticipants = null,
         failThreshold = failThreshold,
-        streakGoal = streakGoal
+        streakGoal = streakGoal,
+        cover = look.cover,
+        accentHex = look.accentHex,
+        icon = look.icon,
+        prize = prizeText
     )
 }
 
 // ───────────────────────── Grupos ─────────────────────────
 
-data class GroupForm(val name: String, val description: String? = null, val isPublic: Boolean = false, val maxMembers: Int? = null)
+data class GroupForm(
+    val name: String,
+    val description: String? = null,
+    val isPublic: Boolean = false,
+    val maxMembers: Int? = null,
+    val look: Look = Look(),
+    /** Meta de treinos do grupo por semana (soma de todos os membros). Null = sem meta. */
+    val weeklyGoal: Int? = null
+)
 
 fun GroupForm.toNew(ownerId: String): NewGroup {
     val n = name.trim()
     require(n.length in 2..60) { "O nome do grupo precisa ter entre 2 e 60 caracteres." }
     require(maxMembers == null || maxMembers in 2..500) { "O limite de membros fica entre 2 e 500." }
+    require(weeklyGoal == null || weeklyGoal in 1..500) { "A meta semanal do grupo fica entre 1 e 500 treinos." }
     val d = description?.trim()?.takeIf { it.isNotEmpty() }
     require(d == null || d.length <= 500) { "A descrição passou de 500 caracteres." }
-    return NewGroup(ownerId, n, d, if (isPublic) "public" else "invite", maxMembers)
+    val look = Identity.clean(look)
+    return NewGroup(
+        ownerId = ownerId, name = n, description = d, privacy = if (isPublic) "public" else "invite", maxMembers = maxMembers,
+        cover = look.cover, accentHex = look.accentHex, icon = look.icon, weeklyGoal = weeklyGoal
+    )
+}
+
+/** Edição do dono: identidade, descrição, aviso fixado (até 300 caracteres) e meta semanal. */
+data class GroupEditForm(
+    val description: String? = null,
+    val look: Look = Look(),
+    val pinnedMessage: String? = null,
+    val weeklyGoal: Int? = null
+)
+
+fun GroupEditForm.toEdit(): GroupEdit {
+    val d = description?.trim()?.takeIf { it.isNotEmpty() }
+    require(d == null || d.length <= 500) { "A descrição passou de 500 caracteres." }
+    val pin = pinnedMessage?.trim()?.takeIf { it.isNotEmpty() }
+    require(pin == null || pin.length <= 300) { "O aviso fixado passou de 300 caracteres." }
+    require(weeklyGoal == null || weeklyGoal in 1..500) { "A meta semanal do grupo fica entre 1 e 500 treinos." }
+    val look = Identity.clean(look)
+    return GroupEdit(d, look.cover, look.accentHex, look.icon, pin, weeklyGoal)
 }
 
 // ───────────────────────── Feed ─────────────────────────
@@ -142,6 +185,11 @@ enum class ReactionKind(val key: String, val emoji: String, val label: String) {
 
 data class ReactionSummary(val counts: Map<ReactionKind, Int>, val mine: Set<ReactionKind>) {
     fun count(kind: ReactionKind) = counts[kind] ?: 0
+
+    /** Liga/desliga a minha reação [kind] e ajusta a contagem (atualização otimista do feed). */
+    fun toggled(kind: ReactionKind): ReactionSummary =
+        if (kind in mine) ReactionSummary(counts + (kind to (count(kind) - 1).coerceAtLeast(0)), mine - kind)
+        else ReactionSummary(counts + (kind to count(kind) + 1), mine + kind)
 }
 
 fun summarizeReactions(postId: String, all: List<PostReaction>, me: String?): ReactionSummary {

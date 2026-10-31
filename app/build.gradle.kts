@@ -76,6 +76,11 @@ dependencies {
 
     implementation(libs.ktor.client.android)
     implementation(libs.kotlinx.coroutines.android)
+    // conversa com o app do relógio (Data Layer do Wear OS)
+    implementation(libs.play.services.wearable)
+    implementation(libs.kotlinx.coroutines.play.services)
+    // avisos do Social em segundo plano (pedido para seguir, fim de desafio)
+    implementation(libs.androidx.work.runtime)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)

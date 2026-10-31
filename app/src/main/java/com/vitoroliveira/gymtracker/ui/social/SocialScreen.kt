@@ -72,7 +72,7 @@ import com.vitoroliveira.gymtracker.ui.theme.ThemedScaffold
 import com.vitoroliveira.gymtracker.ui.theme.ThemedTopAppBar
 import org.koin.compose.viewmodel.koinViewModel
 
-private val TABS = listOf("Feed", "Grupos", "Desafios", "Pessoas")
+private val TABS = listOf("Feed", "Grupos", "Desafios", "Pessoas", "Ranqueada")
 
 /** O que a tela pode pedir ao ViewModel. Separado pra a parte visual poder ser testada sem rede. */
 class SocialActions(
@@ -86,6 +86,13 @@ class SocialActions(
     val react: (String, ReactionKind) -> Unit = { _, _ -> },
     val editPost: (String, String?, String) -> Unit = { _, _, _ -> },
     val createGroup: (com.vitoroliveira.gymtracker.presentation.social.GroupForm) -> Unit = {},
+    val updateGroup: (String, com.vitoroliveira.gymtracker.presentation.social.GroupEditForm) -> Unit = { _, _ -> },
+    val loadGroupProgress: (String) -> Unit = {},
+    val openGroup: (String) -> Unit = {},
+    val removeMember: (String, String) -> Unit = { _, _ -> },
+    val setMemberRole: (String, String, String) -> Unit = { _, _, _ -> },
+    val postGroupMessage: (String, String) -> Unit = { _, _ -> },
+    val deleteGroupMessage: (String, String) -> Unit = { _, _ -> },
     val joinGroup: (String) -> Unit = {},
     val joinCode: (String) -> Unit = {},
     val leaveGroup: (String) -> Unit = {},
@@ -100,7 +107,7 @@ class SocialActions(
 private fun SocialViewModel.actions() = SocialActions(
     refresh = ::refresh, clear = ::clearMessages, saveSettings = ::saveSettings,
     follow = ::follow, unfollow = ::unfollow, acceptFollower = ::acceptFollower, rejectFollower = ::rejectFollower,
-    react = ::toggleReaction, editPost = ::editPost, createGroup = ::createGroup, joinGroup = ::joinGroup, joinCode = ::joinGroupByCode,
+    react = ::toggleReaction, editPost = ::editPost, createGroup = ::createGroup, updateGroup = ::updateGroup, loadGroupProgress = ::loadGroupProgress, openGroup = ::openGroup, removeMember = ::removeMember, setMemberRole = ::setMemberRole, postGroupMessage = ::postGroupMessage, deleteGroupMessage = ::deleteGroupMessage, joinGroup = ::joinGroup, joinCode = ::joinGroupByCode,
     leaveGroup = ::leaveGroup, createChallenge = ::createChallenge, joinChallenge = ::joinChallenge,
     leaveChallenge = ::leaveChallenge, loadStandings = ::loadStandings,
     openProfile = ::openProfile, closeProfile = ::closeProfile
@@ -109,17 +116,20 @@ private fun SocialViewModel.actions() = SocialActions(
 @Composable
 fun SocialScreen(onBack: () -> Unit, vm: SocialViewModel = koinViewModel()) {
     val state by vm.state.collectAsState()
-    SocialContent(state, vm.actions(), onBack)
+    SocialContent(state, vm.actions(), onBack, rankedSlot = { com.vitoroliveira.gymtracker.ui.ranked.RankedScreen() })
 }
 
 @Composable
-fun SocialContent(state: SocialUiState, a: SocialActions, onBack: () -> Unit) {
+fun SocialContent(state: SocialUiState, a: SocialActions, onBack: () -> Unit, rankedSlot: @Composable () -> Unit = {}) {
     var tab by remember { mutableIntStateOf(0) }
     var showSettings by remember { mutableStateOf(false) }
     var showGroupDialog by remember { mutableStateOf(false) }
     var showCodeDialog by remember { mutableStateOf(false) }
     var showChallengeDialog by remember { mutableStateOf(false) }
     var openChallenge by remember { mutableStateOf<ChallengeItem?>(null) }
+    var openGroupId by remember { mutableStateOf<String?>(null) }
+    var challengeGroupId by remember { mutableStateOf<String?>(null) }
+    var editGroupId by remember { mutableStateOf<String?>(null) }
     val snackbar = remember { SnackbarHostState() }
 
     LaunchedEffect(state.message, state.error) {
@@ -149,9 +159,10 @@ fun SocialContent(state: SocialUiState, a: SocialActions, onBack: () -> Unit) {
                 Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
             } else when (tab) {
                 0 -> FeedTab(state, a, onOpenSettings = { showSettings = true })
-                1 -> GroupsTab(state, a, onCreate = { showGroupDialog = true }, onCode = { showCodeDialog = true })
+                1 -> GroupsTab(state, a, onCreate = { showGroupDialog = true }, onCode = { showCodeDialog = true }, onOpen = { openGroupId = it.id })
                 2 -> ChallengesTab(state, a, onCreate = { showChallengeDialog = true }, onOpen = { openChallenge = it })
-                else -> PeopleTab(state, a)
+                3 -> PeopleTab(state, a)
+                else -> rankedSlot()
             }
         }
     }
@@ -164,9 +175,45 @@ fun SocialContent(state: SocialUiState, a: SocialActions, onBack: () -> Unit) {
     if (showCodeDialog) CodeDialog(onConfirm = { a.joinCode(it); showCodeDialog = false }, onDismiss = { showCodeDialog = false })
     if (showChallengeDialog) ChallengeDialog(
         myGroups = state.myGroups,
-        onConfirm = { a.createChallenge(it); showChallengeDialog = false },
-        onDismiss = { showChallengeDialog = false }
+        initialGroupId = challengeGroupId,
+        onConfirm = { a.createChallenge(it); showChallengeDialog = false; challengeGroupId = null },
+        onDismiss = { showChallengeDialog = false; challengeGroupId = null }
     )
+    openGroupId?.let { gid ->
+        val group = (state.myGroups + state.publicGroups).firstOrNull { it.id == gid }
+        if (group == null) openGroupId = null else {
+            val mine = state.myGroups.any { it.id == gid }
+            GroupSheet(
+                d = GroupSheetData(
+                    group = group, mine = mine, me = state.me, progress = state.groupProgress[gid],
+                    streak = state.groupStreaks[gid] ?: 0, board = state.groupBoards[gid].orEmpty(),
+                    messages = state.groupMessages[gid].orEmpty(),
+                    challenges = state.challenges.filter { it.challenge.groupId == gid }
+                ),
+                a = GroupSheetActions(
+                    load = { a.openGroup(gid) },
+                    edit = { editGroupId = gid },
+                    join = { a.joinGroup(gid); openGroupId = null },
+                    leave = { a.leaveGroup(gid); openGroupId = null },
+                    removeMember = { a.removeMember(gid, it) },
+                    setRole = { member, role -> a.setMemberRole(gid, member, role) },
+                    post = { a.postGroupMessage(gid, it) },
+                    deleteMessage = { a.deleteGroupMessage(gid, it) },
+                    newChallenge = { challengeGroupId = gid; showChallengeDialog = true; openGroupId = null },
+                    openChallenge = { openChallenge = it; openGroupId = null }
+                ),
+                onDismiss = { openGroupId = null }
+            )
+        }
+    }
+    editGroupId?.let { gid ->
+        val group = state.myGroups.firstOrNull { it.id == gid }
+        if (group == null) editGroupId = null else GroupEditDialog(
+            group = group,
+            onSave = { a.updateGroup(gid, it); editGroupId = null },
+            onDismiss = { editGroupId = null }
+        )
+    }
     state.profileView?.let { pv ->
         // relação atualizada (seguir/deixar de seguir muda o botão sem fechar a folha)
         val live = state.people.firstOrNull { it.profile.id == pv.person.profile.id }
@@ -217,6 +264,8 @@ private fun FeedTab(state: SocialUiState, a: SocialActions, onOpenSettings: () -
                 }
             }
         }
+        // liga da semana (eu + quem eu sigo) só aparece com mais de uma pessoa
+        if (state.league.size > 1) item(key = "league") { LeagueCard(state.league) }
         if (state.feed.isEmpty()) item(key = "empty") {
             Empty("Feed vazio", "Quando você (ou quem você segue) finalizar um treino compartilhado, ele aparece aqui.")
         }
@@ -297,7 +346,7 @@ private fun ReactionKind.icon(): ImageVector = when (this) {
 // ───────────────────────── Grupos ─────────────────────────
 
 @Composable
-private fun GroupsTab(state: SocialUiState, a: SocialActions, onCreate: () -> Unit, onCode: () -> Unit) {
+private fun GroupsTab(state: SocialUiState, a: SocialActions, onCreate: () -> Unit, onCode: () -> Unit, onOpen: (SocialGroup) -> Unit) {
     LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         item(key = "actions") {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -311,27 +360,35 @@ private fun GroupsTab(state: SocialUiState, a: SocialActions, onCreate: () -> Un
         }
         items(state.myGroups, key = { "m" + it.id }) { g ->
             GroupCard(g, mine = true, isOwner = g.ownerId == state.me,
-                onAction = { a.leaveGroup(g.id) })
+                onAction = { a.leaveGroup(g.id) }, onOpen = { onOpen(g) })
         }
         item(key = "pub-title") { Spacer(Modifier.height(6.dp)); Text("Grupos públicos", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
         if (state.publicGroups.isEmpty()) item(key = "pub-empty") {
             Text("Nenhum grupo público por aqui ainda.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        items(state.publicGroups, key = { "p" + it.id }) { g -> GroupCard(g, mine = false, isOwner = false, onAction = { a.joinGroup(g.id) }) }
+        items(state.publicGroups, key = { "p" + it.id }) { g -> GroupCard(g, mine = false, isOwner = false, onAction = { a.joinGroup(g.id) }, onOpen = { onOpen(g) }) }
     }
 }
 
 @Composable
-private fun GroupCard(g: SocialGroup, mine: Boolean, isOwner: Boolean, onAction: () -> Unit) {
-    ThemedCard(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
+private fun GroupCard(g: SocialGroup, mine: Boolean, isOwner: Boolean, onAction: () -> Unit, onOpen: () -> Unit) {
+    ThemedCard(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium, onClick = onOpen) {
+        // capa do grupo (quadro parado, para a lista não pesar) com o ícone e o nome
+        CoverBox(g.look, Modifier.fillMaxWidth().height(76.dp), shape = androidx.compose.ui.graphics.RectangleShape) {
+            Row(Modifier.align(Alignment.BottomStart).padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                IdentityBadge(g.look, 36.dp)
+                Spacer(Modifier.width(10.dp))
+                Text(g.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Black, color = androidx.compose.ui.graphics.Color.White, maxLines = 1)
+            }
+        }
         Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(g.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                 Text(
-                    (if (g.isPublic) "Público" else "Por convite") + (g.maxMembers?.let { " · até $it membros" } ?: ""),
+                    (if (g.isPublic) "Público" else "Por convite") + (g.maxMembers?.let { " · até $it membros" } ?: "") +
+                        (g.weeklyGoal?.let { " · meta $it treinos/semana" } ?: ""),
                     style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                g.description?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+                g.description?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodySmall, maxLines = 2) }
                 if (isOwner && g.inviteCode != null) Text(
                     "Código de convite: ${g.inviteCode}", style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary
@@ -362,9 +419,20 @@ private fun ChallengesTab(state: SocialUiState, a: SocialActions, onCreate: () -
 @Composable
 private fun ChallengeCard(item: ChallengeItem, onClick: () -> Unit, onJoin: () -> Unit) {
     ThemedCard(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium, onClick = onClick) {
+        val look = item.challenge.look
+        if (look.cover != null || look.accentHex != null || look.icon != null) {
+            CoverBox(look, Modifier.fillMaxWidth().height(60.dp), shape = androidx.compose.ui.graphics.RectangleShape) {
+                Row(Modifier.align(Alignment.BottomStart).padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                    IdentityBadge(look, 30.dp)
+                    Spacer(Modifier.width(8.dp))
+                    Text(item.challenge.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Black, color = androidx.compose.ui.graphics.Color.White, maxLines = 1)
+                }
+            }
+        }
         Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(item.challenge.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                if (look.cover == null && look.accentHex == null && look.icon == null) Text(item.challenge.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                item.challenge.prize?.takeIf { it.isNotBlank() }?.let { Text("Prêmio: $it", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.tertiary, fontWeight = FontWeight.Bold) }
                 Text(
                     (item.metric?.label ?: item.challenge.metric) + (item.challenge.exerciseName?.let { " · $it" } ?: ""),
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -444,6 +512,52 @@ private fun PersonRow(item: PersonItem, a: SocialActions, title: com.vitorolivei
                 Relation.REQUESTED -> OutlinedButton({ a.unfollow(p.id) }) { Text("Pedido enviado") }
                 Relation.FOLLOWING -> OutlinedButton({ a.unfollow(p.id) }) { Text("Seguindo") }
             }
+        }
+    }
+}
+
+/** Liga da semana: ranking por treinos (desempate por dias ativos e volume) entre você e quem você segue. */
+@Composable
+private fun LeagueCard(rows: List<com.vitoroliveira.gymtracker.data.model.LeagueRow>) {
+    var expanded by remember { mutableStateOf(false) }
+    val meIndex = rows.indexOfFirst { it.isMe }
+    // fechado: os 3 primeiros e eu (se eu estiver mais para baixo)
+    val shown = if (expanded || rows.size <= 4) rows.withIndex().toList()
+    else rows.withIndex().filter { it.index < 3 || it.index == meIndex }
+    ThemedCard(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.LocalFireDepartment, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Spacer(Modifier.width(8.dp))
+                Column(Modifier.weight(1f)) {
+                    Text("Liga da semana", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                    Text("Você e quem você segue, de segunda a domingo", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                if (meIndex >= 0) Text("${meIndex + 1}º", fontWeight = FontWeight.Black, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
+            }
+            shown.forEach { (i, r) ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        "${i + 1}", modifier = Modifier.width(26.dp), fontWeight = FontWeight.Black,
+                        color = if (i == 0) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    com.vitoroliveira.gymtracker.ui.profile.UserAvatar(r.avatarUrl, 28.dp, fallbackName = r.username)
+                    Spacer(Modifier.width(8.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            if (r.isMe) "Você" else "@${r.username}",
+                            fontWeight = if (r.isMe) FontWeight.Black else FontWeight.Medium, maxLines = 1
+                        )
+                        Text(
+                            "${r.activeDays} ${if (r.activeDays == 1) "dia" else "dias"} · ${com.vitoroliveira.gymtracker.presentation.social.formatInt(r.volumeKg)} kg · ${r.minutes} min",
+                            style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1
+                        )
+                    }
+                    Text("${r.workouts}", fontWeight = FontWeight.Black, style = MaterialTheme.typography.titleMedium)
+                    Text(" treino${if (r.workouts == 1) "" else "s"}", style = MaterialTheme.typography.labelSmall)
+                }
+            }
+            if (rows.size > 4) TextButton(onClick = { expanded = !expanded }) { Text(if (expanded) "Mostrar menos" else "Ver todos (${rows.size})") }
         }
     }
 }

@@ -29,7 +29,6 @@ import com.vitoroliveira.gymtracker.presentation.viewmodel.WorkoutViewModel
 import com.vitoroliveira.gymtracker.presentation.viewmodel.maxSetsFor
 import com.vitoroliveira.gymtracker.presentation.viewmodel.setLimitMessage
 import com.vitoroliveira.gymtracker.ui.home.ProgressRing
-import com.vitoroliveira.gymtracker.ui.music.MiniPlayer
 import com.vitoroliveira.gymtracker.ui.theme.ThemedCard
 import com.vitoroliveira.gymtracker.ui.theme.ThemedScaffold
 import com.vitoroliveira.gymtracker.ui.theme.ThemedTopAppBar
@@ -66,7 +65,6 @@ fun CircuitScreen(
         }
     }
 
-    com.vitoroliveira.gymtracker.ui.music.TrackRecording(w.activeWorkout?.id, w.summary != null)
     LaunchedEffect(Unit) { workoutVm.startWorkout(muscleGroupId) }
     DisposableEffect(view) { view.keepScreenOn = true; onDispose { view.keepScreenOn = false } }
 
@@ -105,7 +103,8 @@ fun CircuitScreen(
             when {
                 w.activeWorkoutToRecover != null -> RecoverDialog(
                     onResume = { workoutVm.resumeWorkout(w.activeWorkoutToRecover!!) },
-                    onDiscard = { workoutVm.discardAndStartNew(muscleGroupId) }
+                    onDiscard = { workoutVm.discardAndStartNew(muscleGroupId) },
+                    onBack = onExit
                 )
                 w.activeWorkout == null -> Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
                 c.phase == CircuitPhase.IDLE -> CircuitSetup(
@@ -139,13 +138,18 @@ fun CircuitScreen(
 }
 
 @Composable
-private fun RecoverDialog(onResume: () -> Unit, onDiscard: () -> Unit) {
+private fun RecoverDialog(onResume: () -> Unit, onDiscard: () -> Unit, onBack: () -> Unit) {
     AlertDialog(
-        onDismissRequest = {},
+        onDismissRequest = onBack,      // voltar sai do circuito sem mexer no treino aberto
         title = { Text("Treino em andamento") },
         text = { Text("Você já tem um treino aberto. Quer continuar com ele ou começar outro?") },
         confirmButton = { TextButton(onResume) { Text("Continuar") } },
-        dismissButton = { TextButton(onDiscard) { Text("Descartar e começar novo") } }
+        dismissButton = {
+            androidx.compose.foundation.layout.Row {
+                TextButton(onBack) { Text("Voltar") }
+                TextButton(onDiscard) { Text("Descartar e começar novo") }
+            }
+        }
     )
 }
 
@@ -278,7 +282,7 @@ private fun Mini(label: String, value: String, onMinus: () -> Unit, onPlus: () -
 @Composable
 fun CircuitRun(c: CircuitState, vm: CircuitViewModel) = CircuitRunContent(
     c, onDone = vm::tapDone, onStillGoing = vm::tapStillGoing, onExtend = { vm.extendRest(15) },
-    onAdjust = { r, k -> vm.adjust(r, k) }, player = { MiniPlayer() }
+    onAdjust = { r, k -> vm.adjust(r, k) }
 )
 
 @Composable

@@ -1,6 +1,8 @@
 package com.vitoroliveira.gymtracker.presentation
 
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.plus
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -67,5 +69,39 @@ class DashboardCalculatorTest {
         assertEquals(LocalDate(2026, 9, 28), b.first().weekStart)
         assertEquals(LocalDate(2026, 10, 19), b.last().weekStart)
         assertEquals(listOf(0, 2, 0, 1), b.map { it.count })
+    }
+
+    // ---- sequência de semanas com a meta ----
+    // quarta = 21/10/2026; semanas começam em 19/10, 12/10, 5/10, 28/9...
+    private fun d(day: Int, month: Int = 10) = LocalDate(2026, month, day)
+    private val tresNaSemana = { start: LocalDate -> listOf(start, start.plus(1, DateTimeUnit.DAY), start.plus(2, DateTimeUnit.DAY)) }
+
+    @Test fun semanasSeguidasSemTreinoEhZero() = assertEquals(0, DashboardCalculator.weekStreak(emptyList(), quarta, 3))
+
+    @Test fun semanaAtualEmAndamentoNaoQuebraASequencia() {
+        val dates = tresNaSemana(d(12)) + tresNaSemana(d(5)) + listOf(d(19)) // atual com 1 de 3
+        assertEquals(2, DashboardCalculator.weekStreak(dates, quarta, 3))
+    }
+
+    @Test fun semanaAtualQueJaBateuAMetaConta() {
+        val dates = tresNaSemana(d(19)) + tresNaSemana(d(12))
+        assertEquals(2, DashboardCalculator.weekStreak(dates, quarta, 3))
+    }
+
+    @Test fun semanaFracaNoMeioQuebra() {
+        val dates = tresNaSemana(d(12)) + listOf(d(7)) + tresNaSemana(d(28, 9)) // 5/10 com 1 treino
+        assertEquals(1, DashboardCalculator.weekStreak(dates, quarta, 3))
+    }
+
+    @Test fun semanaAnteriorFracaESemanaAtualFracaZera() {
+        assertEquals(0, DashboardCalculator.weekStreak(listOf(d(13), d(19)), quarta, 3))
+    }
+
+    @Test fun metaZeroOuNegativaViraUmTreinoPorSemana() {
+        assertEquals(2, DashboardCalculator.weekStreak(listOf(d(13), d(7)), quarta, 0))
+    }
+
+    @Test fun treinoFuturoNaoContaNaSequencia() {
+        assertEquals(0, DashboardCalculator.weekStreak(tresNaSemana(d(26)), quarta, 3))
     }
 }

@@ -7,7 +7,11 @@ import com.vitoroliveira.gymtracker.data.model.ChallengeParticipant
 import com.vitoroliveira.gymtracker.data.model.FeedPost
 import com.vitoroliveira.gymtracker.data.model.Follow
 import com.vitoroliveira.gymtracker.data.model.GroupMember
+import com.vitoroliveira.gymtracker.data.model.GroupMemberRow
+import com.vitoroliveira.gymtracker.data.model.GroupMessage
+import com.vitoroliveira.gymtracker.data.model.NewGroupMessage
 import com.vitoroliveira.gymtracker.data.model.NewChallenge
+import com.vitoroliveira.gymtracker.data.model.GroupEdit
 import com.vitoroliveira.gymtracker.data.model.NewGroup
 import com.vitoroliveira.gymtracker.data.model.PostReaction
 import com.vitoroliveira.gymtracker.data.model.ProfileStats
@@ -86,6 +90,9 @@ class SocialRepositoryImpl(private val supabase: SupabaseClient) : SocialReposit
 
     override suspend fun profileStats(userId: String): ProfileStats? =
         supabase.postgrest.rpc("profile_stats", buildJsonObject { put("p_profile", userId) }).decodeAsOrNull<ProfileStats>()
+
+    override suspend fun weeklyLeague(): List<com.vitoroliveira.gymtracker.data.model.LeagueRow> =
+        supabase.postgrest.rpc("weekly_league").decodeList()
 
     override suspend fun topTracks(userId: String): List<TopTrack> =
         supabase.postgrest.rpc("profile_top_tracks", buildJsonObject { put("p_profile", userId); put("p_limit", 10) }).decodeList()
@@ -173,6 +180,45 @@ class SocialRepositoryImpl(private val supabase: SupabaseClient) : SocialReposit
             filter { eq("group_id", groupId); eq("profile_id", me()) }
         }
     }
+
+    override suspend fun updateGroup(groupId: String, edit: GroupEdit) {
+        supabase.postgrest["groups"].update(edit) { filter { eq("id", groupId) } }
+    }
+
+    override suspend fun groupBoard(groupId: String): List<GroupMemberRow> =
+        supabase.postgrest.rpc("group_week_board", buildJsonObject { put("p_group", groupId) }).decodeList<GroupMemberRow>()
+
+    override suspend fun groupStreak(groupId: String): Int =
+        supabase.postgrest.rpc("group_goal_streak", buildJsonObject { put("p_group", groupId) }).decodeAs<Int>()
+
+    override suspend fun setMemberRole(groupId: String, profileId: String, role: String) {
+        supabase.postgrest["group_members"].update({ set("role", role) }) {
+            filter { eq("group_id", groupId); eq("profile_id", profileId) }
+        }
+    }
+
+    override suspend fun removeMember(groupId: String, profileId: String) {
+        supabase.postgrest["group_members"].delete { filter { eq("group_id", groupId); eq("profile_id", profileId) } }
+    }
+
+    override suspend fun groupMessages(groupId: String): List<GroupMessage> =
+        supabase.postgrest["group_messages"].select {
+            filter { eq("group_id", groupId) }
+            order("created_at", Order.DESCENDING)
+            limit(50)
+        }.decodeList<GroupMessage>()
+
+    override suspend fun postGroupMessage(groupId: String, body: String) {
+        supabase.postgrest["group_messages"].insert(NewGroupMessage(groupId, body))
+    }
+
+    override suspend fun deleteGroupMessage(messageId: String) {
+        supabase.postgrest["group_messages"].delete { filter { eq("id", messageId) } }
+    }
+
+    override suspend fun groupProgress(groupId: String): com.vitoroliveira.gymtracker.presentation.social.GroupWeekProgress? =
+        supabase.postgrest.rpc("group_week_progress", buildJsonObject { put("p_group", groupId) })
+            .decodeList<com.vitoroliveira.gymtracker.presentation.social.GroupWeekProgress>().firstOrNull()
 
     // ── desafios ──
 

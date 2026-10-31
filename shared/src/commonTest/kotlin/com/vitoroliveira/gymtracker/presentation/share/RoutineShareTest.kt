@@ -122,6 +122,22 @@ class RoutineShareTest {
         assertEquals(listOf(code), shares.countedImports)
     }
 
+    @Test fun treinoGigantePassaPeloLimiteDeImportacao() {
+        val shares = MemShares()
+        val many = (1..100).map { SharedExercise(if (it == 1) "N".repeat(300) else "Exercício $it", 3, 12, "x".repeat(900)) }
+        val code = shares.seed(NewSharedRoutine("G".repeat(200), "#4CAF50", many))
+        val groups = MemGroups()
+        val ex = MemExercises()
+        val vm = RoutineShareViewModel(shares, groups, ex)
+        vm.lookup(code)
+        vm.confirmImport()
+        assertEquals(60, ex.rows.size)
+        assertEquals(80, groups.rows.single().name.length)
+        assertEquals(80, ex.rows.maxOf { it.name.length })
+        assertEquals(500, ex.rows.first().notes!!.length)
+        assertTrue("com 60 exercícios" in vm.state.value.message.orEmpty())
+    }
+
     @Test fun codigoInexistenteAvisa() {
         val vm = RoutineShareViewModel(MemShares(), MemGroups(), MemExercises())
         vm.lookup("ZZZZZZZZ")

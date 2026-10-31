@@ -46,6 +46,25 @@ class WorkoutRepositoryImpl(
             }
     }
 
+    override suspend fun createWorkout(workoutId: String, muscleGroupId: String?, startedAtIso: String) {
+        val userId = supabase.auth.currentUserOrNull()?.id
+            ?: throw IllegalStateException("Usuário não autenticado")
+        supabase.postgrest["workouts"]
+            .insert(Workout(id = workoutId, profileId = userId, muscleGroupId = muscleGroupId, startedAt = startedAtIso))
+    }
+
+    override suspend fun finishWorkoutAt(workoutId: String, finishedAtIso: String) {
+        supabase.postgrest["workouts"]
+            .update({ set("finished_at", finishedAtIso) }) {
+                filter { eq("id", workoutId) }
+            }
+    }
+
+    override suspend fun addSets(sets: List<WorkoutSet>) {
+        if (sets.isEmpty()) return
+        supabase.postgrest["workout_sets"].insert(sets)
+    }
+
     override suspend fun deleteWorkout(workoutId: String) {
         supabase.postgrest["workouts"]
             .delete {
@@ -77,14 +96,26 @@ class WorkoutRepositoryImpl(
     }
 
     override suspend fun getHistory(): List<Workout> {
-        return supabase.postgrest["workouts"]
-            .select {
-                order("started_at", Order.DESCENDING)
-                filter {
-                    filterNot("finished_at", FilterOperator.IS, null)
+        // o Supabase devolve no máximo 1000 linhas por chamada: busca em páginas (erro nº 16)
+        val page = 1000L
+        val all = mutableListOf<Workout>()
+        var from = 0L
+        while (true) {
+            val chunk = supabase.postgrest["workouts"]
+                .select {
+                    order("started_at", Order.DESCENDING)
+                    order("id", Order.ASCENDING)
+                    filter {
+                        filterNot("finished_at", FilterOperator.IS, null)
+                    }
+                    range(from, from + page - 1)
                 }
-            }
-            .decodeList()
+                .decodeList<Workout>()
+            all += chunk
+            if (chunk.size < page) break
+            from += page
+        }
+        return all
     }
 
     override suspend fun getWorkout(workoutId: String): Workout? =
@@ -142,6 +173,7 @@ class WorkoutRepositoryImpl(
                 .select(Columns.raw("exercise_id, set_number, reps, weight_kg, completed_at, workouts!inner(id, started_at, muscle_group_id, muscle_group_name)")) {
                     filter { filterNot("workouts.finished_at", FilterOperator.IS, null) }
                     order("completed_at", Order.ASCENDING)
+                    order("id", Order.ASCENDING)          // desempate: sem ele, páginas podem repetir/pular séries
                     range(from, from + page - 1)
                 }
                 .decodeList<com.vitoroliveira.gymtracker.data.model.ExportSet>()

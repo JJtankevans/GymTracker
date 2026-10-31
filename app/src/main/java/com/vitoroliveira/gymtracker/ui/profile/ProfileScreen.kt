@@ -84,11 +84,13 @@ fun ProfileScreen(
         onNavigateToAchievements = onNavigateToAchievements,
         onUpdateWeeklyGoal = { viewModel.updateWeeklyGoal(it) },
         onSignOut = { viewModel.signOut() },
+        onDeleteAccount = { viewModel.deleteAccount() },
         onClearMessages = { viewModel.clearMessages() },
         onPickPhoto = { photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
         onRemovePhoto = { viewModel.removeAvatar() },
         isExporting = export.isExporting,
-        onExport = exportVm::export
+        onExport = exportVm::export,
+        watchSlot = { com.vitoroliveira.gymtracker.wear.WatchSyncCard() }
     )
 }
 
@@ -103,15 +105,19 @@ fun ProfileScreenContent(
     onUpdateWeeklyGoal: (Int) -> Unit,
     onSignOut: () -> Unit,
     onClearMessages: () -> Unit,
+    onDeleteAccount: () -> Unit = {},
     onPickPhoto: () -> Unit = {},
     onRemovePhoto: () -> Unit = {},
     isExporting: Boolean = false,
-    onExport: () -> Unit = {}
+    onExport: () -> Unit = {},
+    /** Cartão do relógio (fica vazio nas prévias e capturas, que não têm Data Layer). */
+    watchSlot: @Composable () -> Unit = {}
 ) {
     var weeklyGoal by remember(uiState.profile) {
         mutableStateOf(uiState.profile?.weeklyGoal ?: 3)
     }
     var showLogoutDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
     var showPhotoSheet by remember { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
@@ -235,7 +241,7 @@ fun ProfileScreenContent(
 
                 Slider(
                     value = weeklyGoal.toFloat(),
-                    onValueChange = { weeklyGoal = it.toInt() },
+                    onValueChange = { weeklyGoal = kotlin.math.round(it).toInt() },
                     valueRange = 1f..7f,
                     steps = 5,
                     modifier = Modifier.fillMaxWidth()
@@ -308,6 +314,10 @@ fun ProfileScreenContent(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                watchSlot()
+
+                Spacer(modifier = Modifier.height(16.dp))
+
                 OutlinedButton(
                     onClick = onNavigateToThemes,
                     modifier = Modifier.fillMaxWidth()
@@ -328,6 +338,15 @@ fun ProfileScreenContent(
                     )
                 ) {
                     Text(if (uiState.isSigningOut) "Saindo..." else "Sair da conta")
+                }
+
+                TextButton(
+                    onClick = { showDeleteDialog = true },
+                    enabled = !uiState.isSigningOut && !uiState.isDeletingAccount,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text(if (uiState.isDeletingAccount) "Excluindo a conta..." else "Excluir minha conta")
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -356,14 +375,39 @@ fun ProfileScreenContent(
         }
     }
 
+    if (showDeleteDialog) {
+        var typed by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Excluir minha conta") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        "Isto apaga de vez, e não dá para desfazer: seus treinos, grupos, exercícios, recordes, peso, medidas, " +
+                            "foto, posts, seguidores e participações em desafios. Desafios e grupos que você criou somem para todos."
+                    )
+                    Text("Para confirmar, digite EXCLUIR:")
+                    OutlinedTextField(value = typed, onValueChange = { typed = it }, singleLine = true)
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = typed.trim().equals("EXCLUIR", ignoreCase = true),
+                    onClick = { showDeleteDialog = false; onDeleteAccount() }
+                ) { Text("Excluir tudo", color = if (typed.trim().equals("EXCLUIR", ignoreCase = true)) MaterialTheme.colorScheme.error else Color.Unspecified) }
+            },
+            dismissButton = { TextButton(onClick = { showDeleteDialog = false }) { Text("Cancelar") } }
+        )
+    }
+
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
             title = { Text("Sair da conta") },
             text = {
                 Text(
-                    "Seus treinos, o peso e os dados do corpo ficam salvos na conta. O que existe só neste celular é apagado: " +
-                        "medidas corporais, agenda da semana, favoritos do catálogo e o ritmo aprendido no circuito."
+                    "Seus treinos, o peso, as medidas e os dados do corpo ficam salvos na conta. O que existe só neste celular é apagado: " +
+                        "agenda da semana, favoritos do catálogo, metas de carga e o ritmo aprendido no circuito."
                 )
             },
             confirmButton = {

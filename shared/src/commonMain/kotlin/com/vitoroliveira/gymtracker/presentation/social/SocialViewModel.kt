@@ -62,6 +62,14 @@ data class SocialUiState(
     val titles: Map<String, ProfileTitle> = emptyMap(),
     /** Meu perfil público (foto e nome nos meus posts). */
     val myProfile: SocialProfile? = null,
+    /** Liga da semana (eu + quem eu sigo). Vazia sem a migração 015 ou sem ninguém. */
+    val league: List<com.vitoroliveira.gymtracker.data.model.LeagueRow> = emptyList(),
+    /** Treinos da semana de cada grupo (por id); só dos grupos abertos. Vazio sem a migração 017. */
+    val groupProgress: Map<String, GroupWeekProgress> = emptyMap(),
+    /** Ranking da semana, sequência da meta e mural de cada grupo aberto (por id). */
+    val groupBoards: Map<String, List<com.vitoroliveira.gymtracker.data.model.GroupMemberRow>> = emptyMap(),
+    val groupStreaks: Map<String, Int> = emptyMap(),
+    val groupMessages: Map<String, List<com.vitoroliveira.gymtracker.data.model.GroupMessage>> = emptyMap(),
     val profileView: ProfileView? = null,
     val message: String? = null,
     val error: String? = null,
@@ -114,6 +122,7 @@ class SocialViewModel(
             section("o feed") { loadFeed() }
             section("os grupos") { loadGroups() }
             section("os desafios") { loadChallenges() }
+            loadLeagueQuietly()
             update {
                 val nothing = feed.isEmpty() && people.isEmpty() && myGroups.isEmpty() && publicGroups.isEmpty() && challenges.isEmpty()
                 copy(isLoading = false, error = errors.firstOrNull(), loadError = if (nothing) errors.firstOrNull() else null)
@@ -141,6 +150,16 @@ class SocialViewModel(
         val requests = follows.filter { it.followedId == me && it.status == "pending" }
             .mapNotNull { f -> profiles.firstOrNull { it.id == f.followerId } }
         update { copy(people = items, followRequests = requests) }
+    }
+
+    /** A liga é um extra: sem a migração 015 (ou sem rede) o cartão só não aparece, sem mensagem de erro. */
+    private suspend fun loadLeagueQuietly() {
+        try {
+            val rows = repo.weeklyLeague()
+            update { copy(league = rows) }
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+        }
     }
 
     /** Títulos são um enfeite: se falhar (ex.: migração 010 ainda não rodou), a tela segue sem eles e sem mensagem de erro. */
@@ -222,12 +241,27 @@ class SocialViewModel(
 
     // ── feed ──
 
-    /** Liga/desliga a reação do usuário. Atualiza a lista na hora e desfaz se o servidor recusar. */
+    /** Reações gravando agora ("post|tipo"): um segundo toque antes do servidor responder é ignorado. */
+    private val reacting = mutableSetOf<String>()
+
+    /** Liga/desliga a reação do usuário. Atualiza a lista na hora e volta ao que o servidor tem se ele recusar. */
     fun toggleReaction(postId: String, kind: ReactionKind) {
         val item = _state.value.feed.firstOrNull { it.post.id == postId } ?: return
+        val key = "$postId|${kind.key}"
+        if (!reacting.add(key)) return
         val had = kind in item.reactions.mine
-        act("Erro ao reagir", then = { loadFeed() }) {
-            if (had) repo.removeReaction(postId, kind.key) else repo.addReaction(postId, kind.key)
+        update { copy(feed = feed.map { if (it.post.id == postId) it.copy(reactions = it.reactions.toggled(kind)) else it }) }
+        viewModelScope.launch {
+            try {
+                if (had) repo.removeReaction(postId, kind.key) else repo.addReaction(postId, kind.key)
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                // 23505 = a reação já existia (toque duplo em outro aparelho): o estado final é o mesmo, sem erro
+                if (e.message?.contains("23505") != true) update { copy(error = e.toUserMessage("Erro ao reagir")) }
+                runCatching { loadFeed() }
+            } finally {
+                reacting.remove(key)
+            }
         }
     }
 
@@ -254,6 +288,68 @@ class SocialViewModel(
     fun joinGroupByCode(code: String) {
         if (code.isBlank()) { update { copy(error = "Digite o código do convite.") }; return }
         act("Erro ao entrar com o código", "Você entrou no grupo", then = { loadGroups() }) { repo.joinGroupByCode(code.trim()) }
+    }
+
+    /** O dono edita identidade, aviso fixado e meta semanal. */
+    fun updateGroup(id: String, form: GroupEditForm) {
+        val edit = try { form.toEdit() } catch (e: IllegalArgumentException) {
+            update { copy(error = e.message) }; return
+        }
+        act("Erro ao salvar o grupo", "Grupo atualizado", then = { loadGroups(); loadGroupProgress(id) }) { repo.updateGroup(id, edit) }
+    }
+
+    /** Abre o grupo: carrega meta da semana, ranking, sequência e mural (cada um sozinho: o que falhar só não aparece). */
+    fun openGroup(id: String) {
+        loadGroupProgress(id); loadGroupBoard(id); loadGroupStreak(id); loadGroupMessages(id)
+    }
+
+    fun loadGroupBoard(id: String) {
+        viewModelScope.launch {
+            try { val rows = repo.groupBoard(id); update { copy(groupBoards = groupBoards + (id to rows)) } }
+            catch (e: Exception) { if (e is CancellationException) throw e }
+        }
+    }
+
+    fun loadGroupStreak(id: String) {
+        viewModelScope.launch {
+            try { val weeks = repo.groupStreak(id); update { copy(groupStreaks = groupStreaks + (id to weeks)) } }
+            catch (e: Exception) { if (e is CancellationException) throw e }
+        }
+    }
+
+    fun loadGroupMessages(id: String) {
+        viewModelScope.launch {
+            try { val list = repo.groupMessages(id); update { copy(groupMessages = groupMessages + (id to list)) } }
+            catch (e: Exception) { if (e is CancellationException) throw e }
+        }
+    }
+
+    fun removeMember(groupId: String, profileId: String) =
+        act("Erro ao tirar do grupo", "Membro removido", then = { loadGroupBoard(groupId); loadGroupProgress(groupId) }) { repo.removeMember(groupId, profileId) }
+
+    fun setMemberRole(groupId: String, profileId: String, role: String) =
+        act("Erro ao mudar o cargo", "Cargo atualizado", then = { loadGroupBoard(groupId) }) { repo.setMemberRole(groupId, profileId, role) }
+
+    fun postGroupMessage(groupId: String, text: String) {
+        val body = cleanMessage(text) ?: run {
+            update { copy(error = "Escreva uma mensagem de até $MAX_MESSAGE_LENGTH caracteres.") }; return
+        }
+        act("Erro ao enviar a mensagem", then = { loadGroupMessages(groupId) }) { repo.postGroupMessage(groupId, body) }
+    }
+
+    fun deleteGroupMessage(groupId: String, messageId: String) =
+        act("Erro ao apagar a mensagem", then = { loadGroupMessages(groupId) }) { repo.deleteGroupMessage(messageId) }
+
+    /** Treinos do grupo na semana. É um extra: se a função não existir (migração 017), o grupo só não mostra a meta. */
+    fun loadGroupProgress(id: String) {
+        viewModelScope.launch {
+            try {
+                val p = repo.groupProgress(id) ?: return@launch
+                update { copy(groupProgress = groupProgress + (id to p)) }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+            }
+        }
     }
 
     fun leaveGroup(id: String) = act("Erro ao sair do grupo", "Você saiu do grupo", then = { loadGroups(); loadChallenges() }) { repo.leaveGroup(id) }

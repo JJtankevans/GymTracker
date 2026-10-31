@@ -21,7 +21,9 @@ private const val TAU = (2 * PI).toFloat()
  * [t] é o relógio global em 0..1 (volta completa a cada 60s). Todas as
  * animações usam múltiplos inteiros de [t], então o loop é contínuo.
  */
-fun DrawScope.drawThemeBackground(extras: ThemeExtras, base: Color, t: Float) {
+fun DrawScope.drawThemeBackground(extras: ThemeExtras, base: Color, t: Float, level: Int = 1) {
+    // tamanho zero (antes do layout): gradiente radial com raio 0 lança exceção no Android
+    if (size.width < 2f || size.height < 2f) return
     if (extras.backgroundGradient.size >= 2) {
         drawRect(Brush.verticalGradient(extras.backgroundGradient))
     } else {
@@ -50,6 +52,51 @@ fun DrawScope.drawThemeBackground(extras: ThemeExtras, base: Color, t: Float) {
         Decor.WAVES -> drawWaves(extras.decorColors, t)
         Decor.FIREFLIES -> drawFireflies(extras.decorColors, t)
         Decor.DECO -> drawDeco(extras.decorColors)
+        Decor.STORM -> drawStorm(extras.decorColors, t)
+        Decor.DISCO -> drawDisco(extras.decorColors, t)
+        Decor.KALEIDO -> drawKaleido(extras.decorColors, t)
+        Decor.ABYSS -> drawAbyss(extras.decorColors, t)
+        Decor.GALAXY -> drawGalaxy(extras.decorColors, t)
+        Decor.STATIC -> drawStatic(extras.decorColors, t)
+        Decor.HOLO -> drawHolo(extras.decorColors, t)
+        Decor.HAUNTED -> drawHaunted(extras.decorColors, t)
+        Decor.FIREWORKS -> drawFireworks(extras.decorColors, t)
+        Decor.BLOCKS -> drawBlocks(extras.decorColors, t)
+        Decor.ECG -> drawEcg(extras.decorColors, t)
+        Decor.LASERS -> drawLasers(extras.decorColors, t)
+        Decor.CIRCUIT -> drawCircuit(extras.decorColors, t)
+        Decor.SNOW -> drawSnow(extras.decorColors, t)
+        Decor.BUBBLES -> drawBubbles(extras.decorColors, t)
+        Decor.DESERT -> drawDesert(extras.decorColors, t)
+        Decor.ORIGAMI -> drawOrigami(extras.decorColors, t)
+        Decor.NEON_CITY -> drawNeonCity(extras.decorColors, t)
+        Decor.RADAR -> drawRadar(extras.decorColors, t)
+        Decor.SAKURA -> drawSakura(extras.decorColors, t)
+        Decor.VOLCANO -> drawVolcano(extras.decorColors, t)
+        Decor.DNA -> drawDna(extras.decorColors, t)
+        Decor.VINYL -> drawVinyl(extras.decorColors, t)
+        Decor.DUNGEON -> drawDungeon(extras.decorColors, t)
+        Decor.MATERIAL -> drawMaterial(extras.decorColors, t, level)
+        Decor.SPOTLIGHT -> drawSpotlight(extras.decorColors, t, level)
+        Decor.CARBON -> drawCarbon(extras.decorColors, t, level)
+        Decor.TIDE -> drawTide(extras.decorColors, t, level)
+        Decor.INK -> drawInk(extras.decorColors, t, level)
+        Decor.NOTEBOOK -> drawNotebook(extras.decorColors, t, level)
+        Decor.DRAFT -> drawDraft(extras.decorColors, t, level)
+        Decor.BRUTAL -> drawBrutal(extras.decorColors, t, level)
+        Decor.NEON_SIGN -> drawNeonSign(extras.decorColors, t, level)
+        Decor.TERMINAL -> drawTerminal(extras.decorColors, t, level)
+        Decor.TRACK -> drawTrack(extras.decorColors, t, level)
+        Decor.GOLD -> drawGold(extras.decorColors, t, level)
+        Decor.CURTAINS -> drawCurtains(extras.decorColors, t, level)
+        Decor.OUTRUN -> drawOutrun(extras.decorColors, t, level)
+        Decor.PARTY -> drawParty(extras.decorColors, t, level)
+        Decor.CRACKS -> drawCracks(extras.decorColors, t, level)
+        Decor.FJORD -> drawFjord(extras.decorColors, t, level)
+        Decor.OBSIDIAN -> drawObsidian(extras.decorColors, t, level)
+        Decor.HEXNET -> drawHexNet(extras.decorColors, t, level)
+        Decor.FOREST -> drawForest(extras.decorColors, t, level)
+        Decor.GLACIER -> drawGlacier(extras.decorColors, t, level)
     }
 }
 

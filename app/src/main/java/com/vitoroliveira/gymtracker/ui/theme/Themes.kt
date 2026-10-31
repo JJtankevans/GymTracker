@@ -35,7 +35,12 @@ object AppThemes {
         colors = studioColors,
         typography = makeTypography(FontFamily.SansSerif, FontFamily.SansSerif),
         shapes = roundedShapes(8.dp, 12.dp, 16.dp),
-        dynamic = true
+        dynamic = true,
+        extras = ThemeExtras(
+            decor = Decor.MATERIAL,
+            decorColors = listOf(hex(0x7C9CFF), hex(0xC58BFF), hex(0x5BE3C4)),
+            animated = true
+        )
     )
 
     val Studio = AppThemeSpec(
@@ -45,6 +50,9 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.Inter, ThemeFonts.Inter, FontWeight.SemiBold),
         shapes = roundedShapes(8.dp, 12.dp, 18.dp),
         extras = ThemeExtras(
+            decor = Decor.SPOTLIGHT,
+            decorColors = listOf(hex(0x6366F1), hex(0xF59E0B)),
+            animated = true,
             cardBorderWidth = 1.dp, cardBorderColor = hex(0xE3E5EC),
             success = hex(0x16A34A)
         )
@@ -62,6 +70,9 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.SpaceGrotesk, ThemeFonts.Inter, FontWeight.ExtraBold, (-0.3).sp),
         shapes = roundedShapes(8.dp, 12.dp, 14.dp),
         extras = ThemeExtras(
+            decor = Decor.CARBON,
+            decorColors = listOf(hex(0xC6F432), hex(0x7DD3FC)),
+            animated = true,
             homeLayout = HomeLayout.BENTO,
             cardBorderWidth = 1.dp, cardBorderColor = hex(0x2A2E34),
             success = hex(0xC6F432)
@@ -80,14 +91,14 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.Inter, ThemeFonts.Inter, FontWeight.SemiBold),
         shapes = roundedShapes(10.dp, 14.dp, 20.dp),
         extras = ThemeExtras(
+            decor = Decor.TIDE,
+            decorColors = listOf(hex(0x38BDF8), hex(0x2DD4BF), hex(0x818CF8)),
+            animated = true,
             homeLayout = HomeLayout.ORBIT,
             workoutLayout = WorkoutLayout.FOCUS,
-            decor = Decor.WAVES,
-            decorColors = listOf(hex(0x38BDF8), hex(0x2DD4BF), hex(0x818CF8)),
             backgroundGradient = listOf(hex(0x0B1730), hex(0x07101D), hex(0x041526)),
             cardBorderWidth = 1.dp, cardBorderColor = hex(0x1F3556),
-            success = hex(0x2DD4BF),
-            animated = true
+            success = hex(0x2DD4BF)
         )
     )
 
@@ -103,6 +114,9 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.Inter, ThemeFonts.Inter, FontWeight.Medium, (-0.4).sp),
         shapes = roundedShapes(2.dp, 4.dp, 6.dp),
         extras = ThemeExtras(
+            decor = Decor.INK,
+            decorColors = listOf(hex(0x111111), hex(0x3B4A6B)),
+            animated = true,
             homeLayout = HomeLayout.POSTER,
             workoutLayout = WorkoutLayout.FOCUS,
             cardBorderWidth = 1.dp, cardBorderColor = hex(0xD2D2D2),
@@ -124,8 +138,10 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.Playfair, ThemeFonts.Inter, FontWeight.Bold, (-0.5).sp, headingFeatures = "lnum"),
         shapes = roundedShapes(1.dp, 2.dp, 3.dp),
         extras = ThemeExtras(
+            decor = Decor.NOTEBOOK,
+            decorColors = listOf(hex(0x5B8DEF), hex(0xE0524D), hex(0x3A3A3A)),
+            animated = true,
             homeLayout = HomeLayout.EDITORIAL,
-            decor = Decor.PAPER,
             cardBorderWidth = 1.dp, cardBorderColor = hex(0x1B1A17).copy(alpha = 0.75f),
             success = hex(0x2E6B3A)
         )
@@ -143,8 +159,10 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.Mono, ThemeFonts.Inter, FontWeight.Bold),
         shapes = roundedShapes(2.dp, 2.dp, 3.dp),
         extras = ThemeExtras(
+            decor = Decor.DRAFT,
+            decorColors = listOf(hex(0xBFD9FF), hex(0xFFD400)),
+            animated = true,
             homeLayout = HomeLayout.BENTO,
-            decor = Decor.BLUEPRINT,
             cardBorderWidth = 1.dp, cardBorderColor = Color.White.copy(alpha = 0.55f),
             success = hex(0x7CFFB2)
         )
@@ -162,6 +180,9 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.SpaceGrotesk, ThemeFonts.Inter, FontWeight.Black, (-0.6).sp, labelWeight = FontWeight.Bold),
         shapes = roundedShapes(4.dp, 6.dp, 8.dp),
         extras = ThemeExtras(
+            decor = Decor.BRUTAL,
+            decorColors = listOf(hex(0xFF4D8D), hex(0xFFD93D), hex(0x4D9DFF), hex(0x111111)),
+            animated = true,
             homeLayout = HomeLayout.POSTER,
             workoutLayout = WorkoutLayout.FOCUS,
             cardBorderWidth = 3.dp, cardBorderColor = hex(0x000000),
@@ -182,14 +203,14 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.Mono, ThemeFonts.Inter, FontWeight.Bold, 0.5.sp),
         shapes = cutShapes(6.dp, 10.dp, 16.dp),
         extras = ThemeExtras(
+            decor = Decor.NEON_SIGN,
+            decorColors = listOf(hex(0xFF2BD6), hex(0x00F0FF)),
+            animated = true,
             homeLayout = HomeLayout.ORBIT,
             workoutLayout = WorkoutLayout.FOCUS,
-            decor = Decor.NEON_GRID,
-            decorColors = listOf(hex(0xFF2BD6), hex(0x00F0FF)),
             cardBorderWidth = 1.dp, cardBorderColor = hex(0x00F0FF).copy(alpha = 0.65f),
             glowColor = hex(0x00F0FF),
-            success = hex(0x00FF9C),
-            animated = true
+            success = hex(0x00FF9C)
         )
     )
 
@@ -209,12 +230,12 @@ object AppThemes {
             extraLarge = RoundedCornerShape(0.dp)
         ),
         extras = ThemeExtras(
-            homeLayout = HomeLayout.TERMINAL,
-            decor = Decor.SCANLINES,
+            decor = Decor.TERMINAL,
             decorColors = listOf(hex(0x33FF66)),
+            animated = true,
+            homeLayout = HomeLayout.TERMINAL,
             cardBorderWidth = 1.dp, cardBorderColor = hex(0x1F9D3A),
-            success = hex(0x33FF66),
-            animated = true
+            success = hex(0x33FF66)
         )
     )
 
@@ -233,13 +254,13 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.SpaceGrotesk, ThemeFonts.Inter, FontWeight.SemiBold, (-0.2).sp),
         shapes = roundedShapes(14.dp, 20.dp, 28.dp),
         extras = ThemeExtras(
+            decor = Decor.CURTAINS,
+            decorColors = listOf(hex(0x00E5C3), hex(0x7B4DFF), hex(0xFF4DB8), hex(0x2D9CFF)),
+            animated = true,
             homeLayout = HomeLayout.ORBIT,
             workoutLayout = WorkoutLayout.FOCUS,
-            decor = Decor.AURORA,
-            decorColors = listOf(hex(0x00E5C3), hex(0x7B4DFF), hex(0xFF4DB8), hex(0x2D9CFF)),
             cardBorderWidth = 1.dp, cardBorderColor = Color.White.copy(alpha = 0.16f),
-            success = hex(0x7CF7D4),
-            animated = true
+            success = hex(0x7CF7D4)
         )
     )
 
@@ -255,15 +276,15 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.SpaceGrotesk, ThemeFonts.Inter, FontWeight.ExtraBold, 0.2.sp),
         shapes = roundedShapes(12.dp, 18.dp, 22.dp),
         extras = ThemeExtras(
+            decor = Decor.OUTRUN,
+            decorColors = listOf(hex(0xFFD166), hex(0xFF3D9A), hex(0x22D3EE)),
+            animated = true,
             homeLayout = HomeLayout.POSTER,
             workoutLayout = WorkoutLayout.FOCUS,
-            decor = Decor.SYNTH_SUN,
             backgroundGradient = listOf(hex(0x140A33), hex(0x3B0F6B), hex(0xB3175F), hex(0xFF7A3D)),
-            decorColors = listOf(hex(0xFFD166), hex(0xFF3D9A), hex(0x22D3EE)),
             cardBorderWidth = 1.dp, cardBorderColor = hex(0xFF3D9A).copy(alpha = 0.55f),
             glowColor = hex(0xFF3D9A).copy(alpha = 0.6f),
-            success = hex(0x5CFFB8),
-            animated = true
+            success = hex(0x5CFFB8)
         )
     )
 
@@ -279,13 +300,13 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.SpaceGrotesk, ThemeFonts.Inter, FontWeight.ExtraBold, (-0.3).sp),
         shapes = roundedShapes(12.dp, 18.dp, 22.dp),
         extras = ThemeExtras(
-            homeLayout = HomeLayout.BENTO,
-            decor = Decor.CONFETTI,
+            decor = Decor.PARTY,
             decorColors = listOf(hex(0x6C4DFF), hex(0xFF6B6B), hex(0x00C2A8), hex(0xFFC93C), hex(0xFF8FD0)),
+            animated = true,
+            homeLayout = HomeLayout.BENTO,
             cardBorderWidth = 2.5.dp, cardBorderColor = hex(0x1F1F3D),
             hardShadowOffset = 5.dp, hardShadowColor = hex(0xFFC93C),
-            success = hex(0x00A88F),
-            animated = true
+            success = hex(0x00A88F)
         )
     )
 
@@ -301,15 +322,15 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.BarlowCondensed, ThemeFonts.Inter, FontWeight.ExtraBold, (-0.2).sp),
         shapes = roundedShapes(10.dp, 14.dp, 18.dp),
         extras = ThemeExtras(
+            decor = Decor.CRACKS,
+            decorColors = listOf(hex(0xFF6A00), hex(0xFFB000), hex(0xFF3B30)),
+            animated = true,
             homeLayout = HomeLayout.ORBIT,
             workoutLayout = WorkoutLayout.FOCUS,
-            decor = Decor.EMBERS,
             backgroundGradient = listOf(hex(0x0E0403), hex(0x1A0604), hex(0x3A0F06)),
-            decorColors = listOf(hex(0xFF6A00), hex(0xFFB000), hex(0xFF3B30)),
             cardBorderWidth = 1.dp, cardBorderColor = hex(0xFF6A00).copy(alpha = 0.35f),
             glowColor = hex(0xFF6A00).copy(alpha = 0.45f),
-            success = hex(0xFFD23F),
-            animated = true
+            success = hex(0xFFD23F)
         )
     )
 
@@ -328,6 +349,9 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.Inter, ThemeFonts.Inter, FontWeight.Light, (-0.2).sp, labelWeight = FontWeight.Medium),
         shapes = roundedShapes(12.dp, 18.dp, 26.dp),
         extras = ThemeExtras(
+            decor = Decor.FJORD,
+            decorColors = listOf(hex(0x2F5D50), hex(0x6B7C85), hex(0xE8B96A)),
+            animated = true,
             cardBorderWidth = 1.dp, cardBorderColor = hex(0xE1E5DF),
             success = hex(0x2F8F5B)
         )
@@ -345,10 +369,11 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.SpaceGrotesk, ThemeFonts.Inter, FontWeight.Medium, (-0.4).sp),
         shapes = roundedShapes(6.dp, 10.dp, 14.dp),
         extras = ThemeExtras(
+            decor = Decor.OBSIDIAN,
+            decorColors = listOf(hex(0xFFFFFF)),
+            animated = true,
             homeLayout = HomeLayout.BENTO,
             workoutLayout = WorkoutLayout.FOCUS,
-            decor = Decor.DOTS,
-            decorColors = listOf(Color.White),
             cardBorderWidth = 1.dp, cardBorderColor = hex(0x262626),
             success = hex(0x22D3EE)
         )
@@ -366,9 +391,10 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.Inter, ThemeFonts.Inter, FontWeight.SemiBold, (-0.2).sp),
         shapes = roundedShapes(10.dp, 16.dp, 22.dp),
         extras = ThemeExtras(
+            decor = Decor.HEXNET,
+            decorColors = listOf(hex(0x4D86FF), hex(0x7CE0FF)),
+            animated = true,
             homeLayout = HomeLayout.ORBIT,
-            decor = Decor.HALO,
-            decorColors = listOf(hex(0x4D86FF)),
             cardBorderWidth = 1.dp, cardBorderColor = hex(0x26344F),
             success = hex(0x4ADE9B)
         )
@@ -386,13 +412,13 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.Inter, ThemeFonts.Inter, FontWeight.SemiBold, (-0.1).sp),
         shapes = roundedShapes(10.dp, 16.dp, 24.dp),
         extras = ThemeExtras(
-            homeLayout = HomeLayout.ORBIT,
-            decor = Decor.FIREFLIES,
+            decor = Decor.FOREST,
             decorColors = listOf(hex(0xD9F99D), hex(0x2FBF7A)),
+            animated = true,
+            homeLayout = HomeLayout.ORBIT,
             backgroundGradient = listOf(hex(0x0B1A14), hex(0x08120E), hex(0x050C09)),
             cardBorderWidth = 1.dp, cardBorderColor = hex(0x1F3A2D),
-            success = hex(0x7BE0A4),
-            animated = true
+            success = hex(0x7BE0A4)
         )
     )
 
@@ -410,10 +436,11 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.BarlowCondensed, ThemeFonts.BarlowCondensed, FontWeight.Black, 0.3.sp, labelWeight = FontWeight.Bold),
         shapes = roundedShapes(2.dp, 4.dp, 6.dp),
         extras = ThemeExtras(
+            decor = Decor.TRACK,
+            decorColors = listOf(hex(0xFF2D2D)),
+            animated = true,
             homeLayout = HomeLayout.POSTER,
             workoutLayout = WorkoutLayout.FOCUS,
-            decor = Decor.STRIPES,
-            decorColors = listOf(hex(0xFF2D2D)),
             cardBorderWidth = 2.dp, cardBorderColor = hex(0xFF2D2D).copy(alpha = 0.8f),
             success = hex(0x35E08A)
         )
@@ -431,9 +458,10 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.Playfair, ThemeFonts.Inter, FontWeight.SemiBold, (-0.2).sp, headingFeatures = "lnum"),
         shapes = roundedShapes(4.dp, 8.dp, 12.dp),
         extras = ThemeExtras(
+            decor = Decor.GOLD,
+            decorColors = listOf(hex(0xD8B25A), hex(0xFFE9A8)),
+            animated = true,
             homeLayout = HomeLayout.EDITORIAL,
-            decor = Decor.DECO,
-            decorColors = listOf(hex(0xD8B25A)),
             cardBorderWidth = 1.dp, cardBorderColor = hex(0xD8B25A).copy(alpha = 0.35f),
             success = hex(0xD8B25A)
         )
@@ -452,13 +480,13 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.SpaceGrotesk, ThemeFonts.Inter, FontWeight.SemiBold, (-0.3).sp),
         shapes = roundedShapes(14.dp, 22.dp, 30.dp),
         extras = ThemeExtras(
+            decor = Decor.GLACIER,
+            decorColors = listOf(hex(0x1FB6FF), hex(0x5EEAD4), hex(0x818CF8)),
+            animated = true,
             homeLayout = HomeLayout.ORBIT,
             workoutLayout = WorkoutLayout.FOCUS,
-            decor = Decor.AURORA,
-            decorColors = listOf(hex(0x1FB6FF), hex(0x5EEAD4), hex(0x818CF8)),
             cardBorderWidth = 1.dp, cardBorderColor = Color.White.copy(alpha = 0.22f),
-            success = hex(0x5EEAD4),
-            animated = true
+            success = hex(0x5EEAD4)
         )
     )
 
@@ -628,12 +656,600 @@ object AppThemes {
         )
     )
 
+    // ───────────── LOUCOS, segunda leva (28/10/2026) ─────────────
+
+    val Tempestade = AppThemeSpec(
+        id = "tempestade", name = "Tempestade", tagline = "Raio caindo a cada série. Treina na chuva",
+        category = ThemeCategory.CRAZY, isDark = true,
+        colors = makeScheme(
+            dark = true,
+            primary = hex(0x7CC4FF), secondary = hex(0xFFE45C), tertiary = hex(0xB9C6D9),
+            background = hex(0x0A0F1A), surface = hex(0x111827), onSurface = hex(0xE8F0FF),
+            cardColor = hex(0x131C2C).copy(alpha = 0.86f), onPrimary = hex(0x001A33),
+            topBar = Color.Transparent
+        ),
+        typography = makeTypography(ThemeFonts.BarlowCondensed, ThemeFonts.Inter, FontWeight.Black, 0.6.sp, labelWeight = FontWeight.Bold),
+        shapes = cutShapes(4.dp, 10.dp, 16.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.BENTO,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.STORM,
+            backgroundGradient = listOf(hex(0x0A0F1A), hex(0x111A2B), hex(0x1A2436)),
+            decorColors = listOf(hex(0xBFE3FF)),
+            cardBorderWidth = 1.dp, cardBorderColor = hex(0x7CC4FF).copy(alpha = 0.35f),
+            glowColor = hex(0xFFE45C).copy(alpha = 0.25f),
+            success = hex(0xFFE45C),
+            animated = true
+        )
+    )
+
+    val Discoteca = AppThemeSpec(
+        id = "discoteca", name = "Discoteca", tagline = "Bola espelhada girando. Supino com groove",
+        category = ThemeCategory.CRAZY, isDark = true,
+        colors = makeScheme(
+            dark = true,
+            primary = hex(0xFF3DCB), secondary = hex(0x3DDCFF), tertiary = hex(0xFFE03D),
+            background = hex(0x14021F), surface = hex(0x1F0630), onSurface = hex(0xFFF0FB),
+            cardColor = hex(0x22073A).copy(alpha = 0.85f), onPrimary = hex(0x2A0020),
+            topBar = Color.Transparent
+        ),
+        typography = makeTypography(ThemeFonts.Playfair, ThemeFonts.Inter, FontWeight.Black, (-0.2).sp, headingFeatures = "lnum"),
+        shapes = roundedShapes(16.dp, 24.dp, 32.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.POSTER,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.DISCO,
+            decorColors = listOf(hex(0xFF3DCB), hex(0x3DDCFF), hex(0xFFE03D), hex(0x7CFF3D)),
+            cardBorderWidth = 1.5.dp, cardBorderColor = hex(0xFFE03D).copy(alpha = 0.55f),
+            glowColor = hex(0xFF3DCB).copy(alpha = 0.45f),
+            success = hex(0x7CFF3D),
+            animated = true
+        )
+    )
+
+    val Caleidoscopio = AppThemeSpec(
+        id = "caleidoscopio", name = "Caleidoscópio", tagline = "Arco-íris girando sem parar. Tonteira controlada",
+        category = ThemeCategory.CRAZY, isDark = true,
+        colors = makeScheme(
+            dark = true,
+            primary = hex(0xFFB84D), secondary = hex(0x4DB8FF), tertiary = hex(0xB84DFF),
+            background = hex(0x0B0712), surface = hex(0x140D1F), onSurface = hex(0xFFF8EE),
+            cardColor = hex(0x140D1F).copy(alpha = 0.84f), onPrimary = hex(0x2A1500),
+            topBar = Color.Transparent
+        ),
+        typography = makeTypography(ThemeFonts.SpaceGrotesk, ThemeFonts.Inter, FontWeight.Black, (-0.5).sp),
+        shapes = roundedShapes(12.dp, 20.dp, 28.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.ORBIT,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.KALEIDO,
+            decorColors = listOf(hex(0xFF4D4D), hex(0xFFB84D), hex(0xFFF04D), hex(0x4DFF88), hex(0x4DB8FF), hex(0xB84DFF)),
+            cardBorderWidth = 1.5.dp, cardBorderColor = Color.White.copy(alpha = 0.35f),
+            success = hex(0x4DFF88),
+            animated = true
+        )
+    )
+
+    val Abissal = AppThemeSpec(
+        id = "abissal", name = "Abissal", tagline = "Fundo do mar, águas-vivas brilhando no escuro",
+        category = ThemeCategory.CRAZY, isDark = true,
+        colors = makeScheme(
+            dark = true,
+            primary = hex(0x6CF6FF), secondary = hex(0xFF6CF0), tertiary = hex(0xA5B4FC),
+            background = hex(0x00050F), surface = hex(0x030C1C), onSurface = hex(0xE6FBFF),
+            cardColor = hex(0x061428).copy(alpha = 0.8f), onPrimary = hex(0x00242A),
+            topBar = Color.Transparent
+        ),
+        typography = makeTypography(ThemeFonts.Inter, ThemeFonts.Inter, FontWeight.Light, 1.5.sp),
+        shapes = roundedShapes(20.dp, 28.dp, 36.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.ORBIT,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.ABYSS,
+            backgroundGradient = listOf(hex(0x02142A), hex(0x010A18), hex(0x00030A)),
+            decorColors = listOf(hex(0x6CF6FF), hex(0xFF6CF0)),
+            cardBorderWidth = 1.dp, cardBorderColor = hex(0x6CF6FF).copy(alpha = 0.35f),
+            glowColor = hex(0x6CF6FF).copy(alpha = 0.35f),
+            success = hex(0x6CF6FF),
+            animated = true
+        )
+    )
+
+    val Galaxia = AppThemeSpec(
+        id = "galaxia", name = "Galáxia", tagline = "Braços de estrelas girando. Shape interestelar",
+        category = ThemeCategory.CRAZY, isDark = true,
+        colors = makeScheme(
+            dark = true,
+            primary = hex(0x9D8CFF), secondary = hex(0xFFD6A5), tertiary = hex(0xFF7EB6),
+            background = hex(0x05030F), surface = hex(0x0C0820), onSurface = hex(0xF3EEFF),
+            cardColor = hex(0x110C2A).copy(alpha = 0.8f), onPrimary = hex(0x120A33),
+            topBar = Color.Transparent
+        ),
+        typography = makeTypography(ThemeFonts.SpaceGrotesk, ThemeFonts.Inter, FontWeight.Bold, 2.sp),
+        shapes = roundedShapes(14.dp, 22.dp, 30.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.ORBIT,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.GALAXY,
+            decorColors = listOf(hex(0xFFD6A5), hex(0x9D8CFF), hex(0xFF7EB6)),
+            cardBorderWidth = 1.dp, cardBorderColor = hex(0x9D8CFF).copy(alpha = 0.4f),
+            glowColor = hex(0x9D8CFF).copy(alpha = 0.35f),
+            success = hex(0xFFD6A5),
+            animated = true
+        )
+    )
+
+    val ForaDoAr = AppThemeSpec(
+        id = "fora_do_ar", name = "Fora do Ar", tagline = "Chuvisco de TV antiga. Sintonize o treino",
+        category = ThemeCategory.CRAZY, isDark = true,
+        colors = makeScheme(
+            dark = true,
+            primary = hex(0xF2F2F2), secondary = hex(0xFFE600), tertiary = hex(0x00E5FF),
+            background = hex(0x0B0B0B), surface = hex(0x141414), onSurface = hex(0xF5F5F5),
+            outline = hex(0x8A8A8A), cardColor = hex(0x161616).copy(alpha = 0.9f), onPrimary = hex(0x000000)
+        ),
+        typography = makeTypography(ThemeFonts.Mono, ThemeFonts.Mono, FontWeight.ExtraBold, 0.8.sp, labelWeight = FontWeight.Bold),
+        shapes = roundedShapes(2.dp, 4.dp, 6.dp, 8.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.TERMINAL,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.STATIC,
+            decorColors = listOf(hex(0xF2F2F2), hex(0xFFE600), hex(0x00E5FF), hex(0x00E676), hex(0xFF00E6), hex(0xFF1744), hex(0x2962FF)),
+            cardBorderWidth = 2.dp, cardBorderColor = hex(0xF2F2F2).copy(alpha = 0.6f),
+            hardShadowOffset = 3.dp, hardShadowColor = Color.Black,
+            success = hex(0xFFE600),
+            animated = true
+        )
+    )
+
+    val Holografico = AppThemeSpec(
+        id = "holografico", name = "Holográfico", tagline = "Brilho perolado de figurinha rara. Claro e cintilante",
+        category = ThemeCategory.CRAZY, isDark = false,
+        colors = makeScheme(
+            dark = false,
+            primary = hex(0x6D3BFF), secondary = hex(0x00A6B8), tertiary = hex(0xE6008A),
+            background = hex(0xF6F2FF), surface = hex(0xFFFFFF), onSurface = hex(0x1B1530),
+            cardColor = Color.White.copy(alpha = 0.72f), topBar = Color.Transparent
+        ),
+        typography = makeTypography(ThemeFonts.SpaceGrotesk, ThemeFonts.Inter, FontWeight.Bold, (-0.3).sp),
+        shapes = roundedShapes(18.dp, 26.dp, 34.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.EDITORIAL,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.HOLO,
+            decorColors = listOf(hex(0xFFB3E6), hex(0xB3E5FF), hex(0xC8FFD9), hex(0xFFF3B3), hex(0xD9B3FF)),
+            cardBorderWidth = 1.5.dp, cardBorderColor = Color.White,
+            success = hex(0x00A86B),
+            animated = true
+        )
+    )
+
+    val Assombrado = AppThemeSpec(
+        id = "assombrado", name = "Assombrado", tagline = "Lua cheia, morcegos e neblina. Treino de arrepiar",
+        category = ThemeCategory.CRAZY, isDark = true,
+        colors = makeScheme(
+            dark = true,
+            primary = hex(0xFF8A1F), secondary = hex(0xA78BFA), tertiary = hex(0x9DFF6C),
+            background = hex(0x0B0716), surface = hex(0x140D24), onSurface = hex(0xF4EEFF),
+            cardColor = hex(0x160E28).copy(alpha = 0.86f), onPrimary = hex(0x2A1200),
+            topBar = Color.Transparent
+        ),
+        typography = makeTypography(ThemeFonts.Playfair, ThemeFonts.Inter, FontWeight.Black, 0.3.sp, headingFeatures = "lnum"),
+        shapes = cutShapes(6.dp, 12.dp, 18.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.POSTER,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.HAUNTED,
+            backgroundGradient = listOf(hex(0x1A1033), hex(0x0F0920), hex(0x07040F)),
+            decorColors = listOf(hex(0xFFF1C2), hex(0x8A7CC2)),
+            cardBorderWidth = 1.dp, cardBorderColor = hex(0xFF8A1F).copy(alpha = 0.45f),
+            glowColor = hex(0xFF8A1F).copy(alpha = 0.3f),
+            success = hex(0x9DFF6C),
+            animated = true
+        )
+    )
+
+    val Reveillon = AppThemeSpec(
+        id = "reveillon", name = "Réveillon", tagline = "Fogos estourando o tempo todo. Cada série é ano novo",
+        category = ThemeCategory.CRAZY, isDark = true,
+        colors = makeScheme(
+            dark = true,
+            primary = hex(0xFFD447), secondary = hex(0xFF4D8D), tertiary = hex(0x4DD2FF),
+            background = hex(0x050816), surface = hex(0x0B1026), onSurface = hex(0xFFF9E8),
+            cardColor = hex(0x0E1430).copy(alpha = 0.84f), onPrimary = hex(0x2A2000),
+            topBar = Color.Transparent
+        ),
+        typography = makeTypography(ThemeFonts.BarlowCondensed, ThemeFonts.Inter, FontWeight.Black, 1.sp, labelWeight = FontWeight.Bold),
+        shapes = roundedShapes(10.dp, 18.dp, 26.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.POSTER,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.FIREWORKS,
+            backgroundGradient = listOf(hex(0x050816), hex(0x0A1030), hex(0x1A0F33)),
+            decorColors = listOf(hex(0xFFD447), hex(0xFF4D8D), hex(0x4DD2FF), hex(0x9DFF4D)),
+            cardBorderWidth = 1.5.dp, cardBorderColor = hex(0xFFD447).copy(alpha = 0.6f),
+            glowColor = hex(0xFFD447).copy(alpha = 0.3f),
+            success = hex(0x9DFF4D),
+            animated = true
+        )
+    )
+
+    val Blocos = AppThemeSpec(
+        id = "blocos", name = "Blocos", tagline = "Peças caindo e encaixando. Fecha a linha, fecha a série",
+        category = ThemeCategory.CRAZY, isDark = true,
+        colors = makeScheme(
+            dark = true,
+            primary = hex(0x00E5FF), secondary = hex(0xFFE600), tertiary = hex(0xB000FF),
+            background = hex(0x0A0A1F), surface = hex(0x12122E), onSurface = hex(0xFFFFFF),
+            outline = hex(0x5A5A9A), cardColor = hex(0x14143A).copy(alpha = 0.9f), onPrimary = hex(0x001A1F)
+        ),
+        typography = makeTypography(ThemeFonts.Mono, ThemeFonts.Inter, FontWeight.Black, 0.5.sp, labelWeight = FontWeight.Bold),
+        shapes = roundedShapes(0.dp, 0.dp, 0.dp, 0.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.BENTO,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.BLOCKS,
+            decorColors = listOf(hex(0x00E5FF), hex(0xFFE600), hex(0xB000FF), hex(0xFF8A00), hex(0x0057FF), hex(0x00E676), hex(0xFF1744)),
+            cardBorderWidth = 2.dp, cardBorderColor = hex(0x00E5FF).copy(alpha = 0.7f),
+            hardShadowOffset = 4.dp, hardShadowColor = hex(0xB000FF).copy(alpha = 0.8f),
+            success = hex(0x00E676),
+            animated = true
+        )
+    )
+
+    val Cardio = AppThemeSpec(
+        id = "cardio", name = "Cardio", tagline = "Monitor cardíaco batendo. Treino na UTI do shape",
+        category = ThemeCategory.CRAZY, isDark = true,
+        colors = makeScheme(
+            dark = true,
+            primary = hex(0x39FF88), secondary = hex(0xFF3B5C), tertiary = hex(0x7DD3FC),
+            background = hex(0x020A06), surface = hex(0x06140C), onSurface = hex(0xDFFFEA),
+            outline = hex(0x1F7A45), cardColor = hex(0x071A10).copy(alpha = 0.88f), onPrimary = hex(0x00220F)
+        ),
+        typography = makeTypography(ThemeFonts.BarlowCondensed, ThemeFonts.Mono, FontWeight.Black, 0.8.sp, labelWeight = FontWeight.Bold),
+        shapes = roundedShapes(4.dp, 8.dp, 12.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.TERMINAL,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.ECG,
+            decorColors = listOf(hex(0x39FF88)),
+            cardBorderWidth = 1.dp, cardBorderColor = hex(0x39FF88).copy(alpha = 0.45f),
+            glowColor = hex(0x39FF88).copy(alpha = 0.35f),
+            success = hex(0x39FF88),
+            animated = true
+        )
+    )
+
+    val Rave = AppThemeSpec(
+        id = "rave", name = "Rave", tagline = "Lasers cortando a fumaça. O grave bate no peito",
+        category = ThemeCategory.CRAZY, isDark = true,
+        colors = makeScheme(
+            dark = true,
+            primary = hex(0x39FF14), secondary = hex(0xFF00E6), tertiary = hex(0x00F0FF),
+            background = hex(0x050505), surface = hex(0x0D0D0D), onSurface = hex(0xF7F7F7),
+            cardColor = hex(0x101010).copy(alpha = 0.85f), onPrimary = hex(0x041A00),
+            topBar = Color.Transparent
+        ),
+        typography = makeTypography(ThemeFonts.SpaceGrotesk, ThemeFonts.Inter, FontWeight.Black, (-0.6).sp),
+        shapes = cutShapes(6.dp, 12.dp, 20.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.POSTER,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.LASERS,
+            decorColors = listOf(hex(0x39FF14), hex(0xFF00E6), hex(0x00F0FF)),
+            cardBorderWidth = 1.5.dp, cardBorderColor = hex(0x39FF14).copy(alpha = 0.55f),
+            glowColor = hex(0xFF00E6).copy(alpha = 0.4f),
+            success = hex(0x39FF14),
+            animated = true
+        )
+    )
+
+    // ───────────── LOUCOS, terceira leva (28/10/2026, madrugada) ─────────────
+
+    val PlacaMae = AppThemeSpec(
+        id = "placa_mae", name = "Placa-Mãe", tagline = "Energia correndo pelas trilhas. Overclock no shape",
+        category = ThemeCategory.CRAZY, isDark = true,
+        colors = makeScheme(
+            dark = true,
+            primary = hex(0x00E08A), secondary = hex(0xB6FF3B), tertiary = hex(0x3BC9FF),
+            background = hex(0x03140C), surface = hex(0x062014), onSurface = hex(0xE3FFF0),
+            outline = hex(0x1C6B45), cardColor = hex(0x072618).copy(alpha = 0.9f), onPrimary = hex(0x00240F)
+        ),
+        typography = makeTypography(ThemeFonts.Mono, ThemeFonts.Inter, FontWeight.Bold, 0.5.sp, labelWeight = FontWeight.Bold),
+        shapes = cutShapes(3.dp, 6.dp, 10.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.BENTO,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.CIRCUIT,
+            decorColors = listOf(hex(0x00E08A), hex(0xB6FF3B)),
+            cardBorderWidth = 1.dp, cardBorderColor = hex(0x00E08A).copy(alpha = 0.5f),
+            glowColor = hex(0x00E08A).copy(alpha = 0.3f),
+            success = hex(0xB6FF3B),
+            animated = true
+        )
+    )
+
+    val Nevasca = AppThemeSpec(
+        id = "nevasca", name = "Nevasca", tagline = "Floco por floco, série por série. Treino no gelo",
+        category = ThemeCategory.CRAZY, isDark = true,
+        colors = makeScheme(
+            dark = true,
+            primary = hex(0x9AD8FF), secondary = hex(0xE0F4FF), tertiary = hex(0xFFB3C7),
+            background = hex(0x0A1626), surface = hex(0x102036), onSurface = hex(0xF2F9FF),
+            cardColor = hex(0x13263F).copy(alpha = 0.82f), onPrimary = hex(0x002238),
+            topBar = Color.Transparent
+        ),
+        typography = makeTypography(ThemeFonts.SpaceGrotesk, ThemeFonts.Inter, FontWeight.Bold, 0.8.sp),
+        shapes = roundedShapes(16.dp, 24.dp, 32.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.ORBIT,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.SNOW,
+            backgroundGradient = listOf(hex(0x15304F), hex(0x0E1F36), hex(0x08121F)),
+            decorColors = listOf(hex(0xBDE7FF)),
+            cardBorderWidth = 1.dp, cardBorderColor = Color.White.copy(alpha = 0.3f),
+            success = hex(0x9AD8FF),
+            animated = true
+        )
+    )
+
+    val Bolhas = AppThemeSpec(
+        id = "bolhas", name = "Bolhas", tagline = "Bolhas de sabão furta-cor subindo. Leveza no pós-treino",
+        category = ThemeCategory.CRAZY, isDark = true,
+        colors = makeScheme(
+            dark = true,
+            primary = hex(0x9AE6FF), secondary = hex(0xFF9AE6), tertiary = hex(0xFFF09A),
+            background = hex(0x10101E), surface = hex(0x181830), onSurface = hex(0xF6F4FF),
+            cardColor = hex(0x1B1B36).copy(alpha = 0.8f), onPrimary = hex(0x00222E),
+            topBar = Color.Transparent
+        ),
+        typography = makeTypography(ThemeFonts.Inter, ThemeFonts.Inter, FontWeight.SemiBold, 0.2.sp),
+        shapes = roundedShapes(24.dp, 32.dp, 40.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.ORBIT,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.BUBBLES,
+            decorColors = listOf(hex(0xFF9AE6), hex(0x9AE6FF), hex(0xFFF09A)),
+            cardBorderWidth = 1.dp, cardBorderColor = hex(0x9AE6FF).copy(alpha = 0.4f),
+            success = hex(0x9AFFC8),
+            animated = true
+        )
+    )
+
+    val Miragem = AppThemeSpec(
+        id = "miragem", name = "Miragem", tagline = "Sol a pino e dunas tremendo de calor. Cardio no deserto",
+        category = ThemeCategory.CRAZY, isDark = true,
+        colors = makeScheme(
+            dark = true,
+            primary = hex(0xFFB347), secondary = hex(0xFF6B4A), tertiary = hex(0xFFE08A),
+            background = hex(0x2A1408), surface = hex(0x341A0C), onSurface = hex(0xFFF3E6),
+            cardColor = hex(0x3A1D0D).copy(alpha = 0.82f), onPrimary = hex(0x2A1300),
+            topBar = Color.Transparent
+        ),
+        typography = makeTypography(ThemeFonts.Playfair, ThemeFonts.Inter, FontWeight.Black, 0.2.sp, headingFeatures = "lnum"),
+        shapes = roundedShapes(12.dp, 20.dp, 28.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.POSTER,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.DESERT,
+            backgroundGradient = listOf(hex(0x5A2410), hex(0x3A170A), hex(0x1E0C05)),
+            decorColors = listOf(hex(0xFFB347), hex(0xD9824A)),
+            cardBorderWidth = 1.dp, cardBorderColor = hex(0xFFB347).copy(alpha = 0.45f),
+            success = hex(0xFFE08A),
+            animated = true
+        )
+    )
+
+    val Origami = AppThemeSpec(
+        id = "origami", name = "Origami", tagline = "Pássaros de papel voando sobre papel creme. Claro e leve",
+        category = ThemeCategory.CRAZY, isDark = false,
+        colors = makeScheme(
+            dark = false,
+            primary = hex(0xC8432F), secondary = hex(0x2F8F83), tertiary = hex(0x3B5BA9),
+            background = hex(0xF6EFE3), surface = hex(0xFFFAF2), onSurface = hex(0x2A2118),
+            cardColor = hex(0xFFFAF2).copy(alpha = 0.9f)
+        ),
+        typography = makeTypography(ThemeFonts.Playfair, ThemeFonts.Inter, FontWeight.Bold, (-0.2).sp, headingFeatures = "lnum"),
+        shapes = cutShapes(2.dp, 4.dp, 8.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.EDITORIAL,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.ORIGAMI,
+            decorColors = listOf(hex(0xE8604C), hex(0x2F8F83), hex(0xF2B33D), hex(0x3B5BA9)),
+            cardBorderWidth = 1.dp, cardBorderColor = hex(0x2A2118).copy(alpha = 0.2f),
+            hardShadowOffset = 3.dp, hardShadowColor = hex(0x2A2118).copy(alpha = 0.15f),
+            success = hex(0x2F8F83),
+            animated = true
+        )
+    )
+
+    val CidadeNeon = AppThemeSpec(
+        id = "cidade_neon", name = "Cidade Neon", tagline = "Prédios acesos, letreiros e carros voadores. 2077 na academia",
+        category = ThemeCategory.CRAZY, isDark = true,
+        colors = makeScheme(
+            dark = true,
+            primary = hex(0xFF2E88), secondary = hex(0x2EE6FF), tertiary = hex(0xFFD12E),
+            background = hex(0x0B0518), surface = hex(0x140A26), onSurface = hex(0xFFF0F8),
+            cardColor = hex(0x170B2E).copy(alpha = 0.86f), onPrimary = hex(0x2A0016),
+            topBar = Color.Transparent
+        ),
+        typography = makeTypography(ThemeFonts.BarlowCondensed, ThemeFonts.Inter, FontWeight.Black, 1.2.sp, labelWeight = FontWeight.Bold),
+        shapes = cutShapes(4.dp, 10.dp, 16.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.POSTER,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.NEON_CITY,
+            backgroundGradient = listOf(hex(0x1A0838), hex(0x10061F), hex(0x07030E)),
+            decorColors = listOf(hex(0xFF2E88), hex(0x2EE6FF), hex(0xFFD12E)),
+            cardBorderWidth = 1.5.dp, cardBorderColor = hex(0x2EE6FF).copy(alpha = 0.55f),
+            glowColor = hex(0xFF2E88).copy(alpha = 0.4f),
+            success = hex(0x2EE6FF),
+            animated = true
+        )
+    )
+
+    val Radar = AppThemeSpec(
+        id = "radar", name = "Radar", tagline = "Sala de controle: o feixe varre e os alvos piscam",
+        category = ThemeCategory.CRAZY, isDark = true,
+        colors = makeScheme(
+            dark = true,
+            primary = hex(0x3DFF8A), secondary = hex(0xFFE14D), tertiary = hex(0x7CFFC4),
+            background = hex(0x03140B), surface = hex(0x062014), onSurface = hex(0xD8FFE8),
+            cardColor = hex(0x072617).copy(alpha = 0.85f), topBar = Color.Transparent
+        ),
+        typography = makeTypography(ThemeFonts.Mono, ThemeFonts.Mono, FontWeight.Bold, 0.5.sp),
+        shapes = cutShapes(2.dp, 6.dp, 10.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.TERMINAL,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.RADAR,
+            backgroundGradient = listOf(hex(0x062A17), hex(0x03140B), hex(0x010A05)),
+            decorColors = listOf(hex(0x3DFF8A), hex(0xFFE14D)),
+            cardBorderWidth = 1.dp, cardBorderColor = hex(0x3DFF8A).copy(alpha = 0.5f),
+            glowColor = hex(0x3DFF8A).copy(alpha = 0.3f),
+            success = hex(0x3DFF8A),
+            animated = true
+        )
+    )
+
+    val Sakura = AppThemeSpec(
+        id = "sakura", name = "Sakura", tagline = "Cerejeira em flor e pétalas caindo. Claro e calmo",
+        category = ThemeCategory.CRAZY, isDark = false,
+        colors = makeScheme(
+            dark = false,
+            primary = hex(0xD94A86), secondary = hex(0x6B8E5A), tertiary = hex(0x8A5A9E),
+            background = hex(0xFFF3F7), surface = hex(0xFFFAFC), onSurface = hex(0x3A2230),
+            cardColor = hex(0xFFFFFF).copy(alpha = 0.82f)
+        ),
+        typography = makeTypography(ThemeFonts.Playfair, ThemeFonts.Inter, FontWeight.Bold, 0.sp, headingFeatures = "lnum"),
+        shapes = roundedShapes(14.dp, 22.dp, 30.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.EDITORIAL,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.SAKURA,
+            backgroundGradient = listOf(hex(0xFFE4EE), hex(0xFFF3F7), hex(0xFFFBF5)),
+            decorColors = listOf(hex(0xFF8DB8), hex(0xFFC9DD), hex(0x5B3A3A)),
+            cardBorderWidth = 1.dp, cardBorderColor = hex(0xD94A86).copy(alpha = 0.18f),
+            success = hex(0x6B8E5A),
+            animated = true
+        )
+    )
+
+    val Vulcao = AppThemeSpec(
+        id = "vulcao", name = "Vulcão", tagline = "Erupção ao fundo: lava, fumaça e faíscas no céu",
+        category = ThemeCategory.CRAZY, isDark = true,
+        colors = makeScheme(
+            dark = true,
+            primary = hex(0xFF5A1F), secondary = hex(0xFFD23F), tertiary = hex(0xFF8A5C),
+            background = hex(0x140705), surface = hex(0x1F0C08), onSurface = hex(0xFFEDE3),
+            cardColor = hex(0x22100B).copy(alpha = 0.84f), topBar = Color.Transparent
+        ),
+        typography = makeTypography(ThemeFonts.BarlowCondensed, ThemeFonts.Inter, FontWeight.Black, 0.8.sp, labelWeight = FontWeight.Bold),
+        shapes = roundedShapes(6.dp, 12.dp, 18.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.POSTER,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.VOLCANO,
+            backgroundGradient = listOf(hex(0x2B0905), hex(0x170605), hex(0x0A0303)),
+            decorColors = listOf(hex(0xFF5A1F), hex(0xFFD23F), hex(0x120807)),
+            cardBorderWidth = 1.dp, cardBorderColor = hex(0xFF5A1F).copy(alpha = 0.45f),
+            glowColor = hex(0xFF5A1F).copy(alpha = 0.35f),
+            success = hex(0xFFD23F),
+            animated = true
+        )
+    )
+
+    val Dna = AppThemeSpec(
+        id = "dna", name = "DNA", tagline = "Hélices girando: o seu código genético de monstro",
+        category = ThemeCategory.CRAZY, isDark = true,
+        colors = makeScheme(
+            dark = true,
+            primary = hex(0x4DD8FF), secondary = hex(0xFF5FD2), tertiary = hex(0xB8FF5C),
+            background = hex(0x050A18), surface = hex(0x0A1226), onSurface = hex(0xE6F6FF),
+            cardColor = hex(0x0C1630).copy(alpha = 0.85f), topBar = Color.Transparent
+        ),
+        typography = makeTypography(ThemeFonts.SpaceGrotesk, ThemeFonts.Inter, FontWeight.Bold, 0.2.sp),
+        shapes = roundedShapes(10.dp, 18.dp, 26.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.ORBIT,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.DNA,
+            backgroundGradient = listOf(hex(0x0B1834), hex(0x060D1E), hex(0x02050C)),
+            decorColors = listOf(hex(0x4DD8FF), hex(0xFF5FD2), hex(0xB8FF5C)),
+            cardBorderWidth = 1.dp, cardBorderColor = hex(0x4DD8FF).copy(alpha = 0.4f),
+            glowColor = hex(0xFF5FD2).copy(alpha = 0.3f),
+            success = hex(0xB8FF5C),
+            animated = true
+        )
+    )
+
+    val Vinil = AppThemeSpec(
+        id = "vinil", name = "Vinil", tagline = "Disco girando na vitrola e o equalizador pulando",
+        category = ThemeCategory.CRAZY, isDark = true,
+        colors = makeScheme(
+            dark = true,
+            primary = hex(0xFFC23D), secondary = hex(0xFF4D4D), tertiary = hex(0x3DD6C6),
+            background = hex(0x1A1410), surface = hex(0x241C16), onSurface = hex(0xFFF2E0),
+            cardColor = hex(0x2A2019).copy(alpha = 0.86f)
+        ),
+        typography = makeTypography(ThemeFonts.Playfair, ThemeFonts.Inter, FontWeight.Black, 0.sp, headingFeatures = "lnum"),
+        shapes = roundedShapes(8.dp, 14.dp, 22.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.POSTER,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.VINYL,
+            backgroundGradient = listOf(hex(0x2B1F16), hex(0x1A1410), hex(0x0E0B08)),
+            decorColors = listOf(hex(0xFF4D4D), hex(0xFFFFFF), hex(0xFFC23D)),
+            cardBorderWidth = 1.dp, cardBorderColor = hex(0xFFC23D).copy(alpha = 0.35f),
+            hardShadowOffset = 3.dp, hardShadowColor = hex(0x000000).copy(alpha = 0.5f),
+            success = hex(0x3DD6C6),
+            animated = true
+        )
+    )
+
+    val Masmorra = AppThemeSpec(
+        id = "masmorra", name = "Masmorra", tagline = "Parede de pedra e tochas acesas. Treino de RPG",
+        category = ThemeCategory.CRAZY, isDark = true,
+        colors = makeScheme(
+            dark = true,
+            primary = hex(0xFF8A1F), secondary = hex(0xB39DDB), tertiary = hex(0xFFE07A),
+            background = hex(0x120F17), surface = hex(0x1B1722), onSurface = hex(0xF3EAD8),
+            cardColor = hex(0x1E1926).copy(alpha = 0.86f), topBar = Color.Transparent
+        ),
+        typography = makeTypography(ThemeFonts.Playfair, ThemeFonts.Inter, FontWeight.Black, 0.6.sp, headingFeatures = "lnum"),
+        shapes = cutShapes(4.dp, 8.dp, 14.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.BENTO,
+            workoutLayout = WorkoutLayout.FOCUS,
+            decor = Decor.DUNGEON,
+            backgroundGradient = listOf(hex(0x1D1826), hex(0x120F17), hex(0x08070B)),
+            decorColors = listOf(hex(0xFF8A1F), hex(0xFFE07A), hex(0x4A3F5C)),
+            cardBorderWidth = 1.5.dp, cardBorderColor = hex(0xFF8A1F).copy(alpha = 0.4f),
+            hardShadowOffset = 2.dp, hardShadowColor = hex(0x000000).copy(alpha = 0.6f),
+            success = hex(0xFFE07A),
+            animated = true
+        )
+    )
+
     /** Ordem = ordem de exibição dentro de cada categoria. */
     val all: List<AppThemeSpec> = listOf(
         System, Studio, Carbon, Oceano, Tinta, Nordico, Obsidiana, Cobalto, Floresta,
         Papel, Blueprint, Brutal, Neon, Terminal, Arena, Ouro,
         Aurora, Sunset, Confete, Magma, Artico,
-        Matrix, Hipnose, Hiperespaco, Glitch, Lava, Arcade, Carnaval
+        Matrix, Hipnose, Hiperespaco, Glitch, Lava, Arcade, Carnaval,
+        Tempestade, Discoteca, Caleidoscopio, Abissal, Galaxia, ForaDoAr, Holografico,
+        Assombrado, Reveillon, Blocos, Cardio, Rave,
+        PlacaMae, Nevasca, Bolhas, Miragem, Origami, CidadeNeon,
+        Radar, Sakura, Vulcao, Dna, Vinil, Masmorra
+    )
+
+    /** Temas que ganham o selo "NOVO" no seletor (os da última leva). */
+    val newIds: Set<String> = setOf("radar", "sakura", "vulcao", "dna", "vinil", "masmorra")
+
+    /** Temas antigos que ganharam cenário próprio (31/10/2026): o seletor mostra o selo "RENOVADO". */
+    val renewedIds: Set<String> = setOf(
+        "system", "studio", "carbon", "oceano", "tinta", "papel", "blueprint", "brutal", "neon", "terminal", "aurora", "sunset",
+        "confete", "magma", "nordico", "obsidiana", "cobalto", "floresta", "arena", "ouro", "artico"
     )
 
     val available: List<AppThemeSpec> get() = all.filter { it.enabled }

@@ -16,15 +16,6 @@ class ThemePreferences(context: Context) {
     )
     val themeId: StateFlow<String> = _themeId.asStateFlow()
 
-    private val _musicReactive = MutableStateFlow(prefs.getBoolean(KEY_MUSIC, true))
-    /** Quando ligado, as cores do tema acompanham a capa do álbum tocando. */
-    val musicReactive: StateFlow<Boolean> = _musicReactive.asStateFlow()
-
-    fun setMusicReactive(on: Boolean) {
-        prefs.edit().putBoolean(KEY_MUSIC, on).apply()
-        _musicReactive.value = on
-    }
-
     private val _intensity = MutableStateFlow(
         runCatching { Intensity.valueOf(prefs.getString(KEY_INTENSITY, null) ?: "NORMAL") }.getOrDefault(Intensity.NORMAL)
     )
@@ -36,6 +27,17 @@ class ThemePreferences(context: Context) {
         _intensity.value = i
     }
 
+    private val _workoutStyle = MutableStateFlow(
+        prefs.getString(KEY_WORKOUT_STYLE, null)?.let { name -> runCatching { WorkoutLayout.valueOf(name) }.getOrNull() }
+    )
+    /** Estilo da tela de treino ativo escolhido pela pessoa; null = segue o tema. */
+    val workoutStyle: StateFlow<WorkoutLayout?> = _workoutStyle.asStateFlow()
+
+    fun setWorkoutStyle(style: WorkoutLayout?) {
+        prefs.edit().apply { if (style == null) remove(KEY_WORKOUT_STYLE) else putString(KEY_WORKOUT_STYLE, style.name) }.apply()
+        _workoutStyle.value = style
+    }
+
     fun select(id: String) {
         val valid = AppThemes.byId(id).id
         prefs.edit().putString(KEY_THEME, valid).apply()
@@ -44,7 +46,7 @@ class ThemePreferences(context: Context) {
 
     private companion object {
         const val KEY_THEME = "theme_id"
-        const val KEY_MUSIC = "music_reactive"
         const val KEY_INTENSITY = "intensity"
+        const val KEY_WORKOUT_STYLE = "workout_style"
     }
 }

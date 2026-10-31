@@ -64,7 +64,7 @@ import com.vitoroliveira.gymtracker.data.model.ExerciseBaseline
 import com.vitoroliveira.gymtracker.data.model.Workout
 import com.vitoroliveira.gymtracker.data.model.WorkoutSet
 import com.vitoroliveira.gymtracker.presentation.TimerState
-import com.vitoroliveira.gymtracker.presentation.viewmodel.WorkoutSummary
+import com.vitoroliveira.gymtracker.presentation.viewmodel.FinishedWorkoutSummary
 import com.vitoroliveira.gymtracker.presentation.viewmodel.WorkoutUiState
 import com.vitoroliveira.gymtracker.presentation.viewmodel.WorkoutViewModel
 import com.vitoroliveira.gymtracker.ui.theme.GymTrackerTheme
@@ -82,7 +82,9 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.saveable.rememberSaveable
+import com.vitoroliveira.gymtracker.ui.exercise.ExerciseCatalogSheet
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import org.koin.compose.viewmodel.koinViewModel
@@ -95,6 +97,8 @@ fun ActiveWorkoutScreen(
     muscleGroupId: String?,
     muscleGroupName: String?,
     onWorkoutFinished: () -> Unit,
+    /** Veio do aviso "treino em andamento" da Home: entra no treino que já existe sem perguntar. */
+    resumeIfActive: Boolean = false,
     onBack: () -> Unit = {},
     viewModel: WorkoutViewModel = koinViewModel()
 ) {
@@ -103,11 +107,10 @@ fun ActiveWorkoutScreen(
     val context = LocalContext.current
     val view = LocalView.current
 
-    com.vitoroliveira.gymtracker.ui.music.TrackRecording(uiState.activeWorkout?.id, uiState.summary != null)
 
     // Inicia o treino ao abrir a tela (o ViewModel ignora chamadas repetidas, ex.: ao girar a tela)
     LaunchedEffect(Unit) {
-        viewModel.startWorkout(muscleGroupId)
+        viewModel.startWorkout(muscleGroupId, resumeIfActive)
     }
 
     // Tela ligada durante o treino: ninguém quer desbloquear com a mão suada entre as séries.
@@ -131,8 +134,11 @@ fun ActiveWorkoutScreen(
             val visible = lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
             when {
                 t.isFinished && prev?.isFinished != true -> {
-                    context.restFinishedFeedback()
-                    if (visible) restNotifier.cancel() else restNotifier.showFinished()
+                    // quem avisa primeiro (este código ou o alarme do sistema) avisa; o outro não repete
+                    val first = RestAlarm.claim(RestAlarm.scheduledEndsAt)
+                    RestAlarm.cancel(context)
+                    if (first) context.restFinishedFeedback()
+                    if (visible) restNotifier.cancel() else if (first) restNotifier.showFinished()
                 }
                 t.isRunning && (prev == null || !prev.isRunning || t.totalSeconds != prev.totalSeconds || t.remainingSeconds > prev.remainingSeconds) -> {
                     if (Build.VERSION.SDK_INT >= 33 && !restNotifier.canNotify() && !askedNotificationPermission) {
@@ -140,16 +146,55 @@ fun ActiveWorkoutScreen(
                         notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
                     }
                     restNotifier.showCountdown(t.remainingSeconds)
+                    RestAlarm.schedule(context, t.remainingSeconds) // acorda o celular no fim, mesmo bloqueado
                 }
-                !t.isRunning && !t.isFinished -> restNotifier.cancel() // pausado ou cancelado
+                !t.isRunning && !t.isFinished -> { restNotifier.cancel(); RestAlarm.cancel(context) } // pausado ou cancelado
             }
         }
     }
-    DisposableEffect(Unit) { onDispose { restNotifier.cancel() } }
+    DisposableEffect(Unit) { onDispose { restNotifier.cancel(); RestAlarm.cancel(context) } }
+
+    // O treino está na tela? Com ele visível o próprio app avisa o fim do descanso; o alarme só vale com a tela bloqueada/fora do app.
+    DisposableEffect(lifecycleOwner) {
+        RestAlarm.screenVisible = lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_RESUME -> RestAlarm.screenVisible = true
+                Lifecycle.Event.ON_PAUSE -> RestAlarm.screenVisible = false
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer); RestAlarm.screenVisible = false }
+    }
+
+    // Voltando do bloqueio de tela o descanso podia ficar parado na tela até um toque (a contagem seguia, o desenho não).
+    // Enquanto a tela está visível: recalcula o descanso do prazo (também religa a contagem se ela tiver parado) e
+    // força o redesenho 4 vezes por segundo; ao voltar, o primeiro ajuste acontece na hora.
+    LaunchedEffect(viewModel, lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            while (true) {
+                viewModel.refreshTimer()
+                if (viewModel.uiState.value.timerState.isRunning) view.invalidate()
+                kotlinx.coroutines.delay(250)
+            }
+        }
+    }
+
+    // Treino retomado de outro grupo: o nome vem do treino, não da rota (erro nº 20)
+    val groupsRepo: com.vitoroliveira.gymtracker.domain.repository.MuscleGroupRepository = org.koin.compose.koinInject()
+    val activeGroupId = uiState.activeWorkout?.muscleGroupId
+    val routeMismatch = uiState.activeWorkout != null && activeGroupId != muscleGroupId
+    var resolvedName by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(activeGroupId, routeMismatch) {
+        resolvedName = if (!routeMismatch || activeGroupId == null) null
+        else runCatching { groupsRepo.getAll().firstOrNull { it.id == activeGroupId }?.name }.getOrNull()
+    }
+    val groupName = if (routeMismatch) resolvedName ?: uiState.activeWorkout?.muscleGroupName else muscleGroupName
 
     androidx.compose.foundation.layout.Box {
         ActiveWorkoutScreenContent(
-            muscleGroupName = muscleGroupName,
+            muscleGroupName = groupName,
             uiState = uiState,
             elapsedSeconds = elapsed,
             onAddSet = { exerciseId, reps, weight -> viewModel.addSet(exerciseId, reps, weight) },
@@ -164,16 +209,16 @@ fun ActiveWorkoutScreen(
             onResumeWorkout = { viewModel.resumeWorkout(it) },
             onDiscardWorkout = { viewModel.discardAndStartNew(muscleGroupId) },
             onToggleExerciseFinished = { viewModel.toggleExerciseFinished(it) },
+            onAddTemporaryExercises = { viewModel.addTemporaryExercises(it) },
             onSummaryDone = onWorkoutFinished,
             onShareSummary = {
                 val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
                     type = "text/plain"
-                    putExtra(android.content.Intent.EXTRA_TEXT, viewModel.shareText(muscleGroupName))
+                    putExtra(android.content.Intent.EXTRA_TEXT, viewModel.shareText(groupName))
                 }
                 context.startActivity(android.content.Intent.createChooser(send, "Compartilhar treino"))
             },
             onBack = onBack,
-            topSlot = { com.vitoroliveira.gymtracker.ui.music.MiniPlayer() }
         )
         // explosão de confete ao bater recorde de carga
         RecordCelebration(uiState.recordBursts)
@@ -201,9 +246,13 @@ fun ActiveWorkoutScreenContent(
     onDeleteSet: (setId: String) -> Unit = {},
     onSummaryDone: () -> Unit = {},
     onShareSummary: () -> Unit = {},
+    /** Exercícios só desta sessão (não entram no grupo). */
+    onAddTemporaryExercises: (List<Exercise>) -> Unit = {},
     topSlot: @Composable () -> Unit = {}
 ) {
     var showFinishDialog by remember { mutableStateOf(false) }
+    var showTemporaryCatalog by remember { mutableStateOf(false) }
+    var showTemporaryName by remember { mutableStateOf(false) }
     var editingSet by remember { mutableStateOf<WorkoutSet?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -240,6 +289,10 @@ fun ActiveWorkoutScreenContent(
                     }
                 },
                 actions = {
+                    IconButton(
+                        onClick = { showTemporaryCatalog = true },
+                        enabled = uiState.activeWorkout != null && !uiState.isWorkoutFinished
+                    ) { Icon(Icons.Default.Add, contentDescription = "Adicionar exercício só deste treino") }
                     Button(
                         onClick = { showFinishDialog = true },
                         enabled = uiState.activeWorkout != null && !uiState.isWorkoutFinished,
@@ -265,9 +318,11 @@ fun ActiveWorkoutScreenContent(
                 CircularProgressIndicator()
             }
         } else {
-            if (com.vitoroliveira.gymtracker.ui.theme.LocalThemeExtras.current.workoutLayout ==
-                com.vitoroliveira.gymtracker.ui.theme.WorkoutLayout.FOCUS) {
+            val layout = com.vitoroliveira.gymtracker.ui.theme.LocalWorkoutStyle.current
+                ?: com.vitoroliveira.gymtracker.ui.theme.LocalThemeExtras.current.workoutLayout
+            if (layout != com.vitoroliveira.gymtracker.ui.theme.WorkoutLayout.LIST) {
                 FocusWorkoutBody(
+                    style = layout,
                     uiState = uiState,
                     onAddSet = onAddSet,
                     onStartTimer = onStartTimer,
@@ -328,6 +383,43 @@ fun ActiveWorkoutScreenContent(
         }
     }
 
+    if (showTemporaryCatalog) {
+        // exercício só desta sessão: entra no treino e aceita séries, mas não é guardado no grupo
+        fun draft(c: com.vitoroliveira.gymtracker.data.catalog.CatalogExercise) =
+            Exercise(name = c.name, defaultSets = c.sets, defaultReps = c.reps, notes = c.hint)
+        ExerciseCatalogSheet(
+            existingNames = uiState.exercises.map { it.name },
+            onPickOne = { onAddTemporaryExercises(listOf(draft(it))); showTemporaryCatalog = false },
+            onPickMany = { onAddTemporaryExercises(it.map(::draft)); showTemporaryCatalog = false },
+            onCustom = { showTemporaryCatalog = false; showTemporaryName = true },
+            onDismiss = { showTemporaryCatalog = false }
+        )
+    }
+
+    if (showTemporaryName) {
+        var name by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { showTemporaryName = false },
+            title = { Text("Exercício só deste treino") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Nome (ex.: Pump de bíceps)") }, singleLine = true)
+                    Text(
+                        "Fica só nesta sessão: não entra no grupo. Se você já tem um exercício com esse nome, ele é reaproveitado com o histórico.",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(enabled = name.isNotBlank(), onClick = {
+                    onAddTemporaryExercises(listOf(Exercise(name = name.trim(), defaultSets = 4, defaultReps = 12)))
+                    showTemporaryName = false
+                }) { Text("Adicionar") }
+            },
+            dismissButton = { TextButton(onClick = { showTemporaryName = false }) { Text("Cancelar") } }
+        )
+    }
+
     if (showFinishDialog) {
         val sets = uiState.completedSets.size
         AlertDialog(
@@ -368,14 +460,17 @@ fun ActiveWorkoutScreenContent(
 
     if (uiState.activeWorkoutToRecover != null) {
         AlertDialog(
-            onDismissRequest = { },
+            onDismissRequest = onBack,      // voltar fecha o diálogo e sai da tela, sem mexer no treino aberto
             title = { Text("Treino em andamento") },
             text = { Text("Você tem um treino iniciado anteriormente. Deseja continuar ou iniciar um novo?") },
             confirmButton = {
                 Button(onClick = { onResumeWorkout(uiState.activeWorkoutToRecover!!) }) { Text("Continuar") }
             },
             dismissButton = {
-                TextButton(onClick = onDiscardWorkout) { Text("Iniciar Novo") }
+                Row {
+                    TextButton(onClick = onBack) { Text("Voltar") }
+                    TextButton(onClick = onDiscardWorkout) { Text("Iniciar Novo") }
+                }
             }
         )
     }
@@ -731,7 +826,7 @@ private fun EditSetDialog(
 }
 
 @Composable
-fun WorkoutSummaryDialog(summary: WorkoutSummary, onDone: () -> Unit, onShare: (() -> Unit)? = null) {
+fun WorkoutSummaryDialog(summary: FinishedWorkoutSummary, onDone: () -> Unit, onShare: (() -> Unit)? = null) {
     AlertDialog(
         onDismissRequest = { },
         title = { Text("Treino concluído!") },

@@ -23,34 +23,37 @@ Os itens desta seção (5 a 13) foram resolvidos em 27/10/2026; ver "Corrigidos"
 
 ## Baixa prioridade
 
+Corrigidos em 28/10/2026 (branch `claude/noite-melhorias`): 14 a 22 e 24 a 28; o 23 em 30/10/2026 (ver "Corrigidos"). Não resta nenhum.
+
 | # | Problema | Onde | Como corrigir |
 |---|----------|------|---------------|
-| 14 | Exportação paginada ordena só por `completed_at`; empates podem repetir ou pular linhas entre páginas | `WorkoutRepositoryImpl.kt:144` | acrescentar `order("id", Order.ASCENDING)` como desempate |
-| 15 | Peso na nuvem é "apaga e insere" (não atômico): se o INSERT falhar, o peso do dia some da nuvem até a próxima sincronização | `BodyCloudImpl.kt:56` | `upsert(..., onConflict = "profile_id,measured_on")` |
-| 16 | Listas sem paginação: com mais de 1000 treinos (limite padrão do PostgREST) Histórico, Home e Conquistas calculam com dados cortados | `WorkoutRepositoryImpl.getHistory` (`:79`) | paginar como no CSV ou agregar no servidor |
-| 17 | Slider da meta semanal usa `toInt()` (trunca 2,9999 para 2) | `ProfileScreen.kt:238` | `roundToInt()` |
-| 18 | Reação com toque duplo dá "Já existe um item com esse nome" (o comentário diz que a atualização é otimista, mas não é) | `SocialViewModel.toggleReaction` (`:226`) | atualizar a lista na hora e ignorar `23505`, ou bloquear enquanto grava |
-| 19 | Conquista "Recordes" conta todo exercício com carga > 0, não recordes de fato | `AchievementsViewModel.kt:50` | contar só linhas com `previousBestKg != null` (bateu a própria marca) ou renomear a medalha |
-| 20 | Retomar um treino de outro grupo: título e texto de compartilhar usam o grupo escolhido agora, não o do treino retomado | `ActiveWorkoutScreen.kt` (`muscleGroupName` vem da rota) | resolver o nome pelo `activeWorkout.muscleGroupId` |
-| 21 | Diálogo "Treino em andamento" não tem como cancelar (voltar não fecha) | `ActiveWorkoutScreen.kt:369`, `CircuitScreen.kt` (`RecoverDialog`) | `onDismissRequest = onBack` e um botão "Voltar" |
-| 22 | Comparação de nomes ignora só alguns acentos (`è`, `ü`, `ñ`, `î`... não são tratados), diferente de `slug()` | `ExerciseCatalog.kt:173` | usar a mesma tabela do `slug()` |
-| 23 | Duas classes `WorkoutSummary` (fim do treino e detalhe do treino) em pacotes diferentes | `presentation/viewmodel/WorkoutViewModel.kt:29`, `presentation/workout/WorkoutSummary.kt:12` | renomear a do fim do treino (ex.: `FinishedWorkoutSummary`) |
-| 24 | Anti-trapaça: o dono pode alterar `started_at`/`finished_at` dos próprios treinos pela API (RLS libera tudo ao dono), o que mexe em placar e títulos de desafio | RLS de `workouts` | gatilho BEFORE UPDATE que impede mudar `started_at` e força `finished_at = now()` |
-| 25 | `android:allowBackup="true"` leva o token de sessão e os dados locais para o backup do Google | `AndroidManifest.xml:14` | `allowBackup="false"` ou excluir `shared_prefs` nas regras de backup |
 
 ## Configuração e limpeza do repositório
 
 | # | Problema | Como corrigir |
 |---|----------|---------------|
-| 26 | A pasta `.kotlin/` (317 arquivos, ~6 MB de cache do compilador) está versionada, apesar do `.gitignore` | `git rm -r --cached .kotlin` e commitar |
-| 27 | Arquivo solto de outra ferramenta: `.artifacts/1c22306b-.../implementation_plan.artifact.md` (plano antigo de "ícone de voltar") | apagar se não for mais útil |
-| 28 | `kotlinx-datetime = "0.6.1"` no catálogo, mas o código usa a API da 0.7 (`kotlin.time.Instant`, `kotlin.time.Clock.todayIn`); só compila porque outra dependência puxa uma versão mais nova | declarar a versão que de fato é usada (0.7.x) |
-| 29 | Repositório `maven.pkg.jetbrains.space/.../compose/dev` e plugin `compose-multiplatform` declarados mas não usados | remover de `settings.gradle.kts` e `build.gradle.kts` |
-| 30 | Alvos iOS configurados no `:shared` sem nenhum código iOS | manter só se houver plano para iOS (deixam o Gradle mais lento) |
+| 29 | Repositório `maven.pkg.jetbrains.space/.../compose/dev` e plugin `compose-multiplatform` declarados mas não usados | remover de `settings.gradle.kts` e `build.gradle.kts` (deixado por enquanto: o plano do iOS em `docs/IOS.md` usa Compose Multiplatform) |
+| 30 | Alvos iOS configurados no `:shared` sem nenhum código iOS | **mantidos**: agora o CI de iOS (`ios.yml`) compila e testa o `:shared` para iPhone (ver `docs/IOS.md`) |
 
 ---
 
 ## Corrigidos
+
+### Baixa prioridade (28/10/2026, branch `claude/noite-melhorias`)
+Compilados no CI; **não vistos no aparelho**.
+- **14** Exportação CSV: `order("id")` como desempate da paginação (`WorkoutRepositoryImpl.getAllSetsForExport`).
+- **15** Peso: `upsert(onConflict = "profile_id,measured_on")` numa chamada (`BodyCloudImpl.upsertWeight`).
+- **16** Histórico paginado de 1000 em 1000 (`WorkoutRepositoryImpl.getHistory`).
+- **17** Meta semanal arredonda o slider (`ProfileScreen`).
+- **18** Reação: toque duplo ignorado enquanto grava, feed atualizado na hora (`SocialViewModel.toggleReaction`, `ReactionSummary.toggled`); `23505` não vira erro.
+- **19** Medalha "Recordes" conta só exercícios em que a pessoa superou a própria marca (`previousBestKg != null`).
+- **20** Treino retomado de outro grupo mostra o nome do grupo do treino (título e compartilhar).
+- **21** "Treino em andamento" fecha com voltar e tem botão "Voltar" (treino ativo e circuito).
+- **22** Comparação de nomes usa a mesma tabela de acentos do `slug()` (teste com ñ, ú, ü).
+- **24** Migração **`013_horarios_do_treino_protegidos.sql`** (testada no Postgres 16 local; **falta rodar no Supabase**): início não muda nem fica no futuro; fim só uma vez, nunca antes do início, futuro vira `now()`. O app e o relógio continuam funcionando com ela.
+- **25** `android:allowBackup="false"` (o token de sessão não vai para o backup do Google).
+- **26/27** `.kotlin/` e `.artifacts/` fora do git.
+- **28** `kotlinx-datetime` declarado como 0.7.1 (a versão de fato usada).
 
 ### Média prioridade (27/10/2026, branch `claude/correcoes-media-prioridade`)
 Compilados e testados no CI (testes novos no `:shared`); **ainda não vistos no aparelho**. O nº 10 é SQL (migração 012, já rodada no Supabase).
@@ -110,3 +113,6 @@ Compilados e testados no CI; **ainda não vistos no aparelho**.
 
 #### 7. "Sair da conta" sem internet podia fechar o app
 - **Correção:** `ProfileViewModel.signOut` trata as falhas de cada etapa, e `AuthRepositoryImpl.signOut` apaga a sessão salva no aparelho (`clearSession`) quando o pedido de logout ao servidor falha; assim a tela de abertura não entra de novo na conta.
+
+### Baixa prioridade (30/10/2026)
+- **23:** a classe do fim do treino (`presentation/viewmodel/WorkoutViewModel.kt`) agora se chama `FinishedWorkoutSummary`; `WorkoutSummary` ficou só para o detalhe do treino (`presentation/workout/WorkoutSummary.kt`). Só renomeação.

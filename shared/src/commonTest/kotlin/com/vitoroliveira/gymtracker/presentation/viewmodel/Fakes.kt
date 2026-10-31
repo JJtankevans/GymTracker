@@ -1,5 +1,6 @@
 package com.vitoroliveira.gymtracker.presentation.viewmodel
 
+import com.vitoroliveira.gymtracker.mapInPlace
 import com.vitoroliveira.gymtracker.data.model.Exercise
 import com.vitoroliveira.gymtracker.data.model.ExerciseBaseline
 import com.vitoroliveira.gymtracker.data.model.ExerciseProgression
@@ -47,6 +48,20 @@ class FakeWorkoutRepository : WorkoutRepository {
     }
 
     override suspend fun finishWorkout(workoutId: String) { maybeFail(); finished = true }
+    override suspend fun createWorkout(workoutId: String, muscleGroupId: String?, startedAtIso: String) {
+        maybeFail()
+        activeWorkout = Workout(id = workoutId, muscleGroupId = muscleGroupId, startedAt = startedAtIso)
+    }
+    var finishedAt: String? = null
+    override suspend fun finishWorkoutAt(workoutId: String, finishedAtIso: String) {
+        maybeFail()
+        finishedAt = finishedAtIso
+        activeWorkout?.takeIf { it.id == workoutId }?.let { history += it.copy(finishedAt = finishedAtIso); activeWorkout = null }
+    }
+    override suspend fun addSets(sets: List<WorkoutSet>) {
+        maybeFail()
+        sets.forEach { this.sets += it.copy(id = "s${nextId++}") }
+    }
     var failDelete: Throwable? = null
     val history = mutableListOf<Workout>()
     override suspend fun deleteWorkout(workoutId: String) {
@@ -63,7 +78,7 @@ class FakeWorkoutRepository : WorkoutRepository {
     override suspend fun updateNotes(workoutId: String, notes: String?) {
         failNotes?.let { throw it }
         val clean = notes?.trim()?.takeIf { it.isNotEmpty() }
-        history.replaceAll { if (it.id == workoutId) it.copy(notes = clean) else it }
+        history.mapInPlace { if (it.id == workoutId) it.copy(notes = clean) else it }
     }
 
     /** Quando definido, a gravação da série espera por ele (simula a rede lenta). */

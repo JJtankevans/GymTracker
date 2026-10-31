@@ -17,3 +17,8 @@ local.properties
 # Gerados
 build/
 .kotlin/
+
+# iOS: o projeto Xcode é gerado pelo XcodeGen (iosApp/project.yml)
+iosApp/*.xcodeproj/
+iosApp/iosApp/Info.plist
+iosApp/build/

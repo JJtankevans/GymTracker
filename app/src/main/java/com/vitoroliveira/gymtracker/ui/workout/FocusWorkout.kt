@@ -17,6 +17,10 @@ import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,6 +51,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun FocusWorkoutBody(
     uiState: WorkoutUiState,
+    /** FOCUS (padrão), ARENA ou RING: só muda o desenho de cada página de exercício. */
+    style: com.vitoroliveira.gymtracker.ui.theme.WorkoutLayout = com.vitoroliveira.gymtracker.ui.theme.WorkoutLayout.FOCUS,
     onAddSet: (exerciseId: String, reps: Int, weightKg: Double) -> Unit,
     onStartTimer: (Int) -> Unit,
     onCancelTimer: () -> Unit,
@@ -58,7 +64,7 @@ fun FocusWorkoutBody(
     val exercises = uiState.exercises
     if (exercises.isEmpty()) {
         Box(modifier.fillMaxSize().padding(24.dp), Alignment.Center) {
-            Text("Cadastre exercícios nesse grupo para treinar aqui.", textAlign = TextAlign.Center, style = MaterialTheme.typography.bodyLarge)
+            Text("Cadastre exercícios nesse grupo para treinar aqui, ou toque em + (no topo) para adicionar um exercício só deste treino.", textAlign = TextAlign.Center, style = MaterialTheme.typography.bodyLarge)
         }
         return
     }
@@ -72,12 +78,32 @@ fun FocusWorkoutBody(
     Box(modifier.fillMaxSize()) {
     Column(Modifier.fillMaxSize()) {
         // faixa de exercícios (toque pra pular)
-        Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        // exercício adicionado na hora (só desta sessão): o pager vai direto para o primeiro novo
+        var knownCount by remember { mutableIntStateOf(exercises.size) }
+        LaunchedEffect(exercises.size) {
+            if (exercises.size > knownCount) pager.animateScrollToPage(knownCount)
+            knownCount = exercises.size
+        }
+        // a faixa acompanha o exercício atual: ao deslizar para o lado, o chip dele rola para o meio da faixa
+        val chipScroll = rememberScrollState()
+        val chipBounds = remember { mutableStateMapOf<Int, Pair<Int, Int>>() } // início e largura de cada chip, em px
+        var stripWidth by remember { mutableIntStateOf(0) }
+        val stripPadding = with(LocalDensity.current) { 16.dp.roundToPx() }
+        LaunchedEffect(pager.currentPage, chipBounds[pager.currentPage], stripWidth) {
+            val (left, width) = chipBounds[pager.currentPage] ?: return@LaunchedEffect
+            chipScroll.animateScrollTo((stripPadding + left + width / 2 - stripWidth / 2).coerceAtLeast(0))
+        }
+        Row(
+            Modifier.onSizeChanged { stripWidth = it.width }.horizontalScroll(chipScroll).padding(horizontal = 16.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             exercises.forEachIndexed { i, e ->
                 val done = uiState.activeWorkout?.finishedExerciseIds?.contains(e.id) == true
                 val sel = pager.currentPage == i
                 Row(
-                    Modifier.clip(CircleShape)
+                    Modifier
+                        .onGloballyPositioned { chipBounds[i] = it.positionInParent().x.toInt() to it.size.width }
+                        .clip(CircleShape)
                         .background(if (sel) cs.primary else cs.surfaceContainerHighest)
                         .border(1.dp, if (sel) cs.primary else cs.outlineVariant, CircleShape)
                         .clickable { scope.launch { pager.animateScrollToPage(i) } }
@@ -101,6 +127,25 @@ fun FocusWorkoutBody(
             val (reps, kg) = inputs[id] ?: Pair(base?.lastReps ?: e.defaultReps, base?.lastWeightKg ?: suggestion?.weightKg ?: 0.0)
             val newRecord = e.id in uiState.newRecordExerciseIds
 
+            if (style == com.vitoroliveira.gymtracker.ui.theme.WorkoutLayout.ARENA || style == com.vitoroliveira.gymtracker.ui.theme.WorkoutLayout.RING) {
+                val data = PageData(
+                    exercise = e, sets = sets, baseline = base, suggestion = suggestion, reps = reps, kg = kg,
+                    newRecord = newRecord, saving = e.id in uiState.savingExerciseIds,
+                    finished = uiState.activeWorkout?.finishedExerciseIds?.contains(e.id) == true,
+                    rest = rest, timer = timer
+                )
+                val actions = PageActions(
+                    setInput = { r, k -> inputs[id] = Pair(r, k) },
+                    register = { e.id?.let { exerciseId -> onAddSet(exerciseId, reps, kg); onStartTimer(rest) } },
+                    editSet = onEditSet,
+                    toggleFinished = { e.id?.let(onToggleExerciseFinished) },
+                    setRest = { rest = it },
+                    cancelTimer = onCancelTimer
+                )
+                if (style == com.vitoroliveira.gymtracker.ui.theme.WorkoutLayout.ARENA) ArenaPage(data, actions) else RingPage(data, actions)
+                return@HorizontalPager
+            }
+
             Column(
                 Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -116,6 +161,8 @@ fun FocusWorkoutBody(
                 if (suggestion != null && suggestion.weightKg != kg) {
                     LoadSuggestionChip(suggestion, onApply = { inputs[id] = reps to it })
                 }
+                com.vitoroliveira.gymtracker.presentation.workout.compareSet(kg, reps, base?.lastWeightKg, base?.lastReps, base?.recordWeightKg)
+                    ?.let { CompareChip(it) }
                 if (newRecord) Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.EmojiEvents, null, tint = cs.tertiary); Spacer(Modifier.width(6.dp))
                     Text("Novo recorde de carga!", color = cs.tertiary, fontWeight = FontWeight.Bold)

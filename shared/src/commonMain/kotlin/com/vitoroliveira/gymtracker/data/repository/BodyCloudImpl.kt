@@ -1,6 +1,8 @@
 package com.vitoroliveira.gymtracker.data.repository
 
 import com.vitoroliveira.gymtracker.presentation.body.BodyCloud
+import com.vitoroliveira.gymtracker.presentation.body.BodyMeasurement
+import com.vitoroliveira.gymtracker.presentation.body.MeasureSite
 import com.vitoroliveira.gymtracker.presentation.body.BodyProfile
 import com.vitoroliveira.gymtracker.presentation.body.BodyWeightEntry
 import com.vitoroliveira.gymtracker.presentation.body.Sex
@@ -34,6 +36,21 @@ private data class BodyProfileRow(
     @SerialName("ask_weight_each_workout") val askWeightEachWorkout: Boolean = false
 )
 
+@Serializable
+private data class MeasureRow(
+    @SerialName("measured_on") val measuredOn: String,
+    val site: String,
+    val cm: Double
+)
+
+@Serializable
+private data class NewMeasureRow(
+    @SerialName("profile_id") val profileId: String,
+    @SerialName("measured_on") val measuredOn: String,
+    val site: String,
+    val cm: Double
+)
+
 /** Dados corporais no Supabase: tabela body_weights e colunas do perfil (migração 003; RLS: só o dono). */
 class BodyCloudImpl(private val supabase: SupabaseClient) : BodyCloud {
 
@@ -52,9 +69,36 @@ class BodyCloudImpl(private val supabase: SupabaseClient) : BodyCloud {
     override suspend fun upsertWeight(entry: BodyWeightEntry) {
         val me = userId()
         val day = dateOf(entry.epochDay)
-        // um por dia (unique profile_id + measured_on): apaga o do dia e grava o novo
-        supabase.postgrest["body_weights"].delete { filter { eq("measured_on", day) } }
-        supabase.postgrest["body_weights"].insert(NewWeightRow(me, day, roundWeight(entry.kg)))
+        // um por dia (unique profile_id + measured_on): upsert numa chamada só (antes era apaga + insere, e uma
+        // falha no meio deixava o dia sem peso na nuvem)
+        supabase.postgrest["body_weights"].upsert(NewWeightRow(me, day, roundWeight(entry.kg))) {
+            onConflict = "profile_id,measured_on"
+        }
+    }
+
+    override suspend fun fetchMeasurements(): List<BodyMeasurement> =
+        supabase.postgrest["body_measurements"]
+            .select(Columns.list("measured_on", "site", "cm"))
+            .decodeList<MeasureRow>()
+            .mapNotNull { r ->
+                runCatching {
+                    BodyMeasurement(LocalDate.parse(r.measuredOn).toEpochDays().toInt(), MeasureSite.valueOf(r.site), r.cm)
+                }.getOrNull()
+            }
+
+    override suspend fun upsertMeasurement(m: BodyMeasurement) {
+        supabase.postgrest["body_measurements"].upsert(NewMeasureRow(userId(), dateOf(m.epochDay), m.site.name, roundWeight(m.cm))) {
+            onConflict = "profile_id,measured_on,site"
+        }
+    }
+
+    override suspend fun deleteMeasurement(epochDay: Int, site: MeasureSite) {
+        supabase.postgrest["body_measurements"].delete {
+            filter {
+                eq("measured_on", dateOf(epochDay))
+                eq("site", site.name)
+            }
+        }
     }
 
     override suspend fun deleteWeight(epochDay: Int) {

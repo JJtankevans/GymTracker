@@ -96,7 +96,7 @@ class SocialGalleryTest {
         )
         rule.setContent {
             GymTrackerTheme(spec = AppThemes.byId("carbon")) {
-                com.vitoroliveira.gymtracker.ui.social.ChallengeSheet(team, standings, "me", {}, {}, {}, {})
+                com.vitoroliveira.gymtracker.ui.social.ChallengeSheet(team, standings, "me", onLoad = {}, onJoin = {}, onLeave = {}, onDismiss = {})
             }
         }
         rule.waitForIdle()
@@ -111,7 +111,19 @@ class SocialGalleryTest {
         )
         rule.setContent {
             GymTrackerTheme(spec = AppThemes.byId("carbon")) {
-                RecordsContent(RecordsUiState(records = rows, today = LocalDate(2026, 10, 20)), {})
+                RecordsContent(
+                    RecordsUiState(
+                        records = rows, today = LocalDate(2026, 10, 20),
+                        plateaus = listOf(
+                            com.vitoroliveira.gymtracker.presentation.records.Plateau(
+                                "2", "Agachamento Livre", 140.0, "2026-09-02", 6, 5, 135.0,
+                                com.vitoroliveira.gymtracker.presentation.records.plateauTip(140.0, 135.0, 5)
+                            )
+                        )
+                    ),
+                    {},
+                    goals = mapOf("1" to 110.0, "2" to 140.0)
+                )
             }
         }
         rule.waitForIdle()

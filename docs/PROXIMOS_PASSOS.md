@@ -17,7 +17,7 @@
 - **Layouts de Home por tema** (`HomeLayout` em `ThemeSpec.kt`, telas em `ui/home/HomeLayouts.kt`): Clássico, Bento, Pôster, Terminal, Orbit, Editorial. O tema escolhe em `extras.homeLayout`. Falta estender a mesma ideia ao treino ativo, histórico e perfil.
 - **Música** (`ui/music/`): `MusicController` lê a sessão de mídia ativa (exige "acesso a notificações", ligado em Aparência → Cores da música); `MiniPlayer` na Home e no treino; a cor da capa troca a cor primária e a decoração dos temas animados. Não existe visualizador de batida real (Android não oferece de forma confiável), a animação segue a capa e o play/pause.
 - **Relógio** (`:wear`, Compose for Wear OS, standalone): descanso 60/90/120 s com vibração, registrar série com coroa giratória, resumo e 4 cores. Instalar: `adb connect IP:PORTA` (Depuração sem fio no relógio) e `adb install wear-debug.apk`.
-  - Ainda NÃO sincroniza com o celular: os dados do relógio ficam só nele. Próximo passo: Data Layer (play-services-wearable) para o relógio mandar as séries pro treino ativo do celular.
+  - Ainda NÃO sincroniza com o celular: os dados do relógio ficam só nele. Próximo passo: Data Layer (play-services-wearable) para o relógio mandar as séries pro treino ativo do celular. *(superado em 27/10/2026: relógio 2.0, ver `docs/RELOGIO.md`)*
 
 ## Terceira rodada (circuito, social, layouts)
 - **Modo Circuito (beta)** — `presentation/circuit/` (motor puro, 17 testes) + `ui/circuit/`. Liga em Iniciar Treino → "Modo circuito". Aprende segundos/repetição por exercício (mediana das últimas 10, descarta absurdos), entra no descanso sozinho, "AINDA NÃO TERMINEI" soma o tempo e reinicia o descanso, voz (TTS pt-BR) + vibração. Ideias ainda não feitas: notificação fixa com botão "Terminei" (espelha no relógio), botão do fone/coroa do relógio como toque único, ajuste de descanso por esforço (fácil/ok/difícil), progressão automática de carga.
@@ -149,6 +149,48 @@ Pendente / ideias:
 - **Depois (5ª sessão, 27/10):** o Thiago rodou a `010`, a `011` e a `012` e cadastrou os secrets `SUPABASE_URL`/`SUPABASE_KEY` no GitHub; APK com login gerado pela execução 40512678834 (disparada no `master`). Falta decidir a chave de assinatura fixa para distribuir atualizações sem desinstalar.
 
 ---
+
+## Décima sétima rodada (27/10/2026, 6ª sessão na nuvem) — relógio 2.0
+- **Pedido:** "melhorar mil por cento" a versão do relógio e ajudar a instalar.
+- **Arquitetura:** o celular é o hub. `:shared/watch/WatchProtocol.kt` (caminhos e JSON da Data Layer, `buildWatchRoutines`), `WatchSession.kt` (regras do treino no relógio: sugestão de carga, avanço de exercício, recorde, desfazer, batimentos, fila), `domain/usecase/ImportWatchWorkout.kt` (grava no Supabase de forma idempotente: id do relógio, séries numa chamada, fecha por último para o gatilho do feed). Repositório ganhou `createWorkout`, `addSets`, `finishWorkoutAt`. 12 testes novos (`WatchSyncTest`).
+- **Celular:** `app/.../wear/WearSyncService.kt` (WearableListenerService): responde ao pedido de rotinas e importa os treinos (também os pendentes, a cada pedido de rotinas).
+- **Relógio:** reescrito (`WatchController`, `WatchApp`, `WorkoutScreens`, `WatchSync`, `HeartRateMonitor`, `WatchAlerts`): navegação com deslize para voltar, início com os grupos, treino em 3 telas (exercícios · série/descanso · números), coroa/bezel, alarme exato do descanso (vibra com a tela apagada), aviso aos 10 s, recorde com vibração própria, batimentos (Health Services), modo ambiente, atalho no mostrador (Ongoing Activity), resumo, fila de envio, ajustes (cor, descanso, passo da carga, descanso automático, batimentos), ícone novo.
+- **CI:** gera `gymtracker-wear-apk`, roda os testes de tela do `:wear` (sem derrubar a execução) e aceita o secret opcional `DEBUG_KEYSTORE_BASE64` (chave fixa).
+- **Não testado no aparelho:** nada disso (só compilação e testes no CI). Roteiro em `docs/RELOGIO.md`.
+
+## Décima oitava rodada (28/10/2026, 7ª sessão na nuvem, noite sem o Thiago) — temas, Play Protect, relógio, iOS
+- **Play Protect:** leitura de notificações removida (serviço, mini player, cor da música, gravação das músicas). O app só pede INTERNET, VIBRATE e POST_NOTIFICATIONS.
+- **Temas:** 18 Loucos novos (`ThemeDecorCrazy2.kt`: STORM, DISCO, KALEIDO, ABYSS, GALAXY, STATIC, HOLO, HAUNTED, FIREWORKS, BLOCKS, ECG, LASERS; `ThemeDecorCrazy3.kt`: CIRCUIT, SNOW, BUBBLES, DESERT, ORIGAMI, NEON_CITY), total 46; botão de tema aleatório.
+- **Relógio:** semana/sequência/sugestão vindas do celular (`BuildWatchRoutines`), tile com "Treinar", complicação "treinos na semana", anilhas, 1RM no resumo, adicionar exercício fora do grupo; celular com `WatchBridge`, cartão "Relógio" no Perfil e publicação automática ao abrir o app.
+- **Correções:** erros 14–22 e 24–28 (`ERROS_CONHECIDOS.md`), migração 013 (horários protegidos, testada no Postgres local).
+- **Medidas na nuvem:** migração 014 + sincronização no `BodyRepository` (testes novos).
+- **Catálogo:** 93 exercícios (Cardio, Mobilidade, +11 de força).
+- **iOS:** `ios.yml` compila o `:shared` para iPhone e roda os testes no simulador (verde); `docs/IOS.md` com o plano (Compose Multiplatform).
+- **Depois do PR #12 aberto (mesma noite):** resumo do mês no Histórico; liga da semana no Social (migração 015); avisos locais do Social (WorkManager); app de iPhone mínimo em Compose Multiplatform (`composeApp/` + `iosApp/`); OCR das telas do relógio e galeria dos 40 temas no CI.
+- **Fim da madrugada (mesmo PR #12):** mais 6 Loucos (`ThemeDecorCrazy4.kt`: RADAR, SAKURA, VOLCANO, DNA, VINYL, DUNGEON; total 52 temas, 31 Loucos); relógio com **timer de intervalos** (`watch/IntervalTimer.kt`: preparo, rodadas de esforço/pausa, prontos Tabata/HIIT/EMOM e um personalizado salvo; vibra nas trocas; tela acesa; não vibra com o app fechado), **Recordes** e **zonas de batimento** (`watch/HeartZones.kt`: FC máxima de Tanaka pela idade de "Meus dados", amostras por zona na sessão, barra no resumo); **Estagnados** em Recordes no celular e no iPhone (`presentation/records/Plateaus.kt`); **metas de carga** por exercício em Recordes (só no aparelho).
+- **Ideias que ficaram:** salvar o timer de intervalos como treino (precisaria de um exercício "Intervalos"); timer de intervalos vibrar com o app fechado (alarme como o do descanso); zonas também no Histórico do celular (hoje o treino só leva média/máximo); metas de carga na nuvem e no relógio.
+- **Não testado no aparelho:** nada.
+
+## Décima nona rodada (30/10/2026, 8ª sessão na nuvem, com o Thiago acompanhando) — equilíbrio, avisos, segurança e excluir conta
+- **Evolução:** cartão "Equilíbrio do treino (7 dias)" (empurrar x puxar x pernas x core, `MuscleBalance.kt`).
+- **Home:** semanas seguidas batendo a meta (`DashboardCalculator.weekStreak`). **Histórico:** filtro por grupo (`HistoryFilter.kt`).
+- **Avisos:** lembrete "Sua sequência está em risco" (`streakRiskAlert`), canal "Lembretes de treino"; correção do aviso marcado como visto sem permissão de notificação; sem histórico (rede) não avisa "semana sem treino".
+- **Segurança:** CSV com apóstrofo em textos que começam com `=`, `+`, `-` ou `@`; limite de 60 exercícios, 80 caracteres de nome e 500 de anotação ao importar treino por código.
+- **Excluir minha conta:** migração 016 (`delete_my_account()`), `AuthRepository.deleteAccount`, botão no Perfil (celular e iPhone) com confirmação digitada.
+- **Limpeza:** erro 23 (`FinishedWorkoutSummary`). **Docs:** `ROTEIRO_TESTE.md`.
+- **CI:** Android verde em cada commit (um falhou por import e foi corrigido). **Não testado no aparelho:** nada.
+
+## Vigésima rodada (30 e 31/10/2026, 8ª sessão na nuvem) — treino ativo, temas antigos, grupos e ranqueada
+- **Treino ativo:** faixa de chips acompanha o exercício; exercícios só da sessão (botão "+"); estilos **Arena** e **Anel**, seletor "Estilo do treino" e comparação ao vivo com a última vez/recorde (`docs/DESIGN_TREINO_ATIVO.md`); aviso "treino em andamento" na Home com continuar direto/cancelar; descanso que não fica parado depois do bloqueio (`TimerManager.refresh`, relógio de parede).
+- **Temas antigos:** os 21 Profissionais, Ousados e Abstratos ganharam cenário animado próprio (`ThemeDecorClassic*.kt`), com a intensidade (Calmo/Normal/Insano) controlando a riqueza; selo "RENOVADO" no seletor.
+- **Grupos e desafios (migração 017):** capa (fundo animado de um tema), cor, ícone, aviso fixado, meta semanal do grupo com barra e prêmio no desafio.
+- **Ranqueada (migração 018, `docs/RANQUEADA_DESIGN.md`):** elos Ferro a Lenda, turmas semanais (20% sobe, 20% desce), x1 por Elo, temporadas de 8 semanas; pontos calculados no banco.
+- **Também:** equilíbrio muscular, semanas seguidas, filtro do Histórico, lembrete de sequência em risco, CSV sem fórmulas, limites ao importar treino, excluir minha conta (migração 016), correção dos avisos sem permissão.
+- **CI:** Android verde em cada bloco (erros de compilação corrigidos no mesmo dia: import, `vararg` de `Offset`). **Não testado no aparelho:** nada.
+
+
+
+
 
 # Anexo: notas detalhadas das sessões de 21 a 27/10/2026 (movidas do CONTEXTO_SESSAO.md em 27/10/2026; retrato daquele momento, ex.: os PRs citados como abertos já foram mergeados)
 

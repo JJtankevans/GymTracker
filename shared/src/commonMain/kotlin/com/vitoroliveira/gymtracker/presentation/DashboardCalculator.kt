@@ -48,6 +48,23 @@ object DashboardCalculator {
         return streak
     }
 
+    /**
+     * Semanas seguidas (segunda a domingo) com pelo menos [goal] treinos. A semana atual conta se já bateu a meta;
+     * se ainda está em andamento, não quebra a sequência: a contagem começa na semana anterior.
+     */
+    fun weekStreak(workoutDates: List<LocalDate>, today: LocalDate, goal: Int): Int {
+        val need = goal.coerceAtLeast(1)
+        val counts = workoutDates.groupingBy { weekStart(it) }.eachCount()
+        val thisWeek = weekStart(today)
+        var week = if ((counts[thisWeek] ?: 0) >= need) thisWeek else thisWeek.minus(7, DateTimeUnit.DAY)
+        var streak = 0
+        while ((counts[week] ?: 0) >= need) {
+            streak++
+            week = week.minus(7, DateTimeUnit.DAY)
+        }
+        return streak
+    }
+
     /** As últimas [weeks] semanas (a mais antiga primeiro), incluindo semanas sem treino. */
     fun weeklyBuckets(workoutDates: List<LocalDate>, today: LocalDate, weeks: Int = 8): List<WeekBucket> {
         require(weeks > 0)
