@@ -21,7 +21,7 @@ private const val TAU = (2 * PI).toFloat()
  * [t] é o relógio global em 0..1 (volta completa a cada 60s). Todas as
  * animações usam múltiplos inteiros de [t], então o loop é contínuo.
  */
-fun DrawScope.drawThemeBackground(extras: ThemeExtras, base: Color, t: Float) {
+fun DrawScope.drawThemeBackground(extras: ThemeExtras, base: Color, t: Float, level: Int = 1) {
     // tamanho zero (antes do layout): gradiente radial com raio 0 lança exceção no Android
     if (size.width < 2f || size.height < 2f) return
     if (extras.backgroundGradient.size >= 2) {
@@ -76,6 +76,27 @@ fun DrawScope.drawThemeBackground(extras: ThemeExtras, base: Color, t: Float) {
         Decor.DNA -> drawDna(extras.decorColors, t)
         Decor.VINYL -> drawVinyl(extras.decorColors, t)
         Decor.DUNGEON -> drawDungeon(extras.decorColors, t)
+        Decor.MATERIAL -> drawMaterial(extras.decorColors, t, level)
+        Decor.SPOTLIGHT -> drawSpotlight(extras.decorColors, t, level)
+        Decor.CARBON -> drawCarbon(extras.decorColors, t, level)
+        Decor.TIDE -> drawTide(extras.decorColors, t, level)
+        Decor.INK -> drawInk(extras.decorColors, t, level)
+        Decor.NOTEBOOK -> drawNotebook(extras.decorColors, t, level)
+        Decor.DRAFT -> drawDraft(extras.decorColors, t, level)
+        Decor.BRUTAL -> drawBrutal(extras.decorColors, t, level)
+        Decor.NEON_SIGN -> drawNeonSign(extras.decorColors, t, level)
+        Decor.TERMINAL -> drawTerminal(extras.decorColors, t, level)
+        Decor.TRACK -> drawTrack(extras.decorColors, t, level)
+        Decor.GOLD -> drawGold(extras.decorColors, t, level)
+        Decor.CURTAINS -> drawCurtains(extras.decorColors, t, level)
+        Decor.OUTRUN -> drawOutrun(extras.decorColors, t, level)
+        Decor.PARTY -> drawParty(extras.decorColors, t, level)
+        Decor.CRACKS -> drawCracks(extras.decorColors, t, level)
+        Decor.FJORD -> drawFjord(extras.decorColors, t, level)
+        Decor.OBSIDIAN -> drawObsidian(extras.decorColors, t, level)
+        Decor.HEXNET -> drawHexNet(extras.decorColors, t, level)
+        Decor.FOREST -> drawForest(extras.decorColors, t, level)
+        Decor.GLACIER -> drawGlacier(extras.decorColors, t, level)
     }
 }
 

@@ -78,7 +78,29 @@ enum class Decor {
     VOLCANO,    // vulcão em erupção com lava e fumaça
     DNA,        // hélices de DNA girando
     VINYL,      // disco de vinil girando e equalizador
-    DUNGEON     // parede de pedra com tochas
+    DUNGEON,    // parede de pedra com tochas
+    // cenários próprios dos temas antigos (ThemeDecorClassic.kt e ThemeDecorClassic2.kt), com a intensidade controlando a riqueza
+    MATERIAL,   // Sistema: manchas de cor e formas do Material You
+    SPOTLIGHT,  // Studio: refletores de palco varrendo, com poeira
+    CARBON,     // Carbon: fibra de carbono, brilho de verniz e HUD
+    TIDE,       // Oceano: raios de sol, ondas em camadas, cardume e bolhas
+    INK,        // Tinta: gotas de nanquim se espalhando
+    NOTEBOOK,   // Papel: caderno com rabiscos que se desenham sozinhos
+    DRAFT,      // Blueprint: prancheta com compasso, engrenagens e cota
+    BRUTAL,     // Brutal: blocos duros com sombra seca e fita de perigo
+    NEON_SIGN,  // Neon: tubos de néon piscando
+    TERMINAL,   // Terminal: log rolando, cursor e tubo de raios catódicos
+    TRACK,      // Arena: pista de atletismo com corredores e refletores
+    GOLD,       // Ouro: art déco com raios, anéis dourados e brilhos
+    CURTAINS,   // Aurora: cortinas de luz sobre estrelas e montanhas
+    OUTRUN,     // Synthwave: sol listrado, montanhas de arame e chão em fuga
+    PARTY,      // Confete: balões subindo e estouros de confete
+    CRACKS,     // Magma: crosta rachada com veias de lava e faíscas
+    FJORD,      // Nórdico: fiorde com montanhas, névoa e sol baixo
+    OBSIDIAN,   // Obsidiana: vidro vulcânico com brilhos nas arestas
+    HEXNET,     // Cobalto: favo de hexágonos com ondas de dados
+    FOREST,     // Floresta: pinheiros em camadas, luar e vaga-lumes
+    GLACIER     // Ártico: gelo, floco gigante e icebergs à deriva
 }
 
 /**

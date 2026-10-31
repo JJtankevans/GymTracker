@@ -35,7 +35,12 @@ object AppThemes {
         colors = studioColors,
         typography = makeTypography(FontFamily.SansSerif, FontFamily.SansSerif),
         shapes = roundedShapes(8.dp, 12.dp, 16.dp),
-        dynamic = true
+        dynamic = true,
+        extras = ThemeExtras(
+            decor = Decor.MATERIAL,
+            decorColors = listOf(hex(0x7C9CFF), hex(0xC58BFF), hex(0x5BE3C4)),
+            animated = true
+        )
     )
 
     val Studio = AppThemeSpec(
@@ -45,6 +50,9 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.Inter, ThemeFonts.Inter, FontWeight.SemiBold),
         shapes = roundedShapes(8.dp, 12.dp, 18.dp),
         extras = ThemeExtras(
+            decor = Decor.SPOTLIGHT,
+            decorColors = listOf(hex(0x6366F1), hex(0xF59E0B)),
+            animated = true,
             cardBorderWidth = 1.dp, cardBorderColor = hex(0xE3E5EC),
             success = hex(0x16A34A)
         )
@@ -62,6 +70,9 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.SpaceGrotesk, ThemeFonts.Inter, FontWeight.ExtraBold, (-0.3).sp),
         shapes = roundedShapes(8.dp, 12.dp, 14.dp),
         extras = ThemeExtras(
+            decor = Decor.CARBON,
+            decorColors = listOf(hex(0xC6F432), hex(0x7DD3FC)),
+            animated = true,
             homeLayout = HomeLayout.BENTO,
             cardBorderWidth = 1.dp, cardBorderColor = hex(0x2A2E34),
             success = hex(0xC6F432)
@@ -80,14 +91,14 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.Inter, ThemeFonts.Inter, FontWeight.SemiBold),
         shapes = roundedShapes(10.dp, 14.dp, 20.dp),
         extras = ThemeExtras(
+            decor = Decor.TIDE,
+            decorColors = listOf(hex(0x38BDF8), hex(0x2DD4BF), hex(0x818CF8)),
+            animated = true,
             homeLayout = HomeLayout.ORBIT,
             workoutLayout = WorkoutLayout.FOCUS,
-            decor = Decor.WAVES,
-            decorColors = listOf(hex(0x38BDF8), hex(0x2DD4BF), hex(0x818CF8)),
             backgroundGradient = listOf(hex(0x0B1730), hex(0x07101D), hex(0x041526)),
             cardBorderWidth = 1.dp, cardBorderColor = hex(0x1F3556),
-            success = hex(0x2DD4BF),
-            animated = true
+            success = hex(0x2DD4BF)
         )
     )
 
@@ -103,6 +114,9 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.Inter, ThemeFonts.Inter, FontWeight.Medium, (-0.4).sp),
         shapes = roundedShapes(2.dp, 4.dp, 6.dp),
         extras = ThemeExtras(
+            decor = Decor.INK,
+            decorColors = listOf(hex(0x111111), hex(0x3B4A6B)),
+            animated = true,
             homeLayout = HomeLayout.POSTER,
             workoutLayout = WorkoutLayout.FOCUS,
             cardBorderWidth = 1.dp, cardBorderColor = hex(0xD2D2D2),
@@ -124,8 +138,10 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.Playfair, ThemeFonts.Inter, FontWeight.Bold, (-0.5).sp, headingFeatures = "lnum"),
         shapes = roundedShapes(1.dp, 2.dp, 3.dp),
         extras = ThemeExtras(
+            decor = Decor.NOTEBOOK,
+            decorColors = listOf(hex(0x5B8DEF), hex(0xE0524D), hex(0x3A3A3A)),
+            animated = true,
             homeLayout = HomeLayout.EDITORIAL,
-            decor = Decor.PAPER,
             cardBorderWidth = 1.dp, cardBorderColor = hex(0x1B1A17).copy(alpha = 0.75f),
             success = hex(0x2E6B3A)
         )
@@ -143,8 +159,10 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.Mono, ThemeFonts.Inter, FontWeight.Bold),
         shapes = roundedShapes(2.dp, 2.dp, 3.dp),
         extras = ThemeExtras(
+            decor = Decor.DRAFT,
+            decorColors = listOf(hex(0xBFD9FF), hex(0xFFD400)),
+            animated = true,
             homeLayout = HomeLayout.BENTO,
-            decor = Decor.BLUEPRINT,
             cardBorderWidth = 1.dp, cardBorderColor = Color.White.copy(alpha = 0.55f),
             success = hex(0x7CFFB2)
         )
@@ -162,6 +180,9 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.SpaceGrotesk, ThemeFonts.Inter, FontWeight.Black, (-0.6).sp, labelWeight = FontWeight.Bold),
         shapes = roundedShapes(4.dp, 6.dp, 8.dp),
         extras = ThemeExtras(
+            decor = Decor.BRUTAL,
+            decorColors = listOf(hex(0xFF4D8D), hex(0xFFD93D), hex(0x4D9DFF), hex(0x111111)),
+            animated = true,
             homeLayout = HomeLayout.POSTER,
             workoutLayout = WorkoutLayout.FOCUS,
             cardBorderWidth = 3.dp, cardBorderColor = hex(0x000000),
@@ -182,14 +203,14 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.Mono, ThemeFonts.Inter, FontWeight.Bold, 0.5.sp),
         shapes = cutShapes(6.dp, 10.dp, 16.dp),
         extras = ThemeExtras(
+            decor = Decor.NEON_SIGN,
+            decorColors = listOf(hex(0xFF2BD6), hex(0x00F0FF)),
+            animated = true,
             homeLayout = HomeLayout.ORBIT,
             workoutLayout = WorkoutLayout.FOCUS,
-            decor = Decor.NEON_GRID,
-            decorColors = listOf(hex(0xFF2BD6), hex(0x00F0FF)),
             cardBorderWidth = 1.dp, cardBorderColor = hex(0x00F0FF).copy(alpha = 0.65f),
             glowColor = hex(0x00F0FF),
-            success = hex(0x00FF9C),
-            animated = true
+            success = hex(0x00FF9C)
         )
     )
 
@@ -209,12 +230,12 @@ object AppThemes {
             extraLarge = RoundedCornerShape(0.dp)
         ),
         extras = ThemeExtras(
-            homeLayout = HomeLayout.TERMINAL,
-            decor = Decor.SCANLINES,
+            decor = Decor.TERMINAL,
             decorColors = listOf(hex(0x33FF66)),
+            animated = true,
+            homeLayout = HomeLayout.TERMINAL,
             cardBorderWidth = 1.dp, cardBorderColor = hex(0x1F9D3A),
-            success = hex(0x33FF66),
-            animated = true
+            success = hex(0x33FF66)
         )
     )
 
@@ -233,13 +254,13 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.SpaceGrotesk, ThemeFonts.Inter, FontWeight.SemiBold, (-0.2).sp),
         shapes = roundedShapes(14.dp, 20.dp, 28.dp),
         extras = ThemeExtras(
+            decor = Decor.CURTAINS,
+            decorColors = listOf(hex(0x00E5C3), hex(0x7B4DFF), hex(0xFF4DB8), hex(0x2D9CFF)),
+            animated = true,
             homeLayout = HomeLayout.ORBIT,
             workoutLayout = WorkoutLayout.FOCUS,
-            decor = Decor.AURORA,
-            decorColors = listOf(hex(0x00E5C3), hex(0x7B4DFF), hex(0xFF4DB8), hex(0x2D9CFF)),
             cardBorderWidth = 1.dp, cardBorderColor = Color.White.copy(alpha = 0.16f),
-            success = hex(0x7CF7D4),
-            animated = true
+            success = hex(0x7CF7D4)
         )
     )
 
@@ -255,15 +276,15 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.SpaceGrotesk, ThemeFonts.Inter, FontWeight.ExtraBold, 0.2.sp),
         shapes = roundedShapes(12.dp, 18.dp, 22.dp),
         extras = ThemeExtras(
+            decor = Decor.OUTRUN,
+            decorColors = listOf(hex(0xFFD166), hex(0xFF3D9A), hex(0x22D3EE)),
+            animated = true,
             homeLayout = HomeLayout.POSTER,
             workoutLayout = WorkoutLayout.FOCUS,
-            decor = Decor.SYNTH_SUN,
             backgroundGradient = listOf(hex(0x140A33), hex(0x3B0F6B), hex(0xB3175F), hex(0xFF7A3D)),
-            decorColors = listOf(hex(0xFFD166), hex(0xFF3D9A), hex(0x22D3EE)),
             cardBorderWidth = 1.dp, cardBorderColor = hex(0xFF3D9A).copy(alpha = 0.55f),
             glowColor = hex(0xFF3D9A).copy(alpha = 0.6f),
-            success = hex(0x5CFFB8),
-            animated = true
+            success = hex(0x5CFFB8)
         )
     )
 
@@ -279,13 +300,13 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.SpaceGrotesk, ThemeFonts.Inter, FontWeight.ExtraBold, (-0.3).sp),
         shapes = roundedShapes(12.dp, 18.dp, 22.dp),
         extras = ThemeExtras(
-            homeLayout = HomeLayout.BENTO,
-            decor = Decor.CONFETTI,
+            decor = Decor.PARTY,
             decorColors = listOf(hex(0x6C4DFF), hex(0xFF6B6B), hex(0x00C2A8), hex(0xFFC93C), hex(0xFF8FD0)),
+            animated = true,
+            homeLayout = HomeLayout.BENTO,
             cardBorderWidth = 2.5.dp, cardBorderColor = hex(0x1F1F3D),
             hardShadowOffset = 5.dp, hardShadowColor = hex(0xFFC93C),
-            success = hex(0x00A88F),
-            animated = true
+            success = hex(0x00A88F)
         )
     )
 
@@ -301,15 +322,15 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.BarlowCondensed, ThemeFonts.Inter, FontWeight.ExtraBold, (-0.2).sp),
         shapes = roundedShapes(10.dp, 14.dp, 18.dp),
         extras = ThemeExtras(
+            decor = Decor.CRACKS,
+            decorColors = listOf(hex(0xFF6A00), hex(0xFFB000), hex(0xFF3B30)),
+            animated = true,
             homeLayout = HomeLayout.ORBIT,
             workoutLayout = WorkoutLayout.FOCUS,
-            decor = Decor.EMBERS,
             backgroundGradient = listOf(hex(0x0E0403), hex(0x1A0604), hex(0x3A0F06)),
-            decorColors = listOf(hex(0xFF6A00), hex(0xFFB000), hex(0xFF3B30)),
             cardBorderWidth = 1.dp, cardBorderColor = hex(0xFF6A00).copy(alpha = 0.35f),
             glowColor = hex(0xFF6A00).copy(alpha = 0.45f),
-            success = hex(0xFFD23F),
-            animated = true
+            success = hex(0xFFD23F)
         )
     )
 
@@ -328,6 +349,9 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.Inter, ThemeFonts.Inter, FontWeight.Light, (-0.2).sp, labelWeight = FontWeight.Medium),
         shapes = roundedShapes(12.dp, 18.dp, 26.dp),
         extras = ThemeExtras(
+            decor = Decor.FJORD,
+            decorColors = listOf(hex(0x2F5D50), hex(0x6B7C85), hex(0xE8B96A)),
+            animated = true,
             cardBorderWidth = 1.dp, cardBorderColor = hex(0xE1E5DF),
             success = hex(0x2F8F5B)
         )
@@ -345,10 +369,11 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.SpaceGrotesk, ThemeFonts.Inter, FontWeight.Medium, (-0.4).sp),
         shapes = roundedShapes(6.dp, 10.dp, 14.dp),
         extras = ThemeExtras(
+            decor = Decor.OBSIDIAN,
+            decorColors = listOf(hex(0xFFFFFF)),
+            animated = true,
             homeLayout = HomeLayout.BENTO,
             workoutLayout = WorkoutLayout.FOCUS,
-            decor = Decor.DOTS,
-            decorColors = listOf(Color.White),
             cardBorderWidth = 1.dp, cardBorderColor = hex(0x262626),
             success = hex(0x22D3EE)
         )
@@ -366,9 +391,10 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.Inter, ThemeFonts.Inter, FontWeight.SemiBold, (-0.2).sp),
         shapes = roundedShapes(10.dp, 16.dp, 22.dp),
         extras = ThemeExtras(
+            decor = Decor.HEXNET,
+            decorColors = listOf(hex(0x4D86FF), hex(0x7CE0FF)),
+            animated = true,
             homeLayout = HomeLayout.ORBIT,
-            decor = Decor.HALO,
-            decorColors = listOf(hex(0x4D86FF)),
             cardBorderWidth = 1.dp, cardBorderColor = hex(0x26344F),
             success = hex(0x4ADE9B)
         )
@@ -386,13 +412,13 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.Inter, ThemeFonts.Inter, FontWeight.SemiBold, (-0.1).sp),
         shapes = roundedShapes(10.dp, 16.dp, 24.dp),
         extras = ThemeExtras(
-            homeLayout = HomeLayout.ORBIT,
-            decor = Decor.FIREFLIES,
+            decor = Decor.FOREST,
             decorColors = listOf(hex(0xD9F99D), hex(0x2FBF7A)),
+            animated = true,
+            homeLayout = HomeLayout.ORBIT,
             backgroundGradient = listOf(hex(0x0B1A14), hex(0x08120E), hex(0x050C09)),
             cardBorderWidth = 1.dp, cardBorderColor = hex(0x1F3A2D),
-            success = hex(0x7BE0A4),
-            animated = true
+            success = hex(0x7BE0A4)
         )
     )
 
@@ -410,10 +436,11 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.BarlowCondensed, ThemeFonts.BarlowCondensed, FontWeight.Black, 0.3.sp, labelWeight = FontWeight.Bold),
         shapes = roundedShapes(2.dp, 4.dp, 6.dp),
         extras = ThemeExtras(
+            decor = Decor.TRACK,
+            decorColors = listOf(hex(0xFF2D2D)),
+            animated = true,
             homeLayout = HomeLayout.POSTER,
             workoutLayout = WorkoutLayout.FOCUS,
-            decor = Decor.STRIPES,
-            decorColors = listOf(hex(0xFF2D2D)),
             cardBorderWidth = 2.dp, cardBorderColor = hex(0xFF2D2D).copy(alpha = 0.8f),
             success = hex(0x35E08A)
         )
@@ -431,9 +458,10 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.Playfair, ThemeFonts.Inter, FontWeight.SemiBold, (-0.2).sp, headingFeatures = "lnum"),
         shapes = roundedShapes(4.dp, 8.dp, 12.dp),
         extras = ThemeExtras(
+            decor = Decor.GOLD,
+            decorColors = listOf(hex(0xD8B25A), hex(0xFFE9A8)),
+            animated = true,
             homeLayout = HomeLayout.EDITORIAL,
-            decor = Decor.DECO,
-            decorColors = listOf(hex(0xD8B25A)),
             cardBorderWidth = 1.dp, cardBorderColor = hex(0xD8B25A).copy(alpha = 0.35f),
             success = hex(0xD8B25A)
         )
@@ -452,13 +480,13 @@ object AppThemes {
         typography = makeTypography(ThemeFonts.SpaceGrotesk, ThemeFonts.Inter, FontWeight.SemiBold, (-0.3).sp),
         shapes = roundedShapes(14.dp, 22.dp, 30.dp),
         extras = ThemeExtras(
+            decor = Decor.GLACIER,
+            decorColors = listOf(hex(0x1FB6FF), hex(0x5EEAD4), hex(0x818CF8)),
+            animated = true,
             homeLayout = HomeLayout.ORBIT,
             workoutLayout = WorkoutLayout.FOCUS,
-            decor = Decor.AURORA,
-            decorColors = listOf(hex(0x1FB6FF), hex(0x5EEAD4), hex(0x818CF8)),
             cardBorderWidth = 1.dp, cardBorderColor = Color.White.copy(alpha = 0.22f),
-            success = hex(0x5EEAD4),
-            animated = true
+            success = hex(0x5EEAD4)
         )
     )
 
