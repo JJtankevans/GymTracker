@@ -180,6 +180,16 @@ Pendente / ideias:
 - **Limpeza:** erro 23 (`FinishedWorkoutSummary`). **Docs:** `ROTEIRO_TESTE.md`.
 - **CI:** Android verde em cada commit (um falhou por import e foi corrigido). **Não testado no aparelho:** nada.
 
+## Vigésima rodada (30 e 31/10/2026, 8ª sessão na nuvem) — treino ativo, temas antigos, grupos e ranqueada
+- **Treino ativo:** faixa de chips acompanha o exercício; exercícios só da sessão (botão "+"); estilos **Arena** e **Anel**, seletor "Estilo do treino" e comparação ao vivo com a última vez/recorde (`docs/DESIGN_TREINO_ATIVO.md`); aviso "treino em andamento" na Home com continuar direto/cancelar; descanso que não fica parado depois do bloqueio (`TimerManager.refresh`, relógio de parede).
+- **Temas antigos:** os 21 Profissionais, Ousados e Abstratos ganharam cenário animado próprio (`ThemeDecorClassic*.kt`), com a intensidade (Calmo/Normal/Insano) controlando a riqueza; selo "RENOVADO" no seletor.
+- **Grupos e desafios (migração 017):** capa (fundo animado de um tema), cor, ícone, aviso fixado, meta semanal do grupo com barra e prêmio no desafio.
+- **Ranqueada (migração 018, `docs/RANQUEADA_DESIGN.md`):** elos Ferro a Lenda, turmas semanais (20% sobe, 20% desce), x1 por Elo, temporadas de 8 semanas; pontos calculados no banco.
+- **Também:** equilíbrio muscular, semanas seguidas, filtro do Histórico, lembrete de sequência em risco, CSV sem fórmulas, limites ao importar treino, excluir minha conta (migração 016), correção dos avisos sem permissão.
+- **CI:** Android verde em cada bloco (erros de compilação corrigidos no mesmo dia: import, `vararg` de `Offset`). **Não testado no aparelho:** nada.
+
+
+
 
 
 # Anexo: notas detalhadas das sessões de 21 a 27/10/2026 (movidas do CONTEXTO_SESSAO.md em 27/10/2026; retrato daquele momento, ex.: os PRs citados como abertos já foram mergeados)

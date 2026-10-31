@@ -1,4 +1,4 @@
-# GymTracker — contexto para retomar (atualizado em 30/10/2026, 8ª sessão)
+# GymTracker — contexto para retomar (atualizado em 31/10/2026, 8ª sessão)
 
 Leia isto primeiro. O histórico longo de decisões, rodada por rodada, está em `docs/PROXIMOS_PASSOS.md` (as notas detalhadas das sessões de 21 a 27/10 estão no anexo do fim); referências de design em `docs/REFERENCIAS_DESIGN.md`; visão geral do projeto no `README.md` da raiz.
 

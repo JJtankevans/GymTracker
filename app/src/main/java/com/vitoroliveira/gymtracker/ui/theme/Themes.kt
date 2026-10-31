@@ -1246,6 +1246,12 @@ object AppThemes {
     /** Temas que ganham o selo "NOVO" no seletor (os da última leva). */
     val newIds: Set<String> = setOf("radar", "sakura", "vulcao", "dna", "vinil", "masmorra")
 
+    /** Temas antigos que ganharam cenário próprio (31/10/2026): o seletor mostra o selo "RENOVADO". */
+    val renewedIds: Set<String> = setOf(
+        "system", "studio", "carbon", "oceano", "tinta", "papel", "blueprint", "brutal", "neon", "terminal", "aurora", "sunset",
+        "confete", "magma", "nordico", "obsidiana", "cobalto", "floresta", "arena", "ouro", "artico"
+    )
+
     val available: List<AppThemeSpec> get() = all.filter { it.enabled }
 
     fun byId(id: String?): AppThemeSpec =

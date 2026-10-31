@@ -197,9 +197,9 @@ private fun ThemeOption(spec: AppThemeSpec, selected: Boolean, onClick: () -> Un
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(spec.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    if (spec.id in AppThemes.newIds) {
+                    if (spec.id in AppThemes.newIds || spec.id in AppThemes.renewedIds) {
                         Text(
-                            "NOVO",
+                            if (spec.id in AppThemes.newIds) "NOVO" else "RENOVADO",
                             Modifier.padding(start = 8.dp).background(MaterialTheme.colorScheme.tertiary, MaterialTheme.shapes.extraSmall)
                                 .padding(horizontal = 6.dp, vertical = 1.dp),
                             style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Black,
