@@ -66,6 +66,10 @@ data class SocialUiState(
     val league: List<com.vitoroliveira.gymtracker.data.model.LeagueRow> = emptyList(),
     /** Treinos da semana de cada grupo (por id); só dos grupos abertos. Vazio sem a migração 017. */
     val groupProgress: Map<String, GroupWeekProgress> = emptyMap(),
+    /** Ranking da semana, sequência da meta e mural de cada grupo aberto (por id). */
+    val groupBoards: Map<String, List<com.vitoroliveira.gymtracker.data.model.GroupMemberRow>> = emptyMap(),
+    val groupStreaks: Map<String, Int> = emptyMap(),
+    val groupMessages: Map<String, List<com.vitoroliveira.gymtracker.data.model.GroupMessage>> = emptyMap(),
     val profileView: ProfileView? = null,
     val message: String? = null,
     val error: String? = null,
@@ -293,6 +297,48 @@ class SocialViewModel(
         }
         act("Erro ao salvar o grupo", "Grupo atualizado", then = { loadGroups(); loadGroupProgress(id) }) { repo.updateGroup(id, edit) }
     }
+
+    /** Abre o grupo: carrega meta da semana, ranking, sequência e mural (cada um sozinho: o que falhar só não aparece). */
+    fun openGroup(id: String) {
+        loadGroupProgress(id); loadGroupBoard(id); loadGroupStreak(id); loadGroupMessages(id)
+    }
+
+    fun loadGroupBoard(id: String) {
+        viewModelScope.launch {
+            try { update { copy(groupBoards = groupBoards + (id to repo.groupBoard(id))) } }
+            catch (e: Exception) { if (e is CancellationException) throw e }
+        }
+    }
+
+    fun loadGroupStreak(id: String) {
+        viewModelScope.launch {
+            try { update { copy(groupStreaks = groupStreaks + (id to repo.groupStreak(id))) } }
+            catch (e: Exception) { if (e is CancellationException) throw e }
+        }
+    }
+
+    fun loadGroupMessages(id: String) {
+        viewModelScope.launch {
+            try { update { copy(groupMessages = groupMessages + (id to repo.groupMessages(id))) } }
+            catch (e: Exception) { if (e is CancellationException) throw e }
+        }
+    }
+
+    fun removeMember(groupId: String, profileId: String) =
+        act("Erro ao tirar do grupo", "Membro removido", then = { loadGroupBoard(groupId); loadGroupProgress(groupId) }) { repo.removeMember(groupId, profileId) }
+
+    fun setMemberRole(groupId: String, profileId: String, role: String) =
+        act("Erro ao mudar o cargo", "Cargo atualizado", then = { loadGroupBoard(groupId) }) { repo.setMemberRole(groupId, profileId, role) }
+
+    fun postGroupMessage(groupId: String, text: String) {
+        val body = cleanMessage(text) ?: run {
+            update { copy(error = "Escreva uma mensagem de até $MAX_MESSAGE_LENGTH caracteres.") }; return
+        }
+        act("Erro ao enviar a mensagem", then = { loadGroupMessages(groupId) }) { repo.postGroupMessage(groupId, body) }
+    }
+
+    fun deleteGroupMessage(groupId: String, messageId: String) =
+        act("Erro ao apagar a mensagem", then = { loadGroupMessages(groupId) }) { repo.deleteGroupMessage(messageId) }
 
     /** Treinos do grupo na semana. É um extra: se a função não existir (migração 017), o grupo só não mostra a meta. */
     fun loadGroupProgress(id: String) {

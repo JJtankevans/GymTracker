@@ -40,6 +40,11 @@ fun Throwable.toUserMessage(fallback: String): String {
         "could not find the" in text && "column" in text && listOf("cover", "accent_hex", "icon", "pinned_message", "weekly_goal", "prize").any { "'$it'" in text } ->
             "A personalização de grupos e desafios ainda não está ativada no servidor (falta rodar a migração 017)."
 
+        // Mural/ranking de grupo (migração 019)
+        ("group_messages" in text || "group_week_board" in text || "group_goal_streak" in text) &&
+            ("could not find" in text || "does not exist" in text || "schema cache" in text) ->
+            "O mural e o ranking do grupo ainda não estão ativados no servidor (falta rodar a migração 019)."
+
         // Ranqueada: tabelas/funções da migração 018 que ainda não existem
         "ranked_" in text && ("could not find" in text || "does not exist" in text || "schema cache" in text) ->
             "A ranqueada ainda não está ativada no servidor (falta rodar a migração 018)."

@@ -189,81 +189,6 @@ fun IdentityPicker(look: Look, onChange: (Look) -> Unit) {
     }
 }
 
-/** Detalhe do grupo: capa animada, aviso fixado, meta da semana, código de convite e ações. */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun GroupSheet(
-    group: SocialGroup,
-    mine: Boolean,
-    isOwner: Boolean,
-    progress: GroupWeekProgress?,
-    onLoad: () -> Unit,
-    onEdit: () -> Unit,
-    onJoin: () -> Unit,
-    onLeave: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    LaunchedEffect(group.id) { if (mine) onLoad() }
-    val cs = MaterialTheme.colorScheme
-    val accent = parseAccent(group.accentHex) ?: cs.primary
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
-        Column(Modifier.fillMaxWidth().navigationBarsPadding().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            CoverBox(group.look, Modifier.fillMaxWidth().height(150.dp), animated = true) {
-                Row(Modifier.align(Alignment.BottomStart).padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                    IdentityBadge(group.look, 52.dp)
-                    Spacer(Modifier.width(12.dp))
-                    Column {
-                        Text(group.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black, color = Color.White)
-                        Text(
-                            (if (group.isPublic) "Grupo público" else "Por convite") + (group.maxMembers?.let { " · até $it membros" } ?: ""),
-                            style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.85f)
-                        )
-                    }
-                }
-            }
-            group.description?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
-            group.pinnedMessage?.takeIf { it.isNotBlank() }?.let { msg ->
-                Row(
-                    Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium).background(accent.copy(alpha = 0.12f))
-                        .border(1.dp, accent.copy(alpha = 0.5f), MaterialTheme.shapes.medium).padding(12.dp),
-                    verticalAlignment = Alignment.Top
-                ) {
-                    Icon(Icons.Default.PushPin, null, tint = accent)
-                    Spacer(Modifier.width(8.dp))
-                    Text(msg, style = MaterialTheme.typography.bodyMedium)
-                }
-            }
-            if (mine && (group.weeklyGoal != null || progress != null)) {
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("Meta da semana", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                    val p = progress ?: GroupWeekProgress()
-                    val f = p.fraction(group.weeklyGoal)
-                    if (f != null) {
-                        LinearProgressIndicator(progress = { f.coerceIn(0f, 1f) }, Modifier.fillMaxWidth().height(10.dp).clip(CircleShape), color = accent)
-                    }
-                    Text(
-                        p.summary(group.weeklyGoal) + if (f != null && f >= 1f) " · meta batida!" else "",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (f != null && f >= 1f) accent else cs.onSurfaceVariant,
-                        fontWeight = if (f != null && f >= 1f) FontWeight.Bold else FontWeight.Normal
-                    )
-                }
-            }
-            if (isOwner && group.inviteCode != null) Text(
-                "Código de convite: ${group.inviteCode}", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = accent
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                when {
-                    isOwner -> Button(onEdit, Modifier.weight(1f)) { Text("Personalizar grupo") }
-                    mine -> OutlinedButton(onLeave, Modifier.weight(1f)) { Text("Sair do grupo") }
-                    else -> Button(onJoin, Modifier.weight(1f)) { Text("Entrar no grupo") }
-                }
-            }
-            Spacer(Modifier.height(16.dp))
-        }
-    }
-}
-
 /** O dono personaliza o grupo: capa, cor, ícone, descrição, aviso fixado e meta semanal. */
 @Composable
 fun GroupEditDialog(group: SocialGroup, onSave: (GroupEditForm) -> Unit, onDismiss: () -> Unit) {
@@ -278,7 +203,10 @@ fun GroupEditDialog(group: SocialGroup, onSave: (GroupEditForm) -> Unit, onDismi
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 IdentityPicker(look, onChange = { look = it })
                 OutlinedTextField(description, { description = it.take(500) }, label = { Text("Descrição") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
-                OutlinedTextField(pinned, { pinned = it.take(300) }, label = { Text("Aviso fixado (todos veem no topo)") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
+                OutlinedTextField(
+                    pinned, { pinned = it.take(1000) }, label = { Text("Aviso fixado (todos veem no topo)") }, modifier = Modifier.fillMaxWidth(), minLines = 3,
+                    supportingText = { Text("${pinned.length}/1000") }
+                )
                 OutlinedTextField(
                     goal, { goal = it.filter(Char::isDigit).take(3) }, label = { Text("Meta de treinos do grupo por semana") },
                     singleLine = true, modifier = Modifier.fillMaxWidth(),

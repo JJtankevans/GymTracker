@@ -55,6 +55,13 @@ APK certo: os dois artefatos (`gymtracker-debug-apk` e `gymtracker-wear-apk`) da
 - [ ] Desafio novo com capa, cor, ícone e **prêmio**: o cartão e o placar mostram a faixa e "Prêmio: ...".
 - [ ] Sem rodar a 017: criar grupo/desafio **sem** personalizar continua funcionando; personalizar mostra o aviso de que falta a 017.
 
+## 3c-2. Grupos vivos (precisa da migração 019)
+- [ ] O **aviso fixado** mostra o texto inteiro (até 1000 caracteres; "Ver mais" quando passa de 4 linhas) num cartão limpo com barra na cor do grupo.
+- [ ] Abas **Resumo / Ranking / Mural** no grupo. Resumo: meta da semana grande com barra, "N semanas seguidas batendo a meta", desafios do grupo e "Novo desafio neste grupo" (o grupo já vem escolhido), convite com botão de compartilhar.
+- [ ] **Ranking**: membros ordenados por treinos da semana, medalhas ouro/prata/bronze; o dono vê o menu (três pontos) para promover a admin ou remover; um admin só remove membros comuns.
+- [ ] **Mural**: escrever (até 280), enviar, a mensagem aparece com nome e "agora"; apagar a própria; o admin apaga qualquer uma.
+- [ ] Sem a 019: o aviso fixado continua cortando em 300 e o ranking e o mural ficam vazios, sem quebrar o resto.
+
 ## 3d. Ranqueada (precisa da migração 018; veja `docs/RANQUEADA_DESIGN.md`)
 - [ ] Social → aba **Ranqueada** → "Entrar na ranqueada": aparece o cartão do elo (Ferro III, emblema desenhado, barra de RP) e a **rodada da semana** com seus pontos.
 - [ ] Treinar (20 min ou mais) e voltar: os pontos sobem (100 + esforço + séries; só o melhor treino do dia). 3 dias de treino dão +50.

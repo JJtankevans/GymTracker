@@ -164,12 +164,12 @@ fun CodeDialog(onConfirm: (String) -> Unit, onDismiss: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChallengeDialog(myGroups: List<SocialGroup>, onConfirm: (ChallengeForm) -> Unit, onDismiss: () -> Unit) {
+fun ChallengeDialog(myGroups: List<SocialGroup>, onConfirm: (ChallengeForm) -> Unit, onDismiss: () -> Unit, initialGroupId: String? = null) {
     var title by remember { mutableStateOf("") }
     var metric by remember { mutableStateOf(ChallengeMetric.WORKOUTS) }
     var exercise by remember { mutableStateOf("") }
     var days by remember { mutableStateOf("30") }
-    var groupId by remember { mutableStateOf<String?>(null) }
+    var groupId by remember { mutableStateOf(initialGroupId) }
     var minMinutes by remember { mutableStateOf("20") }
     var maxPerDay by remember { mutableStateOf("1") }
     var target by remember { mutableStateOf("") }

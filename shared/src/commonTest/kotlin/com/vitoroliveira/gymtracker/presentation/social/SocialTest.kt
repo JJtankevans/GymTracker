@@ -96,6 +96,26 @@ class FakeSocialRepository(val meId: String = "me") : SocialRepository {
         members += GroupMember(g.id, meId); return g.id
     }
     override suspend fun leaveGroup(groupId: String) { members.removeAll { it.groupId == groupId && it.profileId == meId } }
+    // grupo vivo (migração 019)
+    var boardFor = mutableMapOf<String, List<com.vitoroliveira.gymtracker.data.model.GroupMemberRow>>()
+    var streakFor = mutableMapOf<String, Int>()
+    var messagesFor = mutableMapOf<String, MutableList<com.vitoroliveira.gymtracker.data.model.GroupMessage>>()
+    var failBoard = false
+    val removedMembers = mutableListOf<Pair<String, String>>()
+    val roleChanges = mutableListOf<Triple<String, String, String>>()
+    override suspend fun groupBoard(groupId: String): List<com.vitoroliveira.gymtracker.data.model.GroupMemberRow> {
+        if (failBoard) throw RuntimeException("Could not find the function public.group_week_board in the schema cache")
+        return boardFor[groupId].orEmpty()
+    }
+    override suspend fun groupStreak(groupId: String) = streakFor[groupId] ?: 0
+    override suspend fun removeMember(groupId: String, profileId: String) { removedMembers += groupId to profileId }
+    override suspend fun setMemberRole(groupId: String, profileId: String, role: String) { roleChanges += Triple(groupId, profileId, role) }
+    override suspend fun groupMessages(groupId: String) = messagesFor[groupId].orEmpty().toList()
+    private var messageSeq = 0
+    override suspend fun postGroupMessage(groupId: String, body: String) {
+        messagesFor.getOrPut(groupId) { mutableListOf() }.add(0, com.vitoroliveira.gymtracker.data.model.GroupMessage("m${++messageSeq}", groupId, meId, body, "2026-10-20T12:00:00Z"))
+    }
+    override suspend fun deleteGroupMessage(messageId: String) { messagesFor.values.forEach { l -> l.removeAll { it.id == messageId } } }
     override suspend fun challenges() = challengeList.toList()
     override suspend fun myParticipations() = participations.filter { it.profileId == meId }
     override suspend fun createChallenge(challenge: NewChallenge): Challenge {

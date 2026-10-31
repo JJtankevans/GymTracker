@@ -88,6 +88,11 @@ class SocialActions(
     val createGroup: (com.vitoroliveira.gymtracker.presentation.social.GroupForm) -> Unit = {},
     val updateGroup: (String, com.vitoroliveira.gymtracker.presentation.social.GroupEditForm) -> Unit = { _, _ -> },
     val loadGroupProgress: (String) -> Unit = {},
+    val openGroup: (String) -> Unit = {},
+    val removeMember: (String, String) -> Unit = { _, _ -> },
+    val setMemberRole: (String, String, String) -> Unit = { _, _, _ -> },
+    val postGroupMessage: (String, String) -> Unit = { _, _ -> },
+    val deleteGroupMessage: (String, String) -> Unit = { _, _ -> },
     val joinGroup: (String) -> Unit = {},
     val joinCode: (String) -> Unit = {},
     val leaveGroup: (String) -> Unit = {},
@@ -102,7 +107,7 @@ class SocialActions(
 private fun SocialViewModel.actions() = SocialActions(
     refresh = ::refresh, clear = ::clearMessages, saveSettings = ::saveSettings,
     follow = ::follow, unfollow = ::unfollow, acceptFollower = ::acceptFollower, rejectFollower = ::rejectFollower,
-    react = ::toggleReaction, editPost = ::editPost, createGroup = ::createGroup, updateGroup = ::updateGroup, loadGroupProgress = ::loadGroupProgress, joinGroup = ::joinGroup, joinCode = ::joinGroupByCode,
+    react = ::toggleReaction, editPost = ::editPost, createGroup = ::createGroup, updateGroup = ::updateGroup, loadGroupProgress = ::loadGroupProgress, openGroup = ::openGroup, removeMember = ::removeMember, setMemberRole = ::setMemberRole, postGroupMessage = ::postGroupMessage, deleteGroupMessage = ::deleteGroupMessage, joinGroup = ::joinGroup, joinCode = ::joinGroupByCode,
     leaveGroup = ::leaveGroup, createChallenge = ::createChallenge, joinChallenge = ::joinChallenge,
     leaveChallenge = ::leaveChallenge, loadStandings = ::loadStandings,
     openProfile = ::openProfile, closeProfile = ::closeProfile
@@ -123,6 +128,7 @@ fun SocialContent(state: SocialUiState, a: SocialActions, onBack: () -> Unit, ra
     var showChallengeDialog by remember { mutableStateOf(false) }
     var openChallenge by remember { mutableStateOf<ChallengeItem?>(null) }
     var openGroupId by remember { mutableStateOf<String?>(null) }
+    var challengeGroupId by remember { mutableStateOf<String?>(null) }
     var editGroupId by remember { mutableStateOf<String?>(null) }
     val snackbar = remember { SnackbarHostState() }
 
@@ -169,19 +175,33 @@ fun SocialContent(state: SocialUiState, a: SocialActions, onBack: () -> Unit, ra
     if (showCodeDialog) CodeDialog(onConfirm = { a.joinCode(it); showCodeDialog = false }, onDismiss = { showCodeDialog = false })
     if (showChallengeDialog) ChallengeDialog(
         myGroups = state.myGroups,
-        onConfirm = { a.createChallenge(it); showChallengeDialog = false },
-        onDismiss = { showChallengeDialog = false }
+        initialGroupId = challengeGroupId,
+        onConfirm = { a.createChallenge(it); showChallengeDialog = false; challengeGroupId = null },
+        onDismiss = { showChallengeDialog = false; challengeGroupId = null }
     )
     openGroupId?.let { gid ->
         val group = (state.myGroups + state.publicGroups).firstOrNull { it.id == gid }
         if (group == null) openGroupId = null else {
             val mine = state.myGroups.any { it.id == gid }
             GroupSheet(
-                group = group, mine = mine, isOwner = group.ownerId == state.me, progress = state.groupProgress[gid],
-                onLoad = { a.loadGroupProgress(gid) },
-                onEdit = { editGroupId = gid },
-                onJoin = { a.joinGroup(gid); openGroupId = null },
-                onLeave = { a.leaveGroup(gid); openGroupId = null },
+                d = GroupSheetData(
+                    group = group, mine = mine, me = state.me, progress = state.groupProgress[gid],
+                    streak = state.groupStreaks[gid] ?: 0, board = state.groupBoards[gid].orEmpty(),
+                    messages = state.groupMessages[gid].orEmpty(),
+                    challenges = state.challenges.filter { it.challenge.groupId == gid }
+                ),
+                a = GroupSheetActions(
+                    load = { a.openGroup(gid) },
+                    edit = { editGroupId = gid },
+                    join = { a.joinGroup(gid); openGroupId = null },
+                    leave = { a.leaveGroup(gid); openGroupId = null },
+                    removeMember = { a.removeMember(gid, it) },
+                    setRole = { member, role -> a.setMemberRole(gid, member, role) },
+                    post = { a.postGroupMessage(gid, it) },
+                    deleteMessage = { a.deleteGroupMessage(gid, it) },
+                    newChallenge = { challengeGroupId = gid; showChallengeDialog = true; openGroupId = null },
+                    openChallenge = { openChallenge = it; openGroupId = null }
+                ),
                 onDismiss = { openGroupId = null }
             )
         }

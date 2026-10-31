@@ -76,4 +76,10 @@ class ErrorMessagesTest {
             "Sem conexão com a internet. Verifique sua rede e tente de novo.",
             RuntimeException("Request timeout has expired [url=https://x.supabase.co/rest/v1/rpc/ranked_board, request_timeout=30000 ms]").toUserMessage(fb)
         )
+
+    @Test fun migracaoDoMuralFaltando() =
+        assertEquals(
+            "O mural e o ranking do grupo ainda não estão ativados no servidor (falta rodar a migração 019).",
+            RuntimeException("Could not find the table 'public.group_messages' in the schema cache").toUserMessage(fb)
+        )
 }

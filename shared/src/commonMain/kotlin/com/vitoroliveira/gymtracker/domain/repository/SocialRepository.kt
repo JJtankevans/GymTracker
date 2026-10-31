@@ -6,6 +6,8 @@ import com.vitoroliveira.gymtracker.data.model.FeedPost
 import com.vitoroliveira.gymtracker.data.model.Follow
 import com.vitoroliveira.gymtracker.data.model.GroupEdit
 import com.vitoroliveira.gymtracker.data.model.GroupMember
+import com.vitoroliveira.gymtracker.data.model.GroupMemberRow
+import com.vitoroliveira.gymtracker.data.model.GroupMessage
 import com.vitoroliveira.gymtracker.data.model.NewChallenge
 import com.vitoroliveira.gymtracker.data.model.NewGroup
 import com.vitoroliveira.gymtracker.data.model.PostReaction
@@ -60,6 +62,26 @@ interface SocialRepository {
     }
     /** Treinos dos membros na semana (migração 017); null sem a função no banco. */
     suspend fun groupProgress(groupId: String): com.vitoroliveira.gymtracker.presentation.social.GroupWeekProgress? = null
+    /** Ranking dos membros na semana (migração 019); vazio sem a função. */
+    suspend fun groupBoard(groupId: String): List<GroupMemberRow> = emptyList()
+    /** Semanas seguidas batendo a meta do grupo (migração 019). */
+    suspend fun groupStreak(groupId: String): Int = 0
+    /** O dono muda o cargo de um membro (admin ou member). */
+    suspend fun setMemberRole(groupId: String, profileId: String, role: String) {
+        throw UnsupportedOperationException("Mudar cargo não é possível aqui")
+    }
+    /** O dono ou um admin tira alguém do grupo. */
+    suspend fun removeMember(groupId: String, profileId: String) {
+        throw UnsupportedOperationException("Remover membro não é possível aqui")
+    }
+    /** Mural do grupo, do mais novo para o mais antigo (migração 019). */
+    suspend fun groupMessages(groupId: String): List<GroupMessage> = emptyList()
+    suspend fun postGroupMessage(groupId: String, body: String) {
+        throw UnsupportedOperationException("Mural não é possível aqui")
+    }
+    suspend fun deleteGroupMessage(messageId: String) {
+        throw UnsupportedOperationException("Mural não é possível aqui")
+    }
 
     // Desafios
     suspend fun challenges(): List<Challenge>

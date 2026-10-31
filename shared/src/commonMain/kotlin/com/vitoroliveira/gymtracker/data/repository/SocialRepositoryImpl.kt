@@ -7,6 +7,9 @@ import com.vitoroliveira.gymtracker.data.model.ChallengeParticipant
 import com.vitoroliveira.gymtracker.data.model.FeedPost
 import com.vitoroliveira.gymtracker.data.model.Follow
 import com.vitoroliveira.gymtracker.data.model.GroupMember
+import com.vitoroliveira.gymtracker.data.model.GroupMemberRow
+import com.vitoroliveira.gymtracker.data.model.GroupMessage
+import com.vitoroliveira.gymtracker.data.model.NewGroupMessage
 import com.vitoroliveira.gymtracker.data.model.NewChallenge
 import com.vitoroliveira.gymtracker.data.model.GroupEdit
 import com.vitoroliveira.gymtracker.data.model.NewGroup
@@ -180,6 +183,37 @@ class SocialRepositoryImpl(private val supabase: SupabaseClient) : SocialReposit
 
     override suspend fun updateGroup(groupId: String, edit: GroupEdit) {
         supabase.postgrest["groups"].update(edit) { filter { eq("id", groupId) } }
+    }
+
+    override suspend fun groupBoard(groupId: String): List<GroupMemberRow> =
+        supabase.postgrest.rpc("group_week_board", buildJsonObject { put("p_group", groupId) }).decodeList<GroupMemberRow>()
+
+    override suspend fun groupStreak(groupId: String): Int =
+        supabase.postgrest.rpc("group_goal_streak", buildJsonObject { put("p_group", groupId) }).decodeAs<Int>()
+
+    override suspend fun setMemberRole(groupId: String, profileId: String, role: String) {
+        supabase.postgrest["group_members"].update({ set("role", role) }) {
+            filter { eq("group_id", groupId); eq("profile_id", profileId) }
+        }
+    }
+
+    override suspend fun removeMember(groupId: String, profileId: String) {
+        supabase.postgrest["group_members"].delete { filter { eq("group_id", groupId); eq("profile_id", profileId) } }
+    }
+
+    override suspend fun groupMessages(groupId: String): List<GroupMessage> =
+        supabase.postgrest["group_messages"].select {
+            filter { eq("group_id", groupId) }
+            order("created_at", Order.DESCENDING)
+            limit(50)
+        }.decodeList<GroupMessage>()
+
+    override suspend fun postGroupMessage(groupId: String, body: String) {
+        supabase.postgrest["group_messages"].insert(NewGroupMessage(groupId, body))
+    }
+
+    override suspend fun deleteGroupMessage(messageId: String) {
+        supabase.postgrest["group_messages"].delete { filter { eq("id", messageId) } }
     }
 
     override suspend fun groupProgress(groupId: String): com.vitoroliveira.gymtracker.presentation.social.GroupWeekProgress? =
