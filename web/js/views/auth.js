@@ -42,5 +42,5 @@ export default function auth(root, _p, { go }) {
     h("div", { class: "field" }, h("label", {}, "E-mail"), email), userField,
     h("div", { class: "field" }, h("label", {}, "Senha"), pass),
     btn, h("div", { class: "center" }, toggle),
-    h("div", { class: "center small muted" }, h("a", { href: "#/setup" }, "Trocar o projeto Supabase"))));
+    window.GYM_CONFIG?.url ? null : h("div", { class: "center small muted" }, h("a", { href: "#/setup" }, "Trocar o projeto Supabase"))));
 }
