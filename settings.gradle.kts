@@ -23,3 +23,4 @@ rootProject.name = "GymTracker"
 include(":app")     // UI Android
 include(":shared")  // Lógica KMP compartilhada
 include(":wear")    // App de relógio (Wear OS)
+include(":composeApp") // App de iPhone (Compose Multiplatform; só compila num Mac, ver docs/IOS.md)

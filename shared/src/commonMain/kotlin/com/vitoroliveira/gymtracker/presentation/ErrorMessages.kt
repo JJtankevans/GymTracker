@@ -32,6 +32,23 @@ fun Throwable.toUserMessage(fallback: String): String {
         "jwt expired" in text || "refresh_token" in text || "not authenticated" in text ||
             "não autenticado" in text -> "Sua sessão expirou. Entre novamente."
 
+        // Função do servidor que ainda não foi criada (migração não rodada)
+        ("could not find the function" in text || "pgrst202" in text) && "delete_my_account" in text ->
+            "A exclusão de conta ainda não está ativada no servidor (falta rodar a migração 016)."
+
+        // Coluna de uma migração que ainda não rodou (PostgREST: "Could not find the 'cover' column of 'groups'...")
+        "could not find the" in text && "column" in text && listOf("cover", "accent_hex", "icon", "pinned_message", "weekly_goal", "prize").any { "'$it'" in text } ->
+            "A personalização de grupos e desafios ainda não está ativada no servidor (falta rodar a migração 017)."
+
+        // Mural/ranking de grupo (migração 019)
+        ("group_messages" in text || "group_week_board" in text || "group_goal_streak" in text) &&
+            ("could not find" in text || "does not exist" in text || "schema cache" in text) ->
+            "O mural e o ranking do grupo ainda não estão ativados no servidor (falta rodar a migração 019)."
+
+        // Ranqueada: tabelas/funções da migração 018 que ainda não existem
+        "ranked_" in text && ("could not find" in text || "does not exist" in text || "schema cache" in text) ->
+            "A ranqueada ainda não está ativada no servidor (falta rodar a migração 018)."
+
         // Banco
         "duplicate key" in text || "23505" in text || "already exists" in text ->
             "Já existe um item com esse nome."

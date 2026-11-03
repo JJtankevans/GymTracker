@@ -7,6 +7,7 @@ import com.vitoroliveira.gymtracker.data.model.ExerciseBaseline
 import com.vitoroliveira.gymtracker.data.model.Workout
 import com.vitoroliveira.gymtracker.data.model.WorkoutSet
 import com.vitoroliveira.gymtracker.domain.repository.ExerciseRepository
+import com.vitoroliveira.gymtracker.domain.usecase.addToGroups
 import com.vitoroliveira.gymtracker.domain.repository.WorkoutRepository
 import com.vitoroliveira.gymtracker.presentation.TimerManager
 import com.vitoroliveira.gymtracker.presentation.TimerState
@@ -40,7 +41,7 @@ fun setLimitMessage(exercise: Exercise): String =
         "(${exercise.defaultSets} do plano + $EXTRA_SETS_ALLOWED extras)."
 
 /** Resumo mostrado ao terminar o treino. */
-data class WorkoutSummary(
+data class FinishedWorkoutSummary(
     val durationMinutes: Long,
     val totalSets: Int,
     val totalReps: Int,
@@ -63,7 +64,7 @@ data class WorkoutUiState(
     val baselines: Map<String, ExerciseBaseline> = emptyMap(),
     /** Exercícios em que o usuário já bateu recorde neste treino (recalculado a cada série registrada, editada ou apagada). */
     val newRecordExerciseIds: Set<String> = emptySet(),
-    val summary: WorkoutSummary? = null,
+    val summary: FinishedWorkoutSummary? = null,
     /** Exercícios com série sendo gravada agora: o botão "Registrar série" fica desligado (evita série duplicada no toque duplo). */
     val savingExerciseIds: Set<String> = emptySet(),
     /** Sobe 1 cada vez que uma série registrada ou editada AGORA bate um recorde novo: dispara o confete (retomar o treino não dispara). */
@@ -104,7 +105,11 @@ class WorkoutViewModel(
 
     // ───────────────────────── Início / retomada ─────────────────────────
 
-    fun startWorkout(muscleGroupId: String?) {
+    /**
+     * [resumeIfActive]: se já existe um treino em andamento, entra nele direto em vez de oferecer "continuar ou
+     * descartar" (vindo do aviso da Home, a pessoa já escolheu continuar).
+     */
+    fun startWorkout(muscleGroupId: String?, resumeIfActive: Boolean = false) {
         val s = _uiState.value
         // Idempotente: girar a tela ou recompor não deve iniciar (nem oferecer retomar) de novo.
         if (s.activeWorkout != null || s.isLoading || s.activeWorkoutToRecover != null) return
@@ -114,6 +119,11 @@ class WorkoutViewModel(
             try {
                 val active = workoutRepository.getActiveWorkout()
                 if (active != null) {
+                    val activeId = active.id
+                    if (resumeIfActive && activeId != null) {
+                        openWorkout(active, active.muscleGroupId, workoutRepository.getSetsForWorkout(activeId))
+                        return@launch
+                    }
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         activeWorkoutToRecover = active
@@ -165,11 +175,16 @@ class WorkoutViewModel(
     }
 
     private suspend fun openWorkout(workout: Workout, muscleGroupId: String?, sets: List<WorkoutSet>) {
-        val exercises = if (muscleGroupId != null) {
+        val inGroup = if (muscleGroupId != null) {
             exerciseRepository.getByMuscleGroup(muscleGroupId)
         } else {
             exerciseRepository.getAll()
         }
+        // treino retomado: exercícios "só desta sessão" (fora do grupo) voltam porque já têm séries registradas
+        val groupIds = inGroup.mapNotNull { it.id }.toSet()
+        val strayIds = sets.map { it.exerciseId }.filter { it !in groupIds }.distinct()
+        val exercises = if (muscleGroupId == null || strayIds.isEmpty()) inGroup
+        else inGroup + exerciseRepository.getAll().filter { it.id in strayIds }
         _uiState.value = _uiState.value.copy(
             isLoading = false,
             activeWorkout = workout,
@@ -189,6 +204,36 @@ class WorkoutViewModel(
             recordsBefore = baselines.mapValues { it.value.recordWeightKg }
             // treino retomado: séries de antes que já eram recorde aparecem como recorde (sem confete)
             _uiState.value = withRecords(_uiState.value.copy(baselines = baselines))
+        }
+    }
+
+    /**
+     * Exercícios só desta sessão ("decidi fazer um pump agora"): entram na lista do treino e aceitam séries, mas NÃO
+     * entram no grupo. Se o nome já existe nos exercícios da pessoa (ignorando caixa e acento) ele é reaproveitado, com
+     * o mesmo histórico e recorde; se não, é criado sem grupo. Ao retomar o treino eles reaparecem pelas séries.
+     */
+    fun addTemporaryExercises(drafts: List<Exercise>) {
+        val workoutId = _uiState.value.activeWorkout?.id ?: return
+        val clean = drafts.filter { it.name.isNotBlank() }.map { it.copy(id = null, name = it.name.trim(), groupIds = emptyList()) }
+        if (clean.isEmpty()) return
+        viewModelScope.launch {
+            try {
+                val known = exerciseRepository.getAll().toMutableList()
+                val added = mutableListOf<Exercise>()
+                for (draft in clean) {
+                    val exercise = exerciseRepository.addToGroups(draft, emptySet(), known).exercise
+                    val already = _uiState.value.exercises + added
+                    if (already.none { it.id == exercise.id }) added += exercise
+                }
+                if (added.isEmpty()) return@launch
+                _uiState.value = _uiState.value.copy(exercises = _uiState.value.exercises + added)
+                val baselines = loadBaselines(workoutId, added)
+                recordsBefore = recordsBefore + baselines.mapValues { it.value.recordWeightKg }
+                _uiState.value = withRecords(_uiState.value.copy(baselines = _uiState.value.baselines + baselines))
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                _uiState.value = _uiState.value.copy(errorMessage = e.toUserMessage("Erro ao adicionar o exercício"))
+            }
         }
     }
 
@@ -411,10 +456,10 @@ class WorkoutViewModel(
         }
     }
 
-    private fun buildSummary(state: WorkoutUiState): WorkoutSummary {
+    private fun buildSummary(state: WorkoutUiState): FinishedWorkoutSummary {
         val sets = state.completedSets
         val names = state.exercises.associate { it.id to it.name }
-        return WorkoutSummary(
+        return FinishedWorkoutSummary(
             durationMinutes = _elapsedSeconds.value / 60,
             totalSets = sets.size,
             totalReps = sets.sumOf { it.reps },
@@ -454,6 +499,8 @@ class WorkoutViewModel(
     fun pauseTimer() = timerManager.pause()
     fun resumeTimer() = timerManager.resume()
     fun cancelTimer() = timerManager.cancel()
+    /** Recalcula o descanso na hora (a tela chama ao voltar do bloqueio e enquanto o descanso corre). */
+    fun refreshTimer() = timerManager.refresh()
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(errorMessage = null)

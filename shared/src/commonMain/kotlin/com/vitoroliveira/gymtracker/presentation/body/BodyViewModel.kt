@@ -46,13 +46,21 @@ class BodyRepository(private val store: BodyStore, private val cloud: BodyCloud?
     fun logMeasurement(epochDay: Int, site: MeasureSite, cm: Double) {
         if (cm !in 10.0..300.0) return
         change { d ->
-            d.copy(measurements = (d.measurements.filterNot { it.epochDay == epochDay && it.site == site } + BodyMeasurement(epochDay, site, cm))
-                .sortedWith(compareBy({ it.epochDay }, { it.site.ordinal })))
+            d.copy(
+                measurements = (d.measurements.filterNot { it.epochDay == epochDay && it.site == site } + BodyMeasurement(epochDay, site, cm))
+                    .sortedWith(compareBy({ it.epochDay }, { it.site.ordinal })),
+                pendingMeasureDeletes = d.pendingMeasureDeletes - measureKey(epochDay, site)
+            )
         }
     }
 
     fun deleteMeasurement(epochDay: Int, site: MeasureSite) =
-        change { d -> d.copy(measurements = d.measurements.filterNot { it.epochDay == epochDay && it.site == site }) }
+        change { d ->
+            d.copy(
+                measurements = d.measurements.filterNot { it.epochDay == epochDay && it.site == site },
+                pendingMeasureDeletes = d.pendingMeasureDeletes + measureKey(epochDay, site)
+            )
+        }
 
     fun deleteWeight(epochDay: Int) =
         change { d -> d.copy(weights = d.weights.filter { it.epochDay != epochDay }, pendingDeletes = d.pendingDeletes + epochDay) }
@@ -75,12 +83,32 @@ class BodyRepository(private val store: BodyStore, private val cloud: BodyCloud?
         if (gen != generation) return
         val profile = if (start.profile == BodyProfile()) c.fetchProfile() else { c.saveProfile(start.profile); null }
         if (gen != generation) return
+        // medidas: opcionais (sem a migração 014 a tabela não existe e só elas ficam de fora)
+        val remoteMeasures = try {
+            start.pendingMeasureDeletes.forEach { key ->
+                if (gen != generation) return
+                val (day, site) = key.split('|').let { it[0].toInt() to MeasureSite.valueOf(it[1]) }
+                c.deleteMeasurement(day, site)
+            }
+            val remote = c.fetchMeasurements()
+            val remoteCm = remote.associate { measureKey(it.epochDay, it.site) to it.cm }
+            start.measurements.filter { remoteCm[measureKey(it.epochDay, it.site)] != roundWeight(it.cm) }
+                .forEach { if (gen != generation) return; c.upsertMeasurement(it) }
+            remote
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            null
+        }
+        if (gen != generation) return
         // junta com o estado de AGORA (o usuário pode ter mexido durante a sincronização)
         change { cur ->
             val stillPending = cur.pendingDeletes - start.pendingDeletes
+            val measurePending = if (remoteMeasures != null) cur.pendingMeasureDeletes - start.pendingMeasureDeletes else cur.pendingMeasureDeletes
             cur.copy(
                 weights = mergeWeights(cur.weights, remote, cur.pendingDeletes),
                 pendingDeletes = stillPending,
+                measurements = remoteMeasures?.let { mergeMeasurements(cur.measurements, it, cur.pendingMeasureDeletes) } ?: cur.measurements,
+                pendingMeasureDeletes = measurePending,
                 profile = if (cur.profile == BodyProfile() && profile != null) profile else cur.profile
             )
         }
@@ -88,8 +116,8 @@ class BodyRepository(private val store: BodyStore, private val cloud: BodyCloud?
     }
 
     /**
-     * Apaga os dados corporais do aparelho (ao sair da conta). Os pesos e o perfil corporal têm cópia na nuvem e voltam
-     * na próxima sincronização da mesma conta; as medidas com fita ainda são só locais e se perdem.
+     * Apaga os dados corporais do aparelho (ao sair da conta). Pesos, perfil corporal e medidas (migração 014) têm cópia
+     * na nuvem e voltam na próxima sincronização da mesma conta.
      */
     fun clear() {
         generation++
@@ -114,6 +142,19 @@ class BodyRepository(private val store: BodyStore, private val cloud: BodyCloud?
     suspend fun pushProfile() {
         cloud?.saveProfile(_data.value.profile)
     }
+
+    /** Envia uma medida já gravada no aparelho. */
+    suspend fun pushMeasurement(epochDay: Int, site: MeasureSite) {
+        val c = cloud ?: return
+        _data.value.measurements.firstOrNull { it.epochDay == epochDay && it.site == site }?.let { c.upsertMeasurement(it) }
+    }
+
+    /** Apaga na nuvem uma medida já apagada no aparelho e tira da lista de pendentes. */
+    suspend fun pushMeasurementDelete(epochDay: Int, site: MeasureSite) {
+        val c = cloud ?: return
+        c.deleteMeasurement(epochDay, site)
+        change { it.copy(pendingMeasureDeletes = it.pendingMeasureDeletes - measureKey(epochDay, site)) }
+    }
 }
 
 class BodyViewModel(private val repo: BodyRepository) : ViewModel() {
@@ -124,8 +165,8 @@ class BodyViewModel(private val repo: BodyRepository) : ViewModel() {
     fun setProfile(p: BodyProfile) { repo.setProfile(p); quietly { repo.pushProfile() } }
     fun logWeight(epochDay: Int, kg: Double) { repo.logWeight(epochDay, kg); quietly { repo.pushWeight(epochDay) } }
     fun deleteWeight(epochDay: Int) { repo.deleteWeight(epochDay); quietly { repo.pushDelete(epochDay) } }
-    fun logMeasurement(epochDay: Int, site: MeasureSite, cm: Double) = repo.logMeasurement(epochDay, site, cm)
-    fun deleteMeasurement(epochDay: Int, site: MeasureSite) = repo.deleteMeasurement(epochDay, site)
+    fun logMeasurement(epochDay: Int, site: MeasureSite, cm: Double) { repo.logMeasurement(epochDay, site, cm); quietly { repo.pushMeasurement(epochDay, site) } }
+    fun deleteMeasurement(epochDay: Int, site: MeasureSite) { repo.deleteMeasurement(epochDay, site); quietly { repo.pushMeasurementDelete(epochDay, site) } }
 
     /** A nuvem é cópia: se falhar (sem internet, migração 003 ausente), fica para a próxima sincronização, sem erro na tela. */
     private fun quietly(block: suspend () -> Unit) {

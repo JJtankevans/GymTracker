@@ -57,6 +57,18 @@ private class StepAuth(private val steps: Steps, private val fail: Boolean = fal
     override fun currentUserId(): String? = "u1"
 }
 
+private class DeletingAuth(private val steps: Steps, private val error: Throwable? = null) : AuthRepository {
+    var calls = 0
+    override suspend fun signUp(email: String, password: String, username: String) {}
+    override suspend fun signIn(email: String, password: String) {}
+    override suspend fun resendSignUpConfirmation(email: String) {}
+    override suspend fun signOut() { steps.done += "signOut" }
+    override suspend fun deleteAccount() { calls++; steps.done += "deleteAccount"; error?.let { throw it } }
+    override suspend fun awaitSession() = true
+    override fun isLoggedIn() = true
+    override fun currentUserId(): String? = "u1"
+}
+
 private class StepLocalData(private val steps: Steps, private val failFlush: Boolean = false) :
     com.vitoroliveira.gymtracker.domain.repository.LocalUserData {
     override suspend fun flush() { steps.done += "flush"; if (failFlush) throw RuntimeException("Unable to resolve host") }
@@ -80,6 +92,54 @@ class ProfileViewModelTest {
         vm.signOut()
         assertEquals(listOf("flush", "signOut", "clear"), steps.done)
         assertEquals(true, vm.uiState.value.isSignedOut)
+    }
+
+    @Test fun excluirContaApagaFotoContaEDadosDoAparelho() {
+        val steps = Steps()
+        val profiles = MemProfiles(Profile(id = "u1", username = "thiago", avatarUrl = "https://x/u1/1.jpg"))
+        val auth = DeletingAuth(steps)
+        val vm = ProfileViewModel(profiles, auth, null, StepLocalData(steps))
+        vm.deleteAccount()
+        assertEquals(1, profiles.removals)               // a foto sai pelo Storage antes
+        assertEquals(listOf("deleteAccount", "clear"), steps.done)
+        assertEquals(true, vm.uiState.value.isSignedOut)
+        assertFalse(vm.uiState.value.isDeletingAccount)
+    }
+
+    @Test fun excluirContaSemFotoNaoMexeNoStorage() {
+        val steps = Steps()
+        val profiles = MemProfiles()
+        val vm = ProfileViewModel(profiles, DeletingAuth(steps), null, StepLocalData(steps))
+        vm.deleteAccount()
+        assertEquals(0, profiles.removals)
+        assertEquals(true, vm.uiState.value.isSignedOut)
+    }
+
+    @Test fun semInternetNaoExcluiENaoApagaOAparelho() {
+        val steps = Steps()
+        val vm = ProfileViewModel(MemProfiles(), DeletingAuth(steps, RuntimeException("Unable to resolve host")), null, StepLocalData(steps))
+        vm.deleteAccount()
+        assertEquals(listOf("deleteAccount"), steps.done)   // sem "clear": os dados locais ficam
+        assertFalse(vm.uiState.value.isSignedOut)
+        assertFalse(vm.uiState.value.isDeletingAccount)
+        assertEquals("Sem conexão com a internet. Verifique sua rede e tente de novo.", vm.uiState.value.errorMessage)
+    }
+
+    @Test fun migracaoFaltandoExplicaOMotivo() {
+        val steps = Steps()
+        val error = RuntimeException("Could not find the function public.delete_my_account without parameters in the schema cache")
+        val vm = ProfileViewModel(MemProfiles(), DeletingAuth(steps, error), null, StepLocalData(steps))
+        vm.deleteAccount()
+        assertFalse(vm.uiState.value.isSignedOut)
+        assertEquals("A exclusão de conta ainda não está ativada no servidor (falta rodar a migração 016).", vm.uiState.value.errorMessage)
+    }
+
+    @Test fun excluirContaDuasVezesNaoRepete() {
+        val steps = Steps()
+        val auth = DeletingAuth(steps)
+        val vm = ProfileViewModel(MemProfiles(), auth, null, StepLocalData(steps))
+        vm.deleteAccount(); vm.deleteAccount()
+        assertEquals(1, auth.calls)
     }
 
     @Test fun sairDuasVezesNaoRepete() {

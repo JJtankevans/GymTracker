@@ -6,12 +6,11 @@ import com.vitoroliveira.gymtracker.presentation.body.BodyRepository
 import com.vitoroliveira.gymtracker.presentation.circuit.TimingStore
 import com.vitoroliveira.gymtracker.presentation.schedule.ScheduleRepository
 import com.vitoroliveira.gymtracker.ui.exercise.CatalogPrefs
-import com.vitoroliveira.gymtracker.ui.music.WorkoutTrackRecorder
 import java.io.File
 
 /**
  * Tudo o que o app guarda no aparelho e é do usuário logado. Ficam de fora as preferências do aparelho (tema,
- * intensidade, cores da música, gravar músicas) e o cache de fotos de perfil (são públicas).
+ * intensidade) e o cache de fotos de perfil (são públicas).
  */
 class LocalUserDataImpl(
     context: Context,
@@ -19,11 +18,12 @@ class LocalUserDataImpl(
     private val schedule: ScheduleRepository,
     private val catalog: CatalogPrefs,
     private val timing: TimingStore,
-    private val tracks: WorkoutTrackRecorder
+    private val goals: com.vitoroliveira.gymtracker.ui.records.LoadGoalPrefs
 ) : LocalUserData {
-    private val cacheDir = context.applicationContext.cacheDir
+    private val appContext = context.applicationContext
+    private val cacheDir = appContext.cacheDir
 
-    /** Peso e perfil corporal pendentes vão para a nuvem antes de sair (as medidas ainda não têm tabela). */
+    /** Peso, perfil corporal e medidas pendentes vão para a nuvem antes de sair (medidas: migração 014). */
     override suspend fun flush() = body.sync(force = true)
 
     override fun clear() {
@@ -31,7 +31,8 @@ class LocalUserDataImpl(
         schedule.clear()
         catalog.clear()
         timing.save(emptyMap())
-        tracks.discard()
+        goals.clear()
+        com.vitoroliveira.gymtracker.ui.social.SocialAlertsWorker.clearSeen(appContext)
         // CSV exportado tem o histórico inteiro
         File(cacheDir, "exports").deleteRecursively()
     }

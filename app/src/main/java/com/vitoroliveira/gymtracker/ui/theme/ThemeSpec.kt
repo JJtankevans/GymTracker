@@ -19,7 +19,12 @@ enum class ThemeCategory(val label: String, val blurb: String) {
 }
 
 /** Estrutura da Home. Cada tema escolhe a sua: não é só cor, é composição. */
-enum class WorkoutLayout { LIST, FOCUS }
+enum class WorkoutLayout(val label: String, val blurb: String) {
+    LIST("Lista", "Todos os exercícios numa lista rolável, com campos para digitar."),
+    FOCUS("Foco", "Um exercício por vez, números grandes e botões de mais e menos."),
+    ARENA("Arena", "Sem rolagem, para o polegar: bolinhas de série, números que mudam arrastando e o botão de registrar que vira a barra de descanso."),
+    RING("Anel", "Um anel no centro: cada segmento é uma série, o anel de dentro conta o descanso e tocar no meio registra.")
+}
 
 enum class HomeLayout { CLASSIC, BENTO, POSTER, TERMINAL, ORBIT, EDITORIAL }
 
@@ -46,7 +51,56 @@ enum class Decor {
     CARNIVAL,   // confete e serpentina caindo
     WAVES,      // ondas e bolhas (Oceano)
     FIREFLIES,  // vaga-lumes no mato (Floresta)
-    DECO        // leque e moldura art déco (Ouro)
+    DECO,       // leque e moldura art déco (Ouro)
+    // segunda leva dos Loucos (ThemeDecorCrazy2.kt)
+    STORM,      // chuva, nuvens e relâmpagos
+    DISCO,      // bola espelhada e fachos de luz
+    KALEIDO,    // raios de arco-íris e polígonos girando
+    ABYSS,      // águas-vivas e plâncton brilhando
+    GALAXY,     // braços espirais de estrelas
+    STATIC,     // chuvisco de TV fora do ar
+    HOLO,       // reflexo perolado holográfico
+    HAUNTED,    // lua, morcegos, neblina e cerca torta
+    FIREWORKS,  // fogos de artifício
+    BLOCKS,     // peças de blocos caindo
+    ECG,        // monitor cardíaco
+    LASERS,     // lasers de rave varrendo
+    // terceira leva (ThemeDecorCrazy3.kt)
+    CIRCUIT,    // trilhas de placa-mãe com pulsos
+    SNOW,       // nevasca com floquinhos
+    BUBBLES,    // bolhas de sabão iridescentes
+    DESERT,     // sol, dunas e calor tremendo
+    ORIGAMI,    // pássaros de papel planando
+    NEON_CITY,  // prédios com janelas, letreiros e carros voadores
+    // quarta leva (ThemeDecorCrazy4.kt)
+    RADAR,      // varredura de radar com alvos piscando
+    SAKURA,     // galho de cerejeira e pétalas caindo
+    VOLCANO,    // vulcão em erupção com lava e fumaça
+    DNA,        // hélices de DNA girando
+    VINYL,      // disco de vinil girando e equalizador
+    DUNGEON,    // parede de pedra com tochas
+    // cenários próprios dos temas antigos (ThemeDecorClassic.kt e ThemeDecorClassic2.kt), com a intensidade controlando a riqueza
+    MATERIAL,   // Sistema: manchas de cor e formas do Material You
+    SPOTLIGHT,  // Studio: refletores de palco varrendo, com poeira
+    CARBON,     // Carbon: fibra de carbono, brilho de verniz e HUD
+    TIDE,       // Oceano: raios de sol, ondas em camadas, cardume e bolhas
+    INK,        // Tinta: gotas de nanquim se espalhando
+    NOTEBOOK,   // Papel: caderno com rabiscos que se desenham sozinhos
+    DRAFT,      // Blueprint: prancheta com compasso, engrenagens e cota
+    BRUTAL,     // Brutal: blocos duros com sombra seca e fita de perigo
+    NEON_SIGN,  // Neon: tubos de néon piscando
+    TERMINAL,   // Terminal: log rolando, cursor e tubo de raios catódicos
+    TRACK,      // Arena: pista de atletismo com corredores e refletores
+    GOLD,       // Ouro: art déco com raios, anéis dourados e brilhos
+    CURTAINS,   // Aurora: cortinas de luz sobre estrelas e montanhas
+    OUTRUN,     // Synthwave: sol listrado, montanhas de arame e chão em fuga
+    PARTY,      // Confete: balões subindo e estouros de confete
+    CRACKS,     // Magma: crosta rachada com veias de lava e faíscas
+    FJORD,      // Nórdico: fiorde com montanhas, névoa e sol baixo
+    OBSIDIAN,   // Obsidiana: vidro vulcânico com brilhos nas arestas
+    HEXNET,     // Cobalto: favo de hexágonos com ondas de dados
+    FOREST,     // Floresta: pinheiros em camadas, luar e vaga-lumes
+    GLACIER     // Ártico: gelo, floco gigante e icebergs à deriva
 }
 
 /**
@@ -100,3 +154,5 @@ val LocalThemeExtras = compositionLocalOf { ThemeExtras() }
 /** Relógio compartilhado (0..1 a cada 60s) pra a decoração não "reiniciar" ao trocar de tela. */
 val LocalThemeClock = compositionLocalOf<() -> Float> { { 0f } }
 
+/** Estilo de treino escolhido pela pessoa em Aparência; null = o que o tema define. */
+val LocalWorkoutStyle = androidx.compose.runtime.compositionLocalOf<WorkoutLayout?> { null }

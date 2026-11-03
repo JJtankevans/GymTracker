@@ -6,7 +6,9 @@ import com.vitoroliveira.gymtracker.presentation.toUserMessage
 import kotlin.coroutines.cancellation.CancellationException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.vitoroliveira.gymtracker.data.model.MuscleGroup
 import com.vitoroliveira.gymtracker.data.model.Workout
+import com.vitoroliveira.gymtracker.presentation.workout.ActiveWorkoutInfo
 import com.vitoroliveira.gymtracker.presentation.DashboardCalculator
 import com.vitoroliveira.gymtracker.presentation.WeekBucket
 import com.vitoroliveira.gymtracker.domain.repository.MuscleGroupRepository
@@ -30,6 +32,8 @@ data class HomeUiState(
     val weeklyCount: Int = 0,
     val weeklyGoal: Int = 3,
     val streakDays: Int = 0,
+    /** Semanas seguidas batendo a meta semanal (a atual conta se já bateu). */
+    val weekStreak: Int = 0,
     /** Últimas 8 semanas (mais antiga primeiro) para o gráfico de frequência. */
     val weeklyHistory: List<WeekBucket> = emptyList(),
     val totalWorkouts: Int = 0,
@@ -40,6 +44,13 @@ data class HomeUiState(
     val suggestedGroupId: String? = null,
     /** Pedidos para me seguir esperando resposta (selo no ícone do Social). */
     val pendingFollowRequests: Int = 0,
+    /** Minha posição na liga da semana (1 = primeiro) e quantos estão nela; null sem liga (migração 015) ou sozinho. */
+    val leaguePosition: Int? = null,
+    val leagueSize: Int = 0,
+    /** Treino iniciado e não terminado (a Home oferece continuar ou descartar); null se não há. */
+    val activeWorkout: ActiveWorkoutInfo? = null,
+    /** Meu elo na ranqueada (migração 018); null se não entrei ou se a migração não rodou. */
+    val rank: com.vitoroliveira.gymtracker.presentation.ranked.Rank? = null,
     val errorMessage: String? = null
 )
 
@@ -47,7 +58,8 @@ class HomeViewModel(
     private val workoutRepository: WorkoutRepository,
     private val profileRepository: ProfileRepository,
     private val muscleGroupRepository: MuscleGroupRepository,
-    private val socialRepository: com.vitoroliveira.gymtracker.domain.repository.SocialRepository? = null
+    private val socialRepository: com.vitoroliveira.gymtracker.domain.repository.SocialRepository? = null,
+    private val rankedRepository: com.vitoroliveira.gymtracker.domain.repository.RankedRepository? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -76,16 +88,25 @@ class HomeViewModel(
                 val today = Clock.System.todayIn(timeZone)
                 val weeklyCount = DashboardCalculator.weeklyCount(workoutDates, today)
                 val streakDays = DashboardCalculator.streak(workoutDates, today)
+                val weekStreak = DashboardCalculator.weekStreak(workoutDates, today, profile.weeklyGoal)
                 val weeklyHistory = DashboardCalculator.weeklyBuckets(workoutDates, today, weeks = 8)
 
                 val lastWorkout = history.firstOrNull()
                 val lastWorkoutGroupName = lastWorkout?.resolveGroupName(muscleGroups.associateBy { it.id })
 
+                val league = leagueQuietly()
+                val active = activeWorkoutQuietly(muscleGroups.associateBy { it.id })
+                val rank = rankQuietly()
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
+                    activeWorkout = active,
+                    rank = rank,
+                    leaguePosition = league?.first,
+                    leagueSize = league?.second ?: 0,
                     weeklyCount = weeklyCount,
                     weeklyGoal = profile.weeklyGoal,
                     streakDays = streakDays,
+                    weekStreak = weekStreak,
                     weeklyHistory = weeklyHistory,
                     totalWorkouts = history.size,
                     suggestedGroupId = suggestNextGroup(muscleGroups, history),
@@ -117,6 +138,62 @@ class HomeViewModel(
         val day = date.dayOfMonth.toString().padStart(2, '0')
         val month = date.monthNumber.toString().padStart(2, '0')
         return "$day/$month"
+    }
+
+    /** Treino em andamento é um aviso: se a consulta falhar, a Home segue sem ele. */
+    private suspend fun activeWorkoutQuietly(groups: Map<String?, MuscleGroup>): ActiveWorkoutInfo? {
+        return try {
+            val w = workoutRepository.getActiveWorkout() ?: return null
+            val id = w.id ?: return null
+            val started = w.startedAt?.let { runCatching { Instant.parse(it) }.getOrNull() }
+            ActiveWorkoutInfo(
+                workoutId = id,
+                groupId = w.muscleGroupId,
+                groupName = w.resolveGroupName(groups) ?: "Treino livre",
+                minutes = started?.let { (Clock.System.now() - it).inWholeMinutes.coerceAtLeast(0) } ?: 0
+            )
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            null
+        }
+    }
+
+    /** Cancela o treino em andamento (apaga ele e as séries); se falhar, o aviso continua e aparece o erro. */
+    fun discardActiveWorkout() {
+        val id = _uiState.value.activeWorkout?.workoutId ?: return
+        viewModelScope.launch {
+            try {
+                workoutRepository.deleteWorkout(id)
+                _uiState.value = _uiState.value.copy(activeWorkout = null)
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                _uiState.value = _uiState.value.copy(errorMessage = e.toUserMessage("Erro ao descartar o treino"))
+            }
+        }
+    }
+
+    /** O elo é um enfeite: sem entrar na ranqueada ou sem a migração 018, a Home segue sem o chip. */
+    private suspend fun rankQuietly(): com.vitoroliveira.gymtracker.presentation.ranked.Rank? {
+        val repo = rankedRepository ?: return null
+        return try {
+            repo.player()?.let { com.vitoroliveira.gymtracker.presentation.ranked.rankFor(it.rp) }
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            null
+        }
+    }
+
+    /** (minha posição, tamanho) na liga da semana; null se não há liga, se estou sozinho ou se falhar. */
+    private suspend fun leagueQuietly(): Pair<Int, Int>? {
+        val repo = socialRepository ?: return null
+        return try {
+            val rows = repo.weeklyLeague()
+            val me = rows.indexOfFirst { it.isMe }
+            if (rows.size < 2 || me < 0) null else (me + 1) to rows.size
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            null
+        }
     }
 
     /** Contagem é um extra: sem rede ou sem as tabelas sociais, fica 0 e a Home segue normal. */

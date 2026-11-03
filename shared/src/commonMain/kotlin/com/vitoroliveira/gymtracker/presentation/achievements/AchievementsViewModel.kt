@@ -47,7 +47,8 @@ class AchievementsViewModel(
                 // os extras abaixo são opcionais: se falharem, a família correspondente só não aparece
                 val goal = optional { profiles.getCurrentProfile().weeklyGoal } ?: 3
                 val volume = optional { social?.let { s -> s.profileStats(s.currentUserId())?.volumeKg } }
-                val records = optional { workouts.getRecordsSummary().size }
+                // só conta exercício em que a pessoa já superou a própria marca (com uma sessão só, toda carga seria "recorde")
+                val records = optional { workouts.getRecordsSummary().count { it.previousBestKg != null } }
                 _state.value = AchievementsUiState(
                     isLoading = false,
                     achievements = Achievements.compute(AchievementInput(dates, goal, volume, records, sessions))

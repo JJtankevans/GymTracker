@@ -1,5 +1,6 @@
 package com.vitoroliveira.gymtracker.presentation.social
 
+import com.vitoroliveira.gymtracker.mapInPlace
 import com.vitoroliveira.gymtracker.data.model.Challenge
 import com.vitoroliveira.gymtracker.data.model.ChallengeParticipant
 import com.vitoroliveira.gymtracker.data.model.FeedPost
@@ -33,6 +34,9 @@ import kotlin.test.assertTrue
 import kotlin.time.Instant
 
 class FakeSocialRepository(val meId: String = "me") : SocialRepository {
+    var leagueRows = listOf<com.vitoroliveira.gymtracker.data.model.LeagueRow>()
+    var failLeague = false
+    override suspend fun weeklyLeague() = if (failLeague) throw RuntimeException("function weekly_league() does not exist") else leagueRows
     var settings = SocialSettings()
     var profiles = mutableListOf<SocialProfile>()
     var followList = mutableListOf<Follow>()
@@ -54,7 +58,7 @@ class FakeSocialRepository(val meId: String = "me") : SocialRepository {
     override suspend fun follow(userId: String) { followList += Follow(meId, userId, "pending"); calls += "follow:$userId" }
     override suspend fun unfollow(userId: String) { followList.removeAll { it.followerId == meId && it.followedId == userId } }
     override suspend fun acceptFollower(userId: String) {
-        followList.replaceAll { if (it.followerId == userId && it.followedId == meId) it.copy(status = "accepted") else it }
+        followList.mapInPlace { if (it.followerId == userId && it.followedId == meId) it.copy(status = "accepted") else it }
     }
     override suspend fun rejectFollower(userId: String) { followList.removeAll { it.followerId == userId && it.followedId == meId } }
     var titleList = mutableListOf<com.vitoroliveira.gymtracker.data.model.ProfileTitle>()
@@ -73,7 +77,7 @@ class FakeSocialRepository(val meId: String = "me") : SocialRepository {
     override suspend fun feed(limit: Int): List<FeedPost> { if (failFeed) throw RuntimeException("Unable to resolve host"); return posts.toList() }
     override suspend fun reactions(postIds: List<String>) = reactionList.filter { it.postId in postIds }
     override suspend fun updatePost(postId: String, caption: String?, visibility: String) {
-        posts.replaceAll { if (it.id == postId) it.copy(caption = caption, visibility = visibility) else it }
+        posts.mapInPlace { if (it.id == postId) it.copy(caption = caption, visibility = visibility) else it }
     }
     override suspend fun addReaction(postId: String, kind: String) { reactionList += PostReaction(postId, meId, kind) }
     override suspend fun removeReaction(postId: String, kind: String) {
@@ -92,6 +96,26 @@ class FakeSocialRepository(val meId: String = "me") : SocialRepository {
         members += GroupMember(g.id, meId); return g.id
     }
     override suspend fun leaveGroup(groupId: String) { members.removeAll { it.groupId == groupId && it.profileId == meId } }
+    // grupo vivo (migração 019)
+    var boardFor = mutableMapOf<String, List<com.vitoroliveira.gymtracker.data.model.GroupMemberRow>>()
+    var streakFor = mutableMapOf<String, Int>()
+    var messagesFor = mutableMapOf<String, MutableList<com.vitoroliveira.gymtracker.data.model.GroupMessage>>()
+    var failBoard = false
+    val removedMembers = mutableListOf<Pair<String, String>>()
+    val roleChanges = mutableListOf<Triple<String, String, String>>()
+    override suspend fun groupBoard(groupId: String): List<com.vitoroliveira.gymtracker.data.model.GroupMemberRow> {
+        if (failBoard) throw RuntimeException("Could not find the function public.group_week_board in the schema cache")
+        return boardFor[groupId].orEmpty()
+    }
+    override suspend fun groupStreak(groupId: String) = streakFor[groupId] ?: 0
+    override suspend fun removeMember(groupId: String, profileId: String) { removedMembers += groupId to profileId }
+    override suspend fun setMemberRole(groupId: String, profileId: String, role: String) { roleChanges += Triple(groupId, profileId, role) }
+    override suspend fun groupMessages(groupId: String) = messagesFor[groupId].orEmpty().toList()
+    private var messageSeq = 0
+    override suspend fun postGroupMessage(groupId: String, body: String) {
+        messagesFor.getOrPut(groupId) { mutableListOf() }.add(0, com.vitoroliveira.gymtracker.data.model.GroupMessage("m${++messageSeq}", groupId, meId, body, "2026-10-20T12:00:00Z"))
+    }
+    override suspend fun deleteGroupMessage(messageId: String) { messagesFor.values.forEach { l -> l.removeAll { it.id == messageId } } }
     override suspend fun challenges() = challengeList.toList()
     override suspend fun myParticipations() = participations.filter { it.profileId == meId }
     override suspend fun createChallenge(challenge: NewChallenge): Challenge {
@@ -298,6 +322,18 @@ class SocialTest {
         vm.editPost("p1", "ok", "todos")
         assertEquals("Visibilidade inválida.", vm.state.value.error)
         assertEquals("ok", vm.state.value.feed.single().post.caption)
+    }
+
+    @Test fun ligaDaSemanaCarregaESemAMigracaoNaoMostraErro() {
+        val rows = listOf(
+            com.vitoroliveira.gymtracker.data.model.LeagueRow("b", "beto", workouts = 3),
+            com.vitoroliveira.gymtracker.data.model.LeagueRow("me", "eu", workouts = 1, isMe = true)
+        )
+        val ok = vm(FakeSocialRepository().apply { leagueRows = rows }).state.value
+        assertEquals(listOf("beto", "eu"), ok.league.map { it.username })
+        val semMigracao = vm(FakeSocialRepository().apply { failLeague = true }).state.value
+        assertTrue(semMigracao.league.isEmpty())
+        assertNull(semMigracao.error)
     }
 
     @Test fun reagirLigaEDesliga() {

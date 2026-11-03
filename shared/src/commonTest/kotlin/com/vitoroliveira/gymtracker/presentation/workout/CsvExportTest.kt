@@ -53,6 +53,16 @@ class CsvExportTest {
         assertEquals("simples", csvCell("simples"))
     }
 
+    @Test fun textoQueVirariaFormulaGanhaApostrofo() {
+        assertEquals("'=SOMA(A1)", safeText("=SOMA(A1)"))
+        assertEquals("'+55 11", safeText("+55 11"))
+        assertEquals("'-Remada", safeText("-Remada"))
+        assertEquals("'@usuario", safeText("@usuario"))
+        assertEquals("Supino", safeText("Supino"))
+        assertEquals("", safeText(""))
+        assertEquals("Rosca = direta", safeText("Rosca = direta"))
+    }
+
     @Test fun viewModelGeraECsvEDepoisLimpa() {
         val repo = FakeWorkoutRepository().apply { exportSets = rows }
         val vm = ExportViewModel(repo, FakeExerciseRepository(listOf(Exercise(id = "e1", name = "Supino"))), Groups(emptyList()))

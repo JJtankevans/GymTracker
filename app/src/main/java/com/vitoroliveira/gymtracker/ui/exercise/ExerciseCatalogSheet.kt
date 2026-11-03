@@ -83,6 +83,8 @@ fun CatalogMuscle.tint(): Color = when (this) {
     CatalogMuscle.GLUTEOS -> Color(0xFFEC407A)
     CatalogMuscle.PANTURRILHA -> Color(0xFF9CCC65)
     CatalogMuscle.ABDOMEN -> Color(0xFFFFCA28)
+    CatalogMuscle.CARDIO -> Color(0xFFFF7043)
+    CatalogMuscle.MOBILIDADE -> Color(0xFF26A69A)
 }
 
 /** Escolha de exercício no catálogo: busca, filtro por músculo e cards com ícone do equipamento. */

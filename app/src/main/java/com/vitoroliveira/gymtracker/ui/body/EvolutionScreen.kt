@@ -73,6 +73,10 @@ fun EvolutionContent(
             item(key = "weight") { BodyWeightCard(body, onLog = onLog, onDelete = onDelete, onEditData = { showData = true }) }
             item(key = "measures") { MeasurementsCard(body.measurements, onLogMeasure, onDeleteMeasure) }
             if (evo.weeklySets.any { it.sets > 0 }) item(key = "weekly-sets") { WeeklySetsCard(evo.weeklySets) }
+            if (evo.weeklySets.any { it.sets > 0 }) item(key = "balance") {
+                val balance = remember(evo.weeklySets) { muscleBalance(evo.weeklySets) }
+                if (balance != null) MuscleBalanceCard(balance)
+            }
             item(key = "lifts-title") {
                 Text("Cargas nos básicos", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             }
@@ -126,6 +130,41 @@ private fun WeeklySetsCard(rows: List<com.vitoroliveira.gymtracker.presentation.
             Text(
                 "Referência comum para hipertrofia: ${range.first} a ${range.last} séries por músculo por semana (Schoenfeld e colegas, 2017). " +
                     "É uma faixa, não regra: iniciantes crescem com menos. Exercícios fora do catálogo contam em \"Outros\".",
+                style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+/** Empurrar x puxar x pernas x core nos últimos 7 dias, com a observação principal (se houver). */
+@Composable
+private fun MuscleBalanceCard(balance: MuscleBalance) {
+    ThemedCard(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Equilíbrio do treino (7 dias)", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            val biggest = balance.rows.maxOf { it.sets }.coerceAtLeast(1)
+            balance.rows.forEach { r ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(r.group.label, Modifier.width(96.dp), style = MaterialTheme.typography.bodyMedium, maxLines = 1)
+                    LinearProgressIndicator(
+                        progress = { r.sets / biggest.toFloat() },
+                        modifier = Modifier.weight(1f).height(10.dp),
+                        color = if (r.sets == 0) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        "${(r.share * 100).toInt()}%", Modifier.width(48.dp),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.End
+                    )
+                }
+            }
+            Text(
+                balance.hint ?: "Empurrar, puxar e pernas estão bem distribuídos nesta semana.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (balance.balanced) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.tertiary
+            )
+            Text(
+                "Empurrar: peito, ombros, tríceps. Puxar: costas, bíceps. Pernas: quadríceps, posterior, glúteos, panturrilha. " +
+                    "Cardio e mobilidade não entram. É uma referência, não um diagnóstico.",
                 style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

@@ -31,11 +31,13 @@ class RestNotifier(context: Context) {
                     setShowBadge(false)
                 }
             )
+            nm?.deleteNotificationChannel(CH_DONE_OLD)
             nm?.createNotificationChannel(
                 NotificationChannel(CH_DONE, "Fim do descanso", NotificationManager.IMPORTANCE_HIGH).apply {
-                    description = "Avisa quando o descanso entre séries termina"
-                    enableVibration(true)
-                    vibrationPattern = longArrayOf(0, 220, 120, 220, 120, 380)
+                    description = "Avisa quando o descanso entre séries termina (a vibração vem do próprio app)"
+                    enableVibration(false)
+                    setSound(null, null)
+                    lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
                 }
             )
         }
@@ -99,7 +101,8 @@ class RestNotifier(context: Context) {
 
     private companion object {
         const val CH_COUNTDOWN = "rest_countdown"
-        const val CH_DONE = "rest_done"
+        const val CH_DONE = "rest_done_v2"
+        const val CH_DONE_OLD = "rest_done"
         const val ID = 4201
     }
 }

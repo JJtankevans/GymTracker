@@ -30,6 +30,7 @@ kotlinx-serialization   = "1.8.1"
 androidx-core-ktx            = "1.16.0"
 androidx-activity-compose    = "1.10.1"
 androidx-lifecycle           = "2.9.1"
+androidx-work                = "2.10.0"
 
 # Compose BOM (Android)
 compose-bom             = "2025.06.00"
@@ -38,10 +39,17 @@ compose-bom             = "2025.06.00"
 junit                   = "4.13.2"
 androidx-junit          = "1.2.1"
 espresso-core           = "3.6.1"
-kotlinx-datetime        = "0.6.1"
+kotlinx-datetime        = "0.7.1"
 roborazzi               = "1.76.0"
 robolectric             = "4.17"
 wear-compose            = "1.5.0"
+wear-core               = "1.3.0"
+wear-ongoing            = "1.0.0"
+wear-tiles              = "1.4.1"
+wear-protolayout        = "1.2.1"
+wear-complications      = "1.2.1"
+health-services         = "1.0.0"
+play-services-wearable  = "19.0.0"
 
 
 [libraries]
@@ -51,6 +59,9 @@ compose-runtime              = { module = "org.jetbrains.compose.runtime:runtime
 compose-foundation           = { module = "org.jetbrains.compose.foundation:foundation",        version.ref = "compose-multiplatform" }
 compose-material3            = { module = "org.jetbrains.compose.material3:material3",          version.ref = "compose-multiplatform" }
 compose-components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "compose-multiplatform" }
+compose-ui                   = { module = "org.jetbrains.compose.ui:ui",                        version.ref = "compose-multiplatform" }
+# material3 do Compose Multiplatform tem versão própria; 1.9.0 é a estável mais nova (o 1.11.x ainda é alpha)
+compose-material3-mp         = { module = "org.jetbrains.compose.material3:material3",          version = "1.9.0" }
 
 # --- Supabase BOM + módulos ---
 supabase-bom            = { module = "io.github.jan-tennert.supabase:bom",           version.ref = "supabase" }
@@ -90,6 +101,7 @@ androidx-activity-compose    = { module = "androidx.activity:activity-compose", 
 androidx-lifecycle-runtime   = { module = "androidx.lifecycle:lifecycle-runtime-ktx",        version.ref = "androidx-lifecycle" }
 androidx-lifecycle-viewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel-compose",  version.ref = "androidx-lifecycle" }
 androidx-navigation-compose  = { module = "androidx.navigation:navigation-compose",          version.ref = "androidx-navigation" }
+androidx-work-runtime        = { module = "androidx.work:work-runtime-ktx",                  version.ref = "androidx-work" }
 
 # --- Compose BOM (Android) ---
 androidx-compose-bom                = { module = "androidx.compose:compose-bom",              version.ref = "compose-bom" }
@@ -104,6 +116,17 @@ androidx-compose-material3          = { module = "androidx.compose.material3:mat
 # --- Wear OS ---
 wear-compose-material     = { module = "androidx.wear.compose:compose-material",    version.ref = "wear-compose" }
 wear-compose-foundation   = { module = "androidx.wear.compose:compose-foundation",  version.ref = "wear-compose" }
+wear-compose-navigation   = { module = "androidx.wear.compose:compose-navigation",  version.ref = "wear-compose" }
+wear-core                 = { module = "androidx.wear:wear",                         version.ref = "wear-core" }
+wear-ongoing              = { module = "androidx.wear:wear-ongoing",                 version.ref = "wear-ongoing" }
+wear-tiles                = { module = "androidx.wear.tiles:tiles",                  version.ref = "wear-tiles" }
+wear-protolayout          = { module = "androidx.wear.protolayout:protolayout",      version.ref = "wear-protolayout" }
+wear-complications-source = { module = "androidx.wear.watchface:watchface-complications-data-source-ktx", version.ref = "wear-complications" }
+health-services-client    = { module = "androidx.health:health-services-client",    version.ref = "health-services" }
+guava-android             = { module = "com.google.guava:guava",                      version = "33.4.8-android" }
+play-services-wearable    = { module = "com.google.android.gms:play-services-wearable", version.ref = "play-services-wearable" }
+kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "kotlinx-coroutines" }
+androidx-compose-material-icons-core = { module = "androidx.compose.material:material-icons-core" }
 
 # --- Test ---
 kotlin-test             = { module = "org.jetbrains.kotlin:kotlin-test",                  version.ref = "kotlin" }

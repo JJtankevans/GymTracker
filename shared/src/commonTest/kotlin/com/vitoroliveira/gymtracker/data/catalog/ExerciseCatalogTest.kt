@@ -51,8 +51,11 @@ class ExerciseCatalogTest {
         assertEquals(names.take(2), ExerciseCatalog.recentOnly(ExerciseCatalog.all, names).map { it.name })
     }
 
-    @Test fun mesmoNomeIgnoraAcento() =
+    @Test fun mesmoNomeIgnoraAcento() {
         assertTrue(ExerciseCatalog.isSameName("Elevação Pélvica", "elevacao pelvica"))
+        assertTrue(ExerciseCatalog.isSameName("Crossover Pegada Ñandú", "crossover pegada nandu"))   // ñ e ú
+        assertTrue(ExerciseCatalog.isSameName("Glúteo Müller", "gluteo muller"))                   // ü (erro nº 22)
+    }
 
     @Test fun apelidoAchaOExercicioDoCatalogoSemMisturarNomes() {
         assertEquals("Hack Squat", ExerciseCatalog.find("Agachamento Hack")?.name)
@@ -71,6 +74,14 @@ class ExerciseCatalogTest {
         val aliases = ExerciseCatalog.all.flatMap { it.aliases }.map { it.lowercase().trim() }
         assertTrue(aliases.none { it in names }, "apelido igual a um nome do catálogo")
         assertEquals(aliases.size, aliases.toSet().size, "apelido repetido")
+    }
+
+    @Test fun cardioEMobilidadeContamEmMinutosOuSegundos() {
+        val cardio = ExerciseCatalog.search("", CatalogMuscle.CARDIO)
+        assertTrue(cardio.size >= 6)
+        assertTrue(cardio.filter { it.equipment == Equipment.MAQUINA }.all { it.hint?.contains("minutos") == true })
+        assertTrue(ExerciseCatalog.search("", CatalogMuscle.MOBILIDADE).all { it.hint != null })
+        assertEquals("Passada", ExerciseCatalog.find("Avanço")?.name)
     }
 
     @Test fun exerciciosNovosDosUsuariosEstaoNoCatalogo() {

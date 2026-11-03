@@ -17,6 +17,19 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Instant
 
+/** Guarda o que foi inserido (com id) para os testes de exercício só da sessão. */
+private class RecordingExercises(var rows: List<Exercise>) : com.vitoroliveira.gymtracker.domain.repository.ExerciseRepository {
+    val inserted = mutableListOf<Exercise>()
+    override suspend fun getAll() = rows
+    override suspend fun getByMuscleGroup(muscleGroupId: String) = rows.filter { muscleGroupId in it.groupIds }
+    override suspend fun insert(exercise: Exercise): Exercise {
+        inserted += exercise
+        return exercise.copy(id = "novo${inserted.size}").also { rows = rows + it }
+    }
+    override suspend fun update(exercise: Exercise) { rows = rows.map { if (it.id == exercise.id) exercise else it } }
+    override suspend fun delete(id: String) {}
+}
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class WorkoutViewModelTest {
 
@@ -275,5 +288,81 @@ class WorkoutViewModelTest {
         assertEquals(85.0, vm.uiState.value.baselines["e1"]?.recordWeightKg)
         assertEquals(1, vm.uiState.value.recordBursts)
     }
-}
 
+    // ---- exercício só desta sessão ----
+    private fun grupoPeito(vararg extras: Exercise) = RecordingExercises(listOf(supino.copy(groupIds = listOf("g1")), crucifixo.copy(groupIds = listOf("g1"))) + extras)
+
+    @Test fun exercicioTemporarioNovoEntraNoTreinoSemEntrarEmGrupo() {
+        val repo = grupoPeito()
+        val vm = WorkoutViewModel(workouts, repo, clock)
+        vm.startWorkout("g1")
+        vm.addTemporaryExercises(listOf(Exercise(name = "  Pump de Bíceps ", defaultSets = 4, defaultReps = 15)))
+        val s = vm.uiState.value
+        assertEquals(listOf("Supino", "Crucifixo", "Pump de Bíceps"), s.exercises.map { it.name })
+        assertEquals(emptyList(), repo.inserted.single().groupIds)       // criado sem grupo
+        vm.addSet(s.exercises.last().id!!, 15, 12.0)
+        assertEquals(1, vm.uiState.value.completedSets.size)             // aceita séries
+    }
+
+    @Test fun exercicioTemporarioComNomeExistenteReaproveitaOHistorico() {
+        val rosca = Exercise(id = "e9", name = "Rosca Direta", groupIds = listOf("g2"))
+        val repo = grupoPeito(rosca)
+        val vm = WorkoutViewModel(workouts, repo, clock)
+        vm.startWorkout("g1")
+        vm.addTemporaryExercises(listOf(Exercise(name = "rosca direta")))   // outra caixa
+        assertTrue(repo.inserted.isEmpty())
+        assertEquals("e9", vm.uiState.value.exercises.last().id)
+        assertEquals(listOf("g2"), repo.rows.first { it.id == "e9" }.groupIds) // o grupo dele não mudou
+    }
+
+    @Test fun exercicioQueJaEstaNoTreinoNaoDuplica() {
+        val vm = WorkoutViewModel(workouts, grupoPeito(), clock)
+        vm.startWorkout("g1")
+        vm.addTemporaryExercises(listOf(Exercise(name = "supino"), Exercise(name = "Pump"), Exercise(name = "PUMP")))
+        assertEquals(listOf("Supino", "Crucifixo", "Pump"), vm.uiState.value.exercises.map { it.name })
+    }
+
+    @Test fun nomeEmBrancoEIgnorado() {
+        val vm = WorkoutViewModel(workouts, grupoPeito(), clock)
+        vm.startWorkout("g1")
+        vm.addTemporaryExercises(listOf(Exercise(name = "   ")))
+        assertEquals(2, vm.uiState.value.exercises.size)
+    }
+
+    @Test fun retomarTreinoTrazDeVoltaOExercicioTemporarioComSeries() {
+        val rosca = Exercise(id = "e9", name = "Rosca Direta", groupIds = listOf("g2"))
+        val repo = grupoPeito(rosca)
+        workouts.sets += com.vitoroliveira.gymtracker.data.model.WorkoutSet(id = "s0", workoutId = "w1", exerciseId = "e9", setNumber = 1, reps = 12, weightKg = 15.0)
+        val vm = WorkoutViewModel(workouts, repo, clock)
+        vm.resumeWorkout(com.vitoroliveira.gymtracker.data.model.Workout(id = "w1", muscleGroupId = "g1", startedAt = "2026-10-20T10:00:00Z"))
+        assertEquals(listOf("Supino", "Crucifixo", "Rosca Direta"), vm.uiState.value.exercises.map { it.name })
+    }
+
+    // ---- entrar direto no treino em andamento (aviso da Home) ----
+    @Test fun resumeIfActiveEntraNoTreinoSemPerguntar() {
+        workouts.activeWorkout = com.vitoroliveira.gymtracker.data.model.Workout(id = "velho", startedAt = "2026-10-20T10:00:00Z")
+        workouts.sets += com.vitoroliveira.gymtracker.data.model.WorkoutSet(id = "s0", workoutId = "velho", exerciseId = "e1", setNumber = 1, reps = 10, weightKg = 60.0)
+        val vm = vm()
+        vm.startWorkout(null, resumeIfActive = true)
+        val s = vm.uiState.value
+        assertEquals("velho", s.activeWorkout?.id)
+        assertNull(s.activeWorkoutToRecover)
+        assertEquals(1, s.completedSets.size)
+        assertEquals(0, workouts.startCalls)   // não criou outro treino
+    }
+
+    @Test fun semResumeIfActiveContinuaPerguntando() {
+        workouts.activeWorkout = com.vitoroliveira.gymtracker.data.model.Workout(id = "velho")
+        val vm = vm()
+        vm.startWorkout(null)
+        assertEquals("velho", vm.uiState.value.activeWorkoutToRecover?.id)
+        assertNull(vm.uiState.value.activeWorkout)
+    }
+
+    @Test fun resumeIfActiveSemTreinoAtivoInicia() {
+        val vm = vm()
+        vm.startWorkout(null, resumeIfActive = true)
+        assertNotNull(vm.uiState.value.activeWorkout)
+        assertEquals(1, workouts.startCalls)
+    }
+}

@@ -31,7 +31,46 @@ private class SlowBodyCloud(private val inner: FakeBodyCloud) : BodyCloud by inn
     override suspend fun fetchWeights(): List<BodyWeightEntry> { release.await(); return inner.fetchWeights() }
 }
 
+/** Nuvem com a tabela de medidas (migração 014); [missingTable] simula o banco sem a migração. */
+private class MeasureCloud(private val inner: FakeBodyCloud = FakeBodyCloud()) : BodyCloud by inner {
+    val measures = mutableMapOf<String, BodyMeasurement>()
+    var missingTable = false
+    val deleted = mutableListOf<String>()
+    private fun check() { if (missingTable) throw RuntimeException("relation \"body_measurements\" does not exist") }
+    override suspend fun fetchMeasurements(): List<BodyMeasurement> { check(); return measures.values.toList() }
+    override suspend fun upsertMeasurement(m: BodyMeasurement) { check(); measures[measureKey(m.epochDay, m.site)] = m }
+    override suspend fun deleteMeasurement(epochDay: Int, site: MeasureSite) { check(); deleted += measureKey(epochDay, site); measures.remove(measureKey(epochDay, site)) }
+}
+
 class BodySyncTest {
+    @Test fun medidasSobemDescemENaoRessuscitam() = runTest {
+        val cloud = MeasureCloud()
+        cloud.measures[measureKey(5, MeasureSite.ARM)] = BodyMeasurement(5, MeasureSite.ARM, 38.0)      // de outro celular
+        cloud.measures[measureKey(6, MeasureSite.CALF)] = BodyMeasurement(6, MeasureSite.CALF, 40.0)
+        val repo = BodyRepository(InMemoryBodyStore(BodyData(measurements = listOf(BodyMeasurement(7, MeasureSite.WAIST, 84.0)))), cloud)
+        repo.deleteMeasurement(6, MeasureSite.CALF)          // apagada aqui antes de sincronizar
+
+        repo.sync()
+
+        assertEquals(listOf(5 to MeasureSite.ARM, 7 to MeasureSite.WAIST), repo.data.value.measurements.map { it.epochDay to it.site })
+        assertTrue(measureKey(7, MeasureSite.WAIST) in cloud.measures)      // a local subiu
+        assertEquals(listOf(measureKey(6, MeasureSite.CALF)), cloud.deleted) // a apagada foi apagada lá
+        assertTrue(repo.data.value.pendingMeasureDeletes.isEmpty())
+    }
+
+    @Test fun semATabelaDeMedidasOPesoSincronizaMesmoAssim() = runTest {
+        val cloud = MeasureCloud().apply { missingTable = true }
+        val repo = BodyRepository(
+            InMemoryBodyStore(BodyData(weights = listOf(BodyWeightEntry(9, 70.0)), measurements = listOf(BodyMeasurement(9, MeasureSite.HIPS, 99.0)))),
+            cloud
+        )
+        repo.deleteMeasurement(1, MeasureSite.ARM)
+        repo.sync()
+        assertEquals(listOf(9), repo.data.value.weights.map { it.epochDay })
+        assertEquals(1, repo.data.value.measurements.size)                  // a local continua
+        assertEquals(setOf(measureKey(1, MeasureSite.ARM)), repo.data.value.pendingMeasureDeletes) // fica para depois
+    }
+
     @Test fun sairDaContaApagaOsDadosDoAparelhoEAProximaContaSoVeOsDela() = runTest {
         val store = InMemoryBodyStore(
             BodyData(

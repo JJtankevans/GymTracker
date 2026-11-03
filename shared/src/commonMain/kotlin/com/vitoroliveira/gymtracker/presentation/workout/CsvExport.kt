@@ -25,7 +25,7 @@ fun historyCsv(
             val group = s.workouts?.muscleGroupId?.let { groupNames[it] } ?: s.workouts?.muscleGroupName ?: ""
             val exercise = exerciseNames[s.exerciseId] ?: "Exercício removido"
             appendLine(
-                listOf(date, time, group, exercise, s.setNumber.toString(), s.reps.toString(), decimal(s.weightKg), decimal(s.reps * s.weightKg))
+                listOf(date, time, safeText(group), safeText(exercise), s.setNumber.toString(), s.reps.toString(), decimal(s.weightKg), decimal(s.reps * s.weightKg))
                     .joinToString(";") { csvCell(it) }
             )
         }
@@ -36,3 +36,9 @@ private fun decimal(v: Double): String = formatKgBr(v)
 /** Aspas só quando precisa (separador, aspas ou quebra de linha), dobrando as aspas internas. */
 internal fun csvCell(v: String): String =
     if (v.any { it == ';' || it == '"' || it == '\n' || it == '\r' }) "\"" + v.replace("\"", "\"\"") + "\"" else v
+
+/**
+ * Texto livre (nome de grupo/exercício, que pode vir de um treino compartilhado por outra pessoa) que começa com
+ * = + - @ ou tabulação viraria fórmula ao abrir o CSV na planilha: um apóstrofo na frente o mantém como texto.
+ */
+internal fun safeText(v: String): String = if (v.isNotEmpty() && v[0] in "=+-@\t\r") "'$v" else v

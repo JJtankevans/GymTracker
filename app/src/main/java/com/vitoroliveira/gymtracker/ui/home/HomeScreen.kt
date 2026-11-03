@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -29,6 +30,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.vitoroliveira.gymtracker.presentation.viewmodel.HomeUiState
+import com.vitoroliveira.gymtracker.presentation.workout.ActiveWorkoutInfo
+import com.vitoroliveira.gymtracker.presentation.workout.formatElapsedSince
 import com.vitoroliveira.gymtracker.presentation.viewmodel.HomeViewModel
 import com.vitoroliveira.gymtracker.ui.theme.GymTrackerTheme
 import org.koin.compose.viewmodel.koinViewModel
@@ -39,6 +42,7 @@ fun HomeScreen(
     onNavigateToHistory: () -> Unit,
     onNavigateToProfile: () -> Unit,
     onStartWorkoutClick: () -> Unit,
+    onResumeWorkout: (groupId: String?, groupName: String?) -> Unit = { _, _ -> },
     onNavigateToThemes: () -> Unit = {},
     onNavigateToEvolution: () -> Unit = {},
     onNavigateToRecords: () -> Unit = {},
@@ -64,7 +68,82 @@ fun HomeScreen(
         onNavigateToRecords = onNavigateToRecords,
         onNavigateToSocial = onNavigateToSocial,
         onClearError = { viewModel.clearError() },
-        topSlot = { com.vitoroliveira.gymtracker.ui.music.MiniPlayer() }
+        topSlot = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                uiState.activeWorkout?.let { active ->
+                    ActiveWorkoutBanner(
+                        info = active,
+                        onContinue = { onResumeWorkout(active.groupId, active.groupName) },
+                        onDiscard = { viewModel.discardActiveWorkout() }
+                    )
+                }
+                val pos = uiState.leaguePosition
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    uiState.rank?.let { RankChip(it, onNavigateToSocial) }
+                    if (pos != null) LeagueChip(pos, uiState.leagueSize, onNavigateToSocial)
+                }
+            }
+        }
+    )
+}
+
+/** "Treino em andamento": quem saiu do treino sem terminar volta nele daqui, ou cancela. */
+@Composable
+private fun ActiveWorkoutBanner(info: ActiveWorkoutInfo, onContinue: () -> Unit, onDiscard: () -> Unit) {
+    var confirmDiscard by remember { mutableStateOf(false) }
+    ThemedCard(Modifier.fillMaxWidth(), containerColor = MaterialTheme.colorScheme.primaryContainer) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.PlayArrow, null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                Spacer(Modifier.width(8.dp))
+                Column(Modifier.weight(1f)) {
+                    Text("Treino em andamento", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    Text(
+                        "${info.groupName} · começou ${if (info.minutes < 1) "agora mesmo" else "há ${formatElapsedSince(info.minutes)}"}",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Button(onClick = onContinue, modifier = Modifier.weight(1f)) { Text("Continuar treino") }
+                TextButton(onClick = { confirmDiscard = true }) { Text("Cancelar", color = MaterialTheme.colorScheme.error) }
+            }
+        }
+    }
+    if (confirmDiscard) {
+        AlertDialog(
+            onDismissRequest = { confirmDiscard = false },
+            title = { Text("Cancelar o treino?") },
+            text = { Text("O treino de ${info.groupName} em andamento e as séries já registradas nele serão apagados. Não dá para desfazer.") },
+            confirmButton = { TextButton(onClick = { confirmDiscard = false; onDiscard() }) { Text("Apagar treino", color = MaterialTheme.colorScheme.error) } },
+            dismissButton = { TextButton(onClick = { confirmDiscard = false }) { Text("Voltar") } }
+        )
+    }
+}
+
+/** "Ouro II · 62 RP": o elo na ranqueada, na cor do elo; toque abre o Social. */
+@Composable
+private fun RankChip(rank: com.vitoroliveira.gymtracker.presentation.ranked.Rank, onClick: () -> Unit) {
+    val color = androidx.compose.ui.graphics.Color(rank.tier.colorHex)
+    androidx.compose.material3.AssistChip(
+        onClick = onClick,
+        label = { Text(if (rank.isTop) "${rank.label} · ${rank.rp} RP" else "${rank.label} · ${rank.rpInDivision} RP", fontWeight = FontWeight.Bold) },
+        leadingIcon = { Icon(Icons.Default.Shield, contentDescription = null, tint = color) }
+    )
+}
+
+/** "2º de 5 na liga da semana" (você e quem você segue); toque abre o Social. */
+@Composable
+private fun LeagueChip(position: Int, size: Int, onClick: () -> Unit) {
+    androidx.compose.material3.AssistChip(
+        onClick = onClick,
+        label = { Text(if (position == 1) "1º na liga da semana (de $size)" else "${position}º de $size na liga da semana") },
+        leadingIcon = {
+            Icon(
+                Icons.Default.EmojiEvents, contentDescription = null,
+                tint = if (position == 1) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary
+            )
+        }
     )
 }
 
@@ -192,6 +271,14 @@ fun WeeklyHistoryCard(uiState: HomeUiState) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            if (uiState.weekStreak > 0) {
+                Text(
+                    if (uiState.weekStreak == 1) "1 semana seguida batendo a meta" else "${uiState.weekStreak} semanas seguidas batendo a meta",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
             Spacer(Modifier.height(8.dp))
             BarChart(
                 values = uiState.weeklyHistory.map { it.count },

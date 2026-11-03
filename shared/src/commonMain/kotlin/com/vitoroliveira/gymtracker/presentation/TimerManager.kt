@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlin.time.TimeSource
+import kotlin.time.Clock
 
 data class TimerState(
     val totalSeconds: Int = 0,
@@ -27,21 +27,25 @@ data class TimerState(
         }
 }
 
-private val processStart = TimeSource.Monotonic.markNow()
-private fun monotonicMillis(): Long = processStart.elapsedNow().inWholeMilliseconds
+/**
+ * Relógio do prazo do descanso. É o relógio de parede (e não o monotônico): o monotônico PARA enquanto o aparelho
+ * dorme com a tela bloqueada, então um descanso de 90 s dormindo durava muito mais. O custo é que mudar a hora do
+ * aparelho no meio de um descanso o desloca, o que é raro.
+ */
+private fun wallClockMillis(): Long = Clock.System.now().toEpochMilliseconds()
 
 /**
  * Cronômetro regressivo do descanso entre séries.
  *
- * Calcula o tempo restante a partir de um **prazo (deadline)** em relógio
- * monotônico, e não contando ticks: assim não acumula atraso e continua
- * certo se a coroutine atrasar (tela apagada, app em segundo plano).
+ * Calcula o tempo restante a partir de um **prazo (deadline)** e não contando
+ * ticks: assim não acumula atraso e continua certo se a coroutine atrasar
+ * (tela apagada, app em segundo plano).
  *
  * [nowMillis] é injetável para os testes controlarem o tempo.
  */
 class TimerManager(
     private val scope: CoroutineScope,
-    private val nowMillis: () -> Long = ::monotonicMillis
+    private val nowMillis: () -> Long = ::wallClockMillis
 ) {
 
     private val _timerState = MutableStateFlow(TimerState())
@@ -66,23 +70,39 @@ class TimerManager(
         runCountdown()
     }
 
+    /** Recalcula o que falta a partir do prazo e atualiza o estado se mudou. Devolve os ms que faltam. */
+    private fun applyRemaining(): Long {
+        val leftMs = deadline - nowMillis()
+        // arredonda pra cima: com 0,2s sobrando ainda mostra 1s
+        val left = if (leftMs <= 0) 0 else ((leftMs + 999) / 1000).toInt()
+        if (left != _timerState.value.remainingSeconds) {
+            _timerState.value = _timerState.value.copy(
+                remainingSeconds = left,
+                isRunning = left > 0,
+                isFinished = left == 0
+            )
+        }
+        return leftMs
+    }
+
     private fun runCountdown() {
         timerJob = scope.launch {
             while (true) {
-                val leftMs = deadline - nowMillis()
-                // arredonda pra cima: com 0,2s sobrando ainda mostra 1s
-                val left = if (leftMs <= 0) 0 else ((leftMs + 999) / 1000).toInt()
-                if (left != _timerState.value.remainingSeconds) {
-                    _timerState.value = _timerState.value.copy(
-                        remainingSeconds = left,
-                        isRunning = left > 0,
-                        isFinished = left == 0
-                    )
-                }
-                if (left == 0) break
+                val leftMs = applyRemaining()
+                if (leftMs <= 0) break
                 delay((leftMs % 1000).let { if (it == 0L) 1000L else it }.coerceAtLeast(20L))
             }
         }
+    }
+
+    /**
+     * Confere agora quanto falta e, se a contagem em segundo plano tiver parado por algum motivo (tela bloqueada,
+     * app voltando do segundo plano), liga ela de novo. A tela chama ao voltar e enquanto o descanso roda.
+     */
+    fun refresh() {
+        if (!_timerState.value.isRunning) return
+        val leftMs = applyRemaining()
+        if (leftMs > 0 && timerJob?.isActive != true) runCountdown()
     }
 
     fun pause() {

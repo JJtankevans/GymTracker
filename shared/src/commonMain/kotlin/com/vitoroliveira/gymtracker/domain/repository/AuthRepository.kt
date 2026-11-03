@@ -12,6 +12,13 @@ interface AuthRepository {
     suspend fun resendSignUpConfirmation(email: String)
     suspend fun signIn(email: String, password: String)
     suspend fun signOut()
+    /**
+     * Apaga a conta e tudo que é dela no servidor (função `delete_my_account`, migração 016) e encerra a sessão deste
+     * aparelho. Não dá para desfazer. Implementações sem servidor podem deixar o padrão, que recusa.
+     */
+    suspend fun deleteAccount() {
+        throw UnsupportedOperationException("Excluir a conta não é possível aqui")
+    }
     /** Espera o supabase-kt carregar a sessão salva e diz se há usuário logado. */
     suspend fun awaitSession(): Boolean
     fun isLoggedIn(): Boolean

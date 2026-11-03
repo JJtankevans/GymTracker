@@ -6,6 +6,11 @@ import com.vitoroliveira.gymtracker.data.model.SharedRoutine
 import com.vitoroliveira.gymtracker.domain.repository.ExerciseRepository
 import com.vitoroliveira.gymtracker.domain.repository.MuscleGroupRepository
 
+/** Limites do que entra de um treino de outra pessoa (o código é público): evita encher a conta de lixo. */
+const val MAX_IMPORTED_EXERCISES = 60
+private const val MAX_NAME_LENGTH = 80
+private const val MAX_NOTES_LENGTH = 500
+
 /** Resultado da importação: nome do grupo criado (pode ganhar " 2") e quantos exercícios entraram. */
 data class ImportedRoutine(val groupName: String, val exercises: Int)
 
@@ -19,25 +24,26 @@ class ImportSharedRoutine(
     private val exercises: ExerciseRepository
 ) {
     suspend operator fun invoke(routine: SharedRoutine, existingGroupNames: List<String>): ImportedRoutine {
-        val name = uniqueGroupName(routine.name, existingGroupNames)
+        val name = uniqueGroupName(routine.name.trim().take(MAX_NAME_LENGTH), existingGroupNames)
         val color = routine.colorHex.takeIf { Regex("^#[0-9A-Fa-f]{6}$").matches(it) } ?: "#6200EE"
         val group = groups.insert(MuscleGroup(name = name, colorHex = color))
         val groupId = requireNotNull(group.id) { "O grupo criado veio sem id" }
         try {
             val known = exercises.getAll().toMutableList()
-            routine.exercises.filter { it.name.isNotBlank() }.forEach { ex ->
+            val valid = routine.exercises.filter { it.name.isNotBlank() }.take(MAX_IMPORTED_EXERCISES)
+            valid.forEach { ex ->
                 exercises.addToGroups(
                     Exercise(
-                        name = ex.name.trim(),
+                        name = ex.name.trim().take(MAX_NAME_LENGTH),
                         defaultSets = ex.sets.coerceIn(1, 20),
                         defaultReps = ex.reps.coerceIn(1, 100),
-                        notes = ex.notes?.takeIf { it.isNotBlank() }
+                        notes = ex.notes?.takeIf { it.isNotBlank() }?.take(MAX_NOTES_LENGTH)
                     ),
                     setOf(groupId),
                     known
                 )
             }
-            return ImportedRoutine(name, routine.exercises.count { it.name.isNotBlank() })
+            return ImportedRoutine(name, valid.size)
         } catch (e: Exception) {
             runCatching { groups.delete(groupId) }
             throw e
