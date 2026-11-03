@@ -22,3 +22,4 @@ build/
 iosApp/*.xcodeproj/
 iosApp/iosApp/Info.plist
 iosApp/build/
+node_modules/

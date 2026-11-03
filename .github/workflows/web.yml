@@ -1,0 +1,61 @@
+# Versão web (PWA) do GymTracker: roda os testes e gera a pasta pronta para publicar (artefato "gymtracker-web").
+# Para o pessoal do iPhone: publique essa pasta em qualquer hospedagem estática com HTTPS (Netlify, Cloudflare Pages,
+# GitHub Pages, Vercel) e abra no Safari > Compartilhar > "Adicionar à Tela de Início". Passo a passo em docs/WEB.md.
+# Usa os mesmos secrets do Android: SUPABASE_URL e SUPABASE_KEY (a chave PUBLICÁVEL; nunca a service_role).
+name: Web
+
+on:
+  push:
+    paths: ["web/**", "web-tests/**", "tools/gerar_catalogo_web.py", ".github/workflows/web.yml"]
+  pull_request:
+    paths: ["web/**", "web-tests/**", ".github/workflows/web.yml"]
+  workflow_dispatch:
+
+concurrency:
+  group: web-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Testes das contas (ranqueada, início, formatação)
+        run: node --test web-tests/lib.test.mjs
+
+      - name: Testes ponta a ponta (Chromium + Supabase de mentira)
+        run: |
+          npm install --no-save --no-package-lock playwright@1.49.1
+          npx playwright install --with-deps chromium
+          node web-tests/e2e.mjs --shots web-shots
+
+      - name: Montar a pasta publicável
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          mkdir -p dist
+          cp -r web/. dist/
+          if [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_KEY" ]; then
+            node -e 'require("fs").writeFileSync("dist/config.js", "window.GYM_CONFIG = " + JSON.stringify({ url: process.env.SUPABASE_URL, key: process.env.SUPABASE_KEY }) + ";\n")'
+          else
+            echo "::warning::SUPABASE_URL/SUPABASE_KEY não configurados: o site vai pedir o endereço e a chave na primeira abertura."
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gymtracker-web
+          path: dist
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gymtracker-web-capturas
+          path: web-shots
+          if-no-files-found: ignore

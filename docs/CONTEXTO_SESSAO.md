@@ -1,8 +1,15 @@
-# GymTracker — contexto para retomar (atualizado em 31/10/2026, 8ª sessão)
+# GymTracker — contexto para retomar (atualizado em 03/11/2026, 9ª sessão: modo web)
 
 Leia isto primeiro. O histórico longo de decisões, rodada por rodada, está em `docs/PROXIMOS_PASSOS.md` (as notas detalhadas das sessões de 21 a 27/10 estão no anexo do fim); referências de design em `docs/REFERENCIAS_DESIGN.md`; visão geral do projeto no `README.md` da raiz.
 
 **Onde registrar cada coisa:** estado atual e próximos passos → este arquivo; o que foi feito em cada rodada → `PROXIMOS_PASSOS.md`; erros encontrados e como corrigir → `ERROS_CONHECIDOS.md`; tabelas/SQL → `app/docs/supabaseSchema.md` + `docs/supabase/`; social → `SOCIAL_DESIGN.md`; imagens → `IMAGENS_EXERCICIOS.md`. Regras de fim de sessão (avisar, atualizar este arquivo, pedir autorização para commit) estão no `CLAUDE.md` da raiz.
+
+## Sessão de 03/11/2026 (9ª, nuvem, "yolo" a pedido do Thiago): modo WEB (PWA) para iPhone — TESTADO SÓ COM SUPABASE DE MENTIRA, NÃO VISTO NO SAFARI
+- **Feito:** app web em `web/` (HTML + JS puro, sem build), guia em `docs/WEB.md`. Telas: login/cadastro, Início, Treino (série, recorde, descanso com bipe, exercício temporário, finalizar), Histórico, Recordes, Ranqueada (turma, zonas, x1), Grupos/exercícios, Mais (tema, descanso padrão, CSV, sair, excluir conta). Fala com o mesmo Supabase (mesmas tabelas/funções); a chave vem do `config.js` (CI escreve com os secrets `SUPABASE_URL`/`SUPABASE_KEY`) ou é digitada na 1ª abertura. Workflow novo `.github/workflows/web.yml` (testes + artefato `gymtracker-web` + capturas de tela).
+- **Testado:** `node --test web-tests/lib.test.mjs` (8 testes: elos, zonas, x1, temporadas, sequências, formatação, com os valores dos testes em Kotlin) e `node web-tests/e2e.mjs` (8 cenários em Chromium contra `web-tests/fake-supabase.mjs`). Bugs achados e corrigidos nesses testes: `[hidden]` sobrescrito pelo CSS do descanso, `Array.from` com 3º argumento no emblema, service worker cacheando chamadas à API (agora ignora `/rest/` e `/auth/`).
+- **NÃO testado:** Safari/iOS real, Supabase real (RLS, formatos reais de resposta), service worker em produção, bipe/wake lock em aparelho, instalar na Tela de Início. O iPhone não vibra pelo Safari (só bipe).
+- **Fora do web (por enquanto):** grupos sociais/desafios/feed, medidas, conquistas, foto de perfil, relógio.
+- **Próximos passos:** publicar a pasta (Netlify/Cloudflare Pages), abrir no iPhone e anotar o que quebrar; incluir o endereço do site nas URLs do Supabase se usar confirmação de e-mail; depois levar grupos sociais e desafios para o web.
 
 ## Sessão de 30/10/2026 (8ª, nuvem): equilíbrio muscular, semanas seguidas e limpeza — COMPILADO E TESTADO NO CI, NÃO VISTO NO APARELHO
 - **Pedido:** "trabalha em melhorias para gastar os tokens, pode avançar sem parar". Os PRs #11 e #12 continuam abertos (Thiago ainda não mergeou).

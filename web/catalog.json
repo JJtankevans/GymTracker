@@ -1,0 +1,918 @@
+{
+ "muscles": {
+  "PEITO": "Peito",
+  "COSTAS": "Costas",
+  "OMBROS": "Ombros",
+  "BICEPS": "Bíceps",
+  "TRICEPS": "Tríceps",
+  "QUADRICEPS": "Quadríceps",
+  "POSTERIOR": "Posterior",
+  "GLUTEOS": "Glúteos",
+  "PANTURRILHA": "Panturrilha",
+  "ABDOMEN": "Abdômen",
+  "CARDIO": "Cardio",
+  "MOBILIDADE": "Mobilidade"
+ },
+ "equipment": {
+  "BARRA": "Barra",
+  "HALTERES": "Halteres",
+  "MAQUINA": "Máquina",
+  "POLIA": "Polia",
+  "PESO_CORPO": "Peso do corpo",
+  "SMITH": "Smith"
+ },
+ "exercises": [
+  {
+   "name": "Supino Reto com Barra",
+   "muscle": "PEITO",
+   "equipment": "BARRA",
+   "sets": 4,
+   "reps": 8,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Supino Inclinado com Barra",
+   "muscle": "PEITO",
+   "equipment": "BARRA",
+   "sets": 3,
+   "reps": 10,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Supino Reto com Halteres",
+   "muscle": "PEITO",
+   "equipment": "HALTERES",
+   "sets": 3,
+   "reps": 10,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Supino Inclinado com Halteres",
+   "muscle": "PEITO",
+   "equipment": "HALTERES",
+   "sets": 3,
+   "reps": 10,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Crucifixo com Halteres",
+   "muscle": "PEITO",
+   "equipment": "HALTERES",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Supino na Máquina",
+   "muscle": "PEITO",
+   "equipment": "MAQUINA",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": [
+    "Supino Sentado"
+   ]
+  },
+  {
+   "name": "Crucifixo na Máquina (Peck Deck)",
+   "muscle": "PEITO",
+   "equipment": "MAQUINA",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": [
+    "Fly",
+    "Peck Deck"
+   ]
+  },
+  {
+   "name": "Crossover na Polia",
+   "muscle": "PEITO",
+   "equipment": "POLIA",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Flexão de Braço",
+   "muscle": "PEITO",
+   "equipment": "PESO_CORPO",
+   "sets": 3,
+   "reps": 15,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Supino Inclinado na Máquina",
+   "muscle": "PEITO",
+   "equipment": "MAQUINA",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Supino Declinado na Máquina",
+   "muscle": "PEITO",
+   "equipment": "MAQUINA",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Supino Guiado",
+   "muscle": "PEITO",
+   "equipment": "SMITH",
+   "sets": 4,
+   "reps": 10,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Barra Fixa",
+   "muscle": "COSTAS",
+   "equipment": "PESO_CORPO",
+   "sets": 4,
+   "reps": 8,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Puxada Frontal na Polia",
+   "muscle": "COSTAS",
+   "equipment": "POLIA",
+   "sets": 4,
+   "reps": 10,
+   "hint": null,
+   "aliases": [
+    "Puxada Alta"
+   ]
+  },
+  {
+   "name": "Remada Baixa na Polia",
+   "muscle": "COSTAS",
+   "equipment": "POLIA",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": [
+    "Remada Baixa"
+   ]
+  },
+  {
+   "name": "Remada Curvada com Barra",
+   "muscle": "COSTAS",
+   "equipment": "BARRA",
+   "sets": 4,
+   "reps": 8,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Levantamento Terra",
+   "muscle": "COSTAS",
+   "equipment": "BARRA",
+   "sets": 4,
+   "reps": 5,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Remada Unilateral com Halter",
+   "muscle": "COSTAS",
+   "equipment": "HALTERES",
+   "sets": 3,
+   "reps": 10,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Remada na Máquina",
+   "muscle": "COSTAS",
+   "equipment": "MAQUINA",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Pulldown na Polia",
+   "muscle": "COSTAS",
+   "equipment": "POLIA",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Remada Cavalinho",
+   "muscle": "COSTAS",
+   "equipment": "BARRA",
+   "sets": 4,
+   "reps": 10,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Remada Cavalinho na Máquina",
+   "muscle": "COSTAS",
+   "equipment": "MAQUINA",
+   "sets": 4,
+   "reps": 10,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Desenvolvimento com Barra",
+   "muscle": "OMBROS",
+   "equipment": "BARRA",
+   "sets": 4,
+   "reps": 8,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Desenvolvimento com Halteres",
+   "muscle": "OMBROS",
+   "equipment": "HALTERES",
+   "sets": 4,
+   "reps": 10,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Desenvolvimento na Máquina",
+   "muscle": "OMBROS",
+   "equipment": "MAQUINA",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Elevação Lateral",
+   "muscle": "OMBROS",
+   "equipment": "HALTERES",
+   "sets": 3,
+   "reps": 15,
+   "hint": null,
+   "aliases": [
+    "Elevao lateral"
+   ]
+  },
+  {
+   "name": "Elevação Frontal",
+   "muscle": "OMBROS",
+   "equipment": "HALTERES",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": [
+    "Elevacao Frontral"
+   ]
+  },
+  {
+   "name": "Crucifixo Inverso",
+   "muscle": "OMBROS",
+   "equipment": "MAQUINA",
+   "sets": 3,
+   "reps": 15,
+   "hint": null,
+   "aliases": [
+    "Crucifixo Invertido na Máquina",
+    "Crucifixo Invertido Ombro",
+    "Fly Costas"
+   ]
+  },
+  {
+   "name": "Encolhimento com Halteres",
+   "muscle": "OMBROS",
+   "equipment": "HALTERES",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Elevação Lateral na Máquina",
+   "muscle": "OMBROS",
+   "equipment": "MAQUINA",
+   "sets": 4,
+   "reps": 12,
+   "hint": null,
+   "aliases": [
+    "Elevação Lateral Máquina"
+   ]
+  },
+  {
+   "name": "Face Pull",
+   "muscle": "OMBROS",
+   "equipment": "POLIA",
+   "sets": 3,
+   "reps": 15,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Rosca Direta com Barra",
+   "muscle": "BICEPS",
+   "equipment": "BARRA",
+   "sets": 3,
+   "reps": 10,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Rosca Alternada com Halteres",
+   "muscle": "BICEPS",
+   "equipment": "HALTERES",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Rosca Martelo",
+   "muscle": "BICEPS",
+   "equipment": "HALTERES",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Rosca Scott",
+   "muscle": "BICEPS",
+   "equipment": "MAQUINA",
+   "sets": 3,
+   "reps": 10,
+   "hint": null,
+   "aliases": [
+    "Rosca Scot"
+   ]
+  },
+  {
+   "name": "Rosca na Polia",
+   "muscle": "BICEPS",
+   "equipment": "POLIA",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Rosca com Barra W",
+   "muscle": "BICEPS",
+   "equipment": "BARRA",
+   "sets": 3,
+   "reps": 10,
+   "hint": null,
+   "aliases": [
+    "Rosca com a barra W"
+   ]
+  },
+  {
+   "name": "Rosca Concentrada",
+   "muscle": "BICEPS",
+   "equipment": "HALTERES",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Rosca Martelo na Polia",
+   "muscle": "BICEPS",
+   "equipment": "POLIA",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Tríceps Testa",
+   "muscle": "TRICEPS",
+   "equipment": "BARRA",
+   "sets": 3,
+   "reps": 10,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Tríceps Pulley",
+   "muscle": "TRICEPS",
+   "equipment": "POLIA",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Tríceps Corda",
+   "muscle": "TRICEPS",
+   "equipment": "POLIA",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Tríceps Francês",
+   "muscle": "TRICEPS",
+   "equipment": "HALTERES",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Mergulho nas Paralelas",
+   "muscle": "TRICEPS",
+   "equipment": "PESO_CORPO",
+   "sets": 3,
+   "reps": 10,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Supino Fechado",
+   "muscle": "TRICEPS",
+   "equipment": "BARRA",
+   "sets": 3,
+   "reps": 8,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Tríceps Coice na Polia",
+   "muscle": "TRICEPS",
+   "equipment": "POLIA",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": [
+    "Triceps Coice na Polia Baixa"
+   ]
+  },
+  {
+   "name": "Tríceps na Máquina",
+   "muscle": "TRICEPS",
+   "equipment": "MAQUINA",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": [
+    "Triceps Maquina"
+   ]
+  },
+  {
+   "name": "Agachamento Livre",
+   "muscle": "QUADRICEPS",
+   "equipment": "BARRA",
+   "sets": 4,
+   "reps": 8,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Agachamento no Smith",
+   "muscle": "QUADRICEPS",
+   "equipment": "SMITH",
+   "sets": 4,
+   "reps": 10,
+   "hint": null,
+   "aliases": [
+    "Agachamento Smith"
+   ]
+  },
+  {
+   "name": "Leg Press 45°",
+   "muscle": "QUADRICEPS",
+   "equipment": "MAQUINA",
+   "sets": 4,
+   "reps": 12,
+   "hint": null,
+   "aliases": [
+    "Leg Press 45",
+    "Leg Press"
+   ]
+  },
+  {
+   "name": "Hack Squat",
+   "muscle": "QUADRICEPS",
+   "equipment": "MAQUINA",
+   "sets": 3,
+   "reps": 10,
+   "hint": null,
+   "aliases": [
+    "Agachamento Hack"
+   ]
+  },
+  {
+   "name": "Cadeira Extensora",
+   "muscle": "QUADRICEPS",
+   "equipment": "MAQUINA",
+   "sets": 3,
+   "reps": 15,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Agachamento Búlgaro",
+   "muscle": "QUADRICEPS",
+   "equipment": "HALTERES",
+   "sets": 3,
+   "reps": 10,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Afundo com Halteres",
+   "muscle": "QUADRICEPS",
+   "equipment": "HALTERES",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Mesa Flexora",
+   "muscle": "POSTERIOR",
+   "equipment": "MAQUINA",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Cadeira Flexora",
+   "muscle": "POSTERIOR",
+   "equipment": "MAQUINA",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Stiff com Barra",
+   "muscle": "POSTERIOR",
+   "equipment": "BARRA",
+   "sets": 3,
+   "reps": 10,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Levantamento Terra Romeno",
+   "muscle": "POSTERIOR",
+   "equipment": "BARRA",
+   "sets": 3,
+   "reps": 8,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Elevação Pélvica",
+   "muscle": "GLUTEOS",
+   "equipment": "BARRA",
+   "sets": 4,
+   "reps": 10,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Cadeira Abdutora",
+   "muscle": "GLUTEOS",
+   "equipment": "MAQUINA",
+   "sets": 3,
+   "reps": 15,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Glúteo na Polia (Coice)",
+   "muscle": "GLUTEOS",
+   "equipment": "POLIA",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Glúteo na Máquina",
+   "muscle": "GLUTEOS",
+   "equipment": "MAQUINA",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": [
+    "Glúteo Máquina"
+   ]
+  },
+  {
+   "name": "Cadeira Adutora",
+   "muscle": "GLUTEOS",
+   "equipment": "MAQUINA",
+   "sets": 3,
+   "reps": 15,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Panturrilha em Pé",
+   "muscle": "PANTURRILHA",
+   "equipment": "MAQUINA",
+   "sets": 4,
+   "reps": 15,
+   "hint": null,
+   "aliases": [
+    "Panturrilha Maquina"
+   ]
+  },
+  {
+   "name": "Panturrilha Sentado",
+   "muscle": "PANTURRILHA",
+   "equipment": "MAQUINA",
+   "sets": 4,
+   "reps": 15,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Panturrilha no Leg Press",
+   "muscle": "PANTURRILHA",
+   "equipment": "MAQUINA",
+   "sets": 4,
+   "reps": 15,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Abdominal Supra",
+   "muscle": "ABDOMEN",
+   "equipment": "PESO_CORPO",
+   "sets": 3,
+   "reps": 20,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Elevação de Pernas",
+   "muscle": "ABDOMEN",
+   "equipment": "PESO_CORPO",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Prancha",
+   "muscle": "ABDOMEN",
+   "equipment": "PESO_CORPO",
+   "sets": 3,
+   "reps": 30,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Abdominal na Polia",
+   "muscle": "ABDOMEN",
+   "equipment": "POLIA",
+   "sets": 3,
+   "reps": 15,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Abdominal Infra",
+   "muscle": "ABDOMEN",
+   "equipment": "PESO_CORPO",
+   "sets": 3,
+   "reps": 15,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Abdominal Oblíquo",
+   "muscle": "ABDOMEN",
+   "equipment": "PESO_CORPO",
+   "sets": 3,
+   "reps": 15,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Giro Russo",
+   "muscle": "ABDOMEN",
+   "equipment": "PESO_CORPO",
+   "sets": 3,
+   "reps": 20,
+   "hint": null,
+   "aliases": [
+    "Russian Twist"
+   ]
+  },
+  {
+   "name": "Puxada Supinada",
+   "muscle": "COSTAS",
+   "equipment": "POLIA",
+   "sets": 3,
+   "reps": 10,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Remada Alta",
+   "muscle": "OMBROS",
+   "equipment": "BARRA",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Desenvolvimento Arnold",
+   "muscle": "OMBROS",
+   "equipment": "HALTERES",
+   "sets": 3,
+   "reps": 10,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Tríceps no Banco",
+   "muscle": "TRICEPS",
+   "equipment": "PESO_CORPO",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": [
+    "Triceps Banco"
+   ]
+  },
+  {
+   "name": "Passada",
+   "muscle": "QUADRICEPS",
+   "equipment": "HALTERES",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": [
+    "Avanço",
+    "Afundo Caminhando"
+   ]
+  },
+  {
+   "name": "Leg Press Horizontal",
+   "muscle": "QUADRICEPS",
+   "equipment": "MAQUINA",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Agachamento Sumô",
+   "muscle": "GLUTEOS",
+   "equipment": "HALTERES",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": [
+    "Agachamento Sumo"
+   ]
+  },
+  {
+   "name": "Kettlebell Swing",
+   "muscle": "GLUTEOS",
+   "equipment": "HALTERES",
+   "sets": 3,
+   "reps": 15,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Esteira",
+   "muscle": "CARDIO",
+   "equipment": "MAQUINA",
+   "sets": 1,
+   "reps": 20,
+   "hint": null,
+   "aliases": [
+    "Corrida na Esteira"
+   ]
+  },
+  {
+   "name": "Bicicleta Ergométrica",
+   "muscle": "CARDIO",
+   "equipment": "MAQUINA",
+   "sets": 1,
+   "reps": 20,
+   "hint": null,
+   "aliases": [
+    "Bike"
+   ]
+  },
+  {
+   "name": "Elíptico",
+   "muscle": "CARDIO",
+   "equipment": "MAQUINA",
+   "sets": 1,
+   "reps": 20,
+   "hint": null,
+   "aliases": [
+    "Transport"
+   ]
+  },
+  {
+   "name": "Simulador de Escada",
+   "muscle": "CARDIO",
+   "equipment": "MAQUINA",
+   "sets": 1,
+   "reps": 15,
+   "hint": null,
+   "aliases": [
+    "Escada"
+   ]
+  },
+  {
+   "name": "Remo Ergômetro",
+   "muscle": "CARDIO",
+   "equipment": "MAQUINA",
+   "sets": 1,
+   "reps": 10,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Pular Corda",
+   "muscle": "CARDIO",
+   "equipment": "PESO_CORPO",
+   "sets": 5,
+   "reps": 60,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Burpee",
+   "muscle": "CARDIO",
+   "equipment": "PESO_CORPO",
+   "sets": 3,
+   "reps": 12,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Polichinelo",
+   "muscle": "CARDIO",
+   "equipment": "PESO_CORPO",
+   "sets": 3,
+   "reps": 30,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Alongamento de Posterior",
+   "muscle": "MOBILIDADE",
+   "equipment": "PESO_CORPO",
+   "sets": 2,
+   "reps": 30,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Alongamento de Peitoral",
+   "muscle": "MOBILIDADE",
+   "equipment": "PESO_CORPO",
+   "sets": 2,
+   "reps": 30,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Mobilidade de Quadril",
+   "muscle": "MOBILIDADE",
+   "equipment": "PESO_CORPO",
+   "sets": 2,
+   "reps": 10,
+   "hint": null,
+   "aliases": []
+  },
+  {
+   "name": "Rotação Torácica",
+   "muscle": "MOBILIDADE",
+   "equipment": "PESO_CORPO",
+   "sets": 2,
+   "reps": 10,
+   "hint": null,
+   "aliases": []
+  }
+ ]
+}

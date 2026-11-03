@@ -92,3 +92,13 @@ APK certo: os dois artefatos (`gymtracker-debug-apk` e `gymtracker-wear-apk`) da
 
 ## 7. iPhone (só se tiver Mac/Xcode)
 - [ ] O CI só prova que a tela de login abre no simulador. Login, treino e telas internas nunca foram exercitados.
+
+
+## 8. Versão web (iPhone/Safari ou qualquer navegador)
+- [ ] Abrir o endereço publicado (ver `docs/WEB.md`), entrar com a conta de teste e ver o Início com a meta e a sequência.
+- [ ] Safari › Compartilhar › Adicionar à Tela de Início: abre em tela cheia, com o ícone do app.
+- [ ] Treinar: registrar séries, bater um recorde (confete), ver o descanso contar e apitar, bloquear a tela e voltar (a contagem continua certa).
+- [ ] "+ Exercício › Só neste treino": entra na sessão e NÃO aparece no grupo depois.
+- [ ] Sair do treino e voltar pelo cartão "Treino em andamento" do Início.
+- [ ] Ranqueada: entrar, ver a turma, mandar um x1 amistoso, aceitar em outra conta.
+- [ ] Mais: trocar o tema, exportar o CSV, sair da conta.
