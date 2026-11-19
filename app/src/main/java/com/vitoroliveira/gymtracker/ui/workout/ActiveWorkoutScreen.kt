@@ -632,6 +632,25 @@ fun ExerciseWorkoutCard(
                 )
             }
 
+            Spacer(modifier = Modifier.height(8.dp))
+            // ajuste rápido sem teclado: repetições ±1 à esquerda, carga ±2,5 kg à direita (alinhados com os campos de cima)
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                com.vitoroliveira.gymtracker.ui.components.QuickSteps(
+                    minusLabel = "−1", plusLabel = "+1",
+                    minusDescription = "Menos uma repetição", plusDescription = "Mais uma repetição",
+                    onMinus = { reps = com.vitoroliveira.gymtracker.ui.utils.stepRepsText(reps, -1); repsTouched = true },
+                    onPlus = { reps = com.vitoroliveira.gymtracker.ui.utils.stepRepsText(reps, 1); repsTouched = true },
+                    modifier = Modifier.weight(1f),
+                )
+                com.vitoroliveira.gymtracker.ui.components.QuickSteps(
+                    minusLabel = "−2,5", plusLabel = "+2,5",
+                    minusDescription = "Menos 2,5 quilos", plusDescription = "Mais 2,5 quilos",
+                    onMinus = { weight = com.vitoroliveira.gymtracker.ui.utils.stepKgText(weight, -2.5); weightError = false },
+                    onPlus = { weight = com.vitoroliveira.gymtracker.ui.utils.stepKgText(weight, 2.5); weightError = false },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+
             Spacer(modifier = Modifier.height(12.dp))
 
             Button(

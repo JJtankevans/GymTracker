@@ -27,6 +27,18 @@ fun formatKg(value: Double): String {
     else rounded.toString().trimEnd('0').replace('.', ',')
 }
 
+/** Botões "−/+" de repetições: "12" + 1 → "13". Campo vazio conta como 0; nunca abaixo de 0 nem acima de 999 (o campo aceita 3 dígitos). */
+fun stepRepsText(current: String, delta: Int): String {
+    val base = current.toIntOrNull() ?: 0
+    return (base + delta).coerceIn(0, 999).toString()
+}
+
+/** Botões "−/+" de carga: "80" + 2,5 → "82,5"; aceita vírgula ou ponto; campo vazio conta como 0; nunca negativo. */
+fun stepKgText(current: String, deltaKg: Double): String {
+    val base = current.replace(',', '.').toDoubleOrNull() ?: 0.0
+    return formatKg((base + deltaKg).coerceAtLeast(0.0))
+}
+
 /** 3725 → "1:02:05", 125 → "02:05". */
 fun formatElapsed(totalSeconds: Long): String {
     val h = totalSeconds / 3600
