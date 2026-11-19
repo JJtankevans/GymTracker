@@ -1,25 +1,11 @@
 package com.vitoroliveira.gymtracker.ui.music
 
-import android.content.ComponentName
 import android.content.Context
 import android.graphics.Bitmap
-import android.media.MediaMetadata
-import android.media.session.MediaController
-import android.media.session.MediaSessionManager
-import android.media.session.PlaybackState
-import android.provider.Settings
-import android.service.notification.NotificationListenerService
 import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-
-/**
- * Serviço vazio: existir e ter permissão de "acesso a notificações" é o que
- * autoriza o app a enxergar as sessões de mídia (Spotify, YouTube Music...).
- * Nenhuma notificação é lida ou guardada.
- */
-class MediaListenerService : NotificationListenerService()
 
 data class NowPlaying(
     val title: String,
@@ -36,99 +22,24 @@ data class MusicState(
     val nowPlaying: NowPlaying? = null
 )
 
-/** Observa a mídia tocando no celular e expõe controles básicos. */
+/**
+ * Música desligada (14/11/2026): ler a mídia que está tocando exigia o serviço de leitura de
+ * notificações (BIND_NOTIFICATION_LISTENER_SERVICE), e o Play Protect bloqueia a instalação de
+ * APK de fora da Play Store que declara essa permissão. O serviço saiu do manifesto; esta classe
+ * ficou só como casca para o resto do app compilar: nunca há acesso nem música tocando, então o
+ * mini-player não aparece, o tema não troca de cor e nenhuma faixa é gravada.
+ * Para voltar: publicar pela Play Store e recuperar a versão anterior deste arquivo no Git.
+ */
+@Suppress("UNUSED_PARAMETER")
 class MusicController(context: Context) {
-    private val ctx = context.applicationContext
-    private val manager = ctx.getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
-    private val listener = ComponentName(ctx, MediaListenerService::class.java)
-
     private val _state = MutableStateFlow(MusicState())
     val state: StateFlow<MusicState> = _state.asStateFlow()
 
-    private var controller: MediaController? = null
-    private var started = false
-
-    private val sessionsListener = MediaSessionManager.OnActiveSessionsChangedListener { pick(it.orEmpty()) }
-
-    private val callback = object : MediaController.Callback() {
-        override fun onMetadataChanged(metadata: MediaMetadata?) = publish()
-        override fun onPlaybackStateChanged(state: PlaybackState?) = publish()
-        override fun onSessionDestroyed() = refresh()
-    }
-
-    fun hasAccess(): Boolean {
-        val flat = Settings.Secure.getString(ctx.contentResolver, "enabled_notification_listeners") ?: return false
-        return flat.split(":").any { ComponentName.unflattenFromString(it)?.packageName == ctx.packageName }
-    }
-
-    /** Chame ao abrir o app e ao voltar das configurações. */
-    fun refresh() {
-        val access = hasAccess()
-        if (!access) {
-            detach()
-            _state.value = MusicState(hasAccess = false)
-            return
-        }
-        try {
-            if (!started) {
-                manager.addOnActiveSessionsChangedListener(sessionsListener, listener)
-                started = true
-            }
-            pick(manager.getActiveSessions(listener))
-        } catch (_: SecurityException) {
-            _state.value = MusicState(hasAccess = false)
-        }
-    }
-
-    private fun pick(list: List<MediaController>) {
-        val best = list.firstOrNull { it.playbackState?.state == PlaybackState.STATE_PLAYING } ?: list.firstOrNull()
-        if (best?.sessionToken != controller?.sessionToken) {
-            controller?.unregisterCallback(callback)
-            controller = best
-            best?.registerCallback(callback)
-        }
-        publish()
-    }
-
-    private var lastArt: Bitmap? = null
-    private var lastAccent: Color? = null
-
-    private fun publish() {
-        val c = controller
-        val md = c?.metadata
-        if (c == null || md == null) {
-            _state.value = MusicState(hasAccess = true, nowPlaying = null)
-            return
-        }
-        val art = md.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART) ?: md.getBitmap(MediaMetadata.METADATA_KEY_ART)
-        if (art !== lastArt) { lastArt = art; lastAccent = art?.let(::dominantColor) }
-        val pm = ctx.packageManager
-        val appName = runCatching { pm.getApplicationLabel(pm.getApplicationInfo(c.packageName, 0)).toString() }.getOrDefault("")
-        _state.value = MusicState(
-            hasAccess = true,
-            nowPlaying = NowPlaying(
-                title = md.getString(MediaMetadata.METADATA_KEY_TITLE).orEmpty(),
-                artist = md.getString(MediaMetadata.METADATA_KEY_ARTIST) ?: md.getString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST).orEmpty(),
-                album = md.getString(MediaMetadata.METADATA_KEY_ALBUM),
-                art = art,
-                accent = lastAccent,
-                isPlaying = c.playbackState?.state == PlaybackState.STATE_PLAYING,
-                app = appName
-            )
-        )
-    }
-
-    private fun detach() {
-        controller?.unregisterCallback(callback); controller = null
-        if (started) { runCatching { manager.removeOnActiveSessionsChangedListener(sessionsListener) }; started = false }
-    }
-
-    fun playPause() {
-        val c = controller ?: return
-        if (c.playbackState?.state == PlaybackState.STATE_PLAYING) c.transportControls.pause() else c.transportControls.play()
-    }
-    fun next() { controller?.transportControls?.skipToNext() }
-    fun previous() { controller?.transportControls?.skipToPrevious() }
+    fun hasAccess(): Boolean = false
+    fun refresh() { _state.value = MusicState(hasAccess = false) }
+    fun playPause() {}
+    fun next() {}
+    fun previous() {}
 }
 
 /**

@@ -36,7 +36,25 @@ android {
         )
     }
 
+    // Chave de assinatura FIXA (card #343): só existe quando o CI (ou você) define GYM_KEYSTORE_PATH apontando
+    // para um keystore real. Sem a variável, tudo continua como antes (chave de debug padrão do Android).
+    // Com a mesma chave em todo APK, o celular aceita atualizar por cima sem desinstalar.
+    val fixedKeystore = System.getenv("GYM_KEYSTORE_PATH")?.takeIf { it.isNotBlank() && file(it).exists() }
+    signingConfigs {
+        if (fixedKeystore != null) {
+            create("fixed") {
+                storeFile = file(fixedKeystore)
+                storePassword = System.getenv("GYM_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("GYM_KEY_ALIAS")
+                keyPassword = System.getenv("GYM_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
+        debug {
+            signingConfigs.findByName("fixed")?.let { signingConfig = it }
+        }
         release {
             isMinifyEnabled = false
         }

@@ -79,7 +79,6 @@ fun ThemePickerScreen(onBack: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 item(key = "intensity") { IntensityCard(prefs) }
-                item(key = "music") { MusicCard(prefs) }
                 ThemeCategory.entries.forEach { category ->
                     val themes = AppThemes.available.filter { it.category == category }
                     if (themes.isEmpty()) return@forEach

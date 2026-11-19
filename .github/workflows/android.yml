@@ -48,6 +48,29 @@ jobs:
             echo "::warning::SUPABASE_URL/SUPABASE_KEY não configurados: o APK abre, mas o login não vai funcionar."
           fi
 
+      # Assinatura fixa (card #343). Opcional: sem os 4 secrets abaixo o APK sai com a chave de debug do runner, como antes.
+      #   ANDROID_KEYSTORE_BASE64 = o arquivo .jks em base64 (base64 -w0 gym.jks)
+      #   ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+      - name: Chave de assinatura fixa (se configurada)
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KS_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KS_KEYPASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -n "$KS_B64" ]; then
+            echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/gym.jks"
+            {
+              echo "GYM_KEYSTORE_PATH=$RUNNER_TEMP/gym.jks"
+              printf 'GYM_KEYSTORE_PASSWORD=%s\n' "$KS_PASS"
+              printf 'GYM_KEY_ALIAS=%s\n' "$KS_ALIAS"
+              printf 'GYM_KEY_PASSWORD=%s\n' "$KS_KEYPASS"
+            } >> "$GITHUB_ENV"
+            echo "Assinando com a chave fixa."
+          else
+            echo "::notice::Sem ANDROID_KEYSTORE_BASE64: APK assinado com a chave de debug do runner (atualizar exige desinstalar)."
+          fi
+
       - name: Permissão do gradlew
         run: chmod +x ./gradlew
 

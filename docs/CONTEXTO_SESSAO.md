@@ -1,4 +1,20 @@
-# GymTracker — contexto para retomar (atualizado em 27/10/2026)
+﻿# GymTracker — contexto para retomar (atualizado em 14/11/2026)
+
+## Sessão de 17/11/2026 (PC do Thiago, sem Android SDK) — NÃO COMPILADO, NÃO COMMITADO
+- **#343 Assinatura fixa no CI (escrito, não testado):** `app/build.gradle.kts` cria o `signingConfig "fixed"` só se `GYM_KEYSTORE_PATH` existir (e usa no `debug`); o workflow `android.yml` ganhou o passo "Chave de assinatura fixa (se configurada)", que lê 4 secrets. **Sem os secrets nada muda** (chave de debug do runner). **Para ativar:** (1) `keytool -genkeypair -v -keystore gym.jks -alias gym -keyalg RSA -keysize 2048 -validity 10000`; (2) `base64 -w0 gym.jks` → secret `ANDROID_KEYSTORE_BASE64`; (3) secrets `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`; (4) **guardar o `gym.jks` num lugar seguro fora do git** (perder = voltar a desinstalar); (5) desinstalar o app uma última vez, instalar o APK novo; dali em diante atualiza por cima. O primeiro CI depois desta mudança confirma que o Gradle compila (não rodei).
+- **Erro nº 26:** `git rm -r --cached .kotlin` feito (fica só no índice; o `.gitignore` já ignorava). Entra no próximo commit.
+- **#344 (parte banco):** docs/supabase/013_medidas_corporais.sql (aditiva, idempotente). Falta o Kotlin: BodyCloud ganhar etchMeasurements/upsertMeasurement/deleteMeasurement (mesmo padrão do peso em BodyCloudImpl, site = MeasureSite.name), o repositório sincronizar e LocalUserDataImpl continuar limpando as medidas locais ao sair. Aplicar a 013 no SQL Editor só quando esse código existir.
+- **Não feito de propósito:** a segunda passada de limpeza da música (apagar `MiniPlayer`, `WorkoutTrackRecorder` etc. em ~12 arquivos). Sem compilador, apagar código às cegas arrisca quebrar o CI; deixar para uma sessão com Android SDK ou fazer pelo CI em branch própria.
+
+## Sessão de 14/11/2026 (PC do Thiago, sem Android SDK): leitura de notificações removida — NÃO COMPILADO, NÃO COMMITADO
+- **Branch local `claude/remover-leitura-notificacoes`** (sai do `master`, 3 arquivos alterados, **sem commit e sem push**: falta a autorização do Thiago). Este PC não tem Android SDK nem `local.properties`, então nada foi compilado: o primeiro push precisa passar pelo CI antes de confiar.
+- **O que mudou** (o mínimo para o Play Protect parar de bloquear, sem arriscar quebrar a compilação às cegas):
+  1. `AndroidManifest.xml`: saiu o `<service .ui.music.MediaListenerService>` com `BIND_NOTIFICATION_LISTENER_SERVICE` (era a única permissão sensível).
+  2. `ui/music/MusicController.kt`: saíram a classe `MediaListenerService` e todo o acesso a `MediaSessionManager`; a classe virou uma casca que nunca tem acesso nem música (`hasAccess() = false`). Por consequência o mini-player não aparece (Home, treino, circuito), o tema não troca de cor pela capa e o `WorkoutTrackRecorder` nunca grava faixa.
+  3. `ui/theme/ThemePickerScreen.kt`: o cartão "Cores da música" saiu da lista (a função `MusicCard` ficou no arquivo, sem uso).
+- **Ficou para uma segunda passada** (limpeza, sem efeito para o usuário): apagar `MiniPlayer`, `WorkoutTrackRecorder`/`TrackRecording`, `SocialPrefs.recordMusic`, `ThemePreferences.musicReactive`, `MusicCard`, o registro no Koin, `MusicGalleryTest` e as opções de música do Social (privacidade de música, "mais tocadas"), que agora ficam sempre vazias.
+- **Para validar:** autorizar commit + push → esperar o CI → instalar o APK recebido pelo WhatsApp e confirmar que o aviso do Play Protect sumiu.
+- **Board:** o projeto **GymTracker** no Runtime ganhou 26 cards de ideias (#342–#367); este trabalho é o #342.
 
 Leia isto primeiro. O histórico longo de decisões, rodada por rodada, está em `docs/PROXIMOS_PASSOS.md` (as notas detalhadas das sessões de 21 a 27/10 estão no anexo do fim); referências de design em `docs/REFERENCIAS_DESIGN.md`; visão geral do projeto no `README.md` da raiz.
 
@@ -85,6 +101,7 @@ Android (Jetpack Compose) + módulo KMP `:shared` (regras, ViewModels, repositó
 | `010` | títulos de desafio | aplicada (27/10/2026) | — |
 | `011` | compartilhar treino por código | aplicada (27/10/2026) | — |
 | `012` | dia do treino no fuso de Brasília (progressão, recordes, dias ativos) | aplicada (27/10/2026) | — |
+| `013` | tabela `body_measurements` (medidas com fita na nuvem, só o dono; card #344) | **escrita e testada no PGlite (RLS, enum, 1 por dia/local, sem TRUNCATE), NÃO aplicada**; o app ainda não usa | — |
 - Consultas só de leitura: `consulta_exercicios_de_todos_os_usuarios.sql`, `consulta_uso_do_storage.sql`. `test_social.sql` é para banco de teste.
 - O conector Supabase da sessão não enxerga esse projeto; só dá para sondar por REST com a chave publicável. Não dá para conferir RLS por aqui.
 - `local.properties` (fora do git) precisa de `SUPABASE_URL` e `SUPABASE_KEY` (chave `sb_publishable_...`).
@@ -163,3 +180,4 @@ Caminhos curtos: `shared/...` = `shared/src/commonMain/kotlin/com/vitoroliveira/
 
 ## Preferências do Thiago
 Quer autonomia ("yolo, sem perguntas"), mas **antes de commitar/encerrar a sessão ou limpar disco, avisar e pedir autorização** (ver `CLAUDE.md`); temas variados e profissionais (contidos e impactantes), referências de design levadas a sério, e relatório honesto do que não foi testado no aparelho. Gosta de ícones/desenhos em vez de emojis. Baixar arquivos externos ele autorizou uma vez; pedir de novo para outros. Não apagar dados dele. Mensagens em português do Brasil, diretas.
+
