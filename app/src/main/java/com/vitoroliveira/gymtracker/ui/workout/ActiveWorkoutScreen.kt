@@ -814,15 +814,14 @@ fun ExerciseWorkoutCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    (6..10).forEach { v ->
-                        FilterChip(
-                            selected = rpe == v,
-                            onClick = { rpe = v; RpeStore.put(rpeContext, lastSet.id, v) },
-                            label = { Text("$v") }
-                        )
-                    }
-                }
+                // Degraus 6..10 no estilo "hyaline-level" (OriginKit): arraste e o nome rola sobre o cursor
+                com.vitoroliveira.gymtracker.ui.components.HyalineLevel(
+                    names = listOf("6 · leve", "7 · moderada", "8 · forte", "9 · muito forte", "10 · no limite"),
+                    selected = if (rpe > 0) rpe - 6 else -1,
+                    onSelect = { s -> rpe = s + 6; RpeStore.put(rpeContext, lastSet.id, s + 6) },
+                    startCaption = "Leve", endCaption = "Falha",
+                    description = "Esforço da série"
+                )
             }
 
             if (showTimerOptions) {
