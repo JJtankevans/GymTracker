@@ -225,3 +225,9 @@ Quer autonomia ("yolo, sem perguntas"), mas **antes de commitar/encerrar a sess�
 - **Home, 4 layouts restantes** (Poster/Tinta, Terminal, Orbit/Oceano, Editorial/Papel): a ação de iniciar agora inicia o **próximo treino sugerido** no estilo de cada layout (em vez de repetir o cartão); sem sugestão, abre a folha de escolha. Conferido no emulador nos 4 temas. Card #537.
 - **Web (iPhone):** plano em `docs/WEB_APP.md` (PWA Vite + React + TS + supabase-js em `GymTracker/web/`, mesmo Supabase). 18 cards novos no Runtime (#524 a #541). Nada de código da web ainda.
 - O tema do emulador voltou para Studio depois dos testes.
+
+## 22/11/2026 (rodadas 3 a 6 — versão web)
+- **`GymTracker/web/`** (Vite + React + TS + supabase-js): login, Início, Treino, Histórico, Grupos, Evolução, Recordes, Conquistas, claro/escuro, PWA (manifest, ícones gerados por `npm run icons`, service worker da casca). 22 testes das regras (`npm test`), `npm run build` ok. `?mock` mostra tudo com dados falsos. README em `web/README.md`; plano em `docs/WEB_APP.md`.
+- **Conferido:** interface em 390 px no navegador do app, modo demonstração, claro e escuro. **Não conferido:** login e dados reais do Supabase (o agente não digita senha), iPhone/Safari de verdade, instalação na tela de início, o serviço do service worker em produção.
+- **Risco a olhar primeiro:** as consultas ao Supabase foram escritas pelo esquema (`docs/supabase`), sem rodar contra o banco. Se algo falhar, a tela mostra o erro com "Tentar de novo" (olhar o console do Safari).
+- **Falta (cards #529 a #535):** catálogo de 70 exercícios e treinos prontos, temas extras, Social, push, backup/importar, níveis de força, medidas, deploy na Vercel (precisa do projeto e das variáveis de ambiente).

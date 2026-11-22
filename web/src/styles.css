@@ -129,3 +129,23 @@ button.card { color: inherit; font: inherit; cursor: pointer; }
 .swatch { width: 44px; height: 44px; border-radius: 22px; border: 0; cursor: pointer; flex: none; outline-offset: 2px; }
 .btn.danger { color: var(--danger); }
 .chips{scrollbar-width:none}.chips::-webkit-scrollbar{display:none}
+
+/* evolução e conquistas */
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.stats .label { font-size: 10px; letter-spacing: 0.04em; }
+.stats b { font-size: 15px; white-space: nowrap; }
+.prog { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+.prog i { display: block; height: 100%; background: var(--accent); }
+.ach:not(.on) { opacity: 0.85; }
+.medal { position: relative; width: 52px; height: 52px; flex: none; border: 0; padding: 0; background: none; perspective: 400px; cursor: pointer; }
+.medal:disabled { cursor: default; }
+.medal .face { position: absolute; inset: 0; border-radius: 50%; display: grid; place-items: center; backface-visibility: hidden; -webkit-backface-visibility: hidden; transition: transform 0.6s cubic-bezier(0.33, 1, 0.68, 1); }
+.medal .front { background: var(--accent); color: var(--on-accent); }
+.ach:not(.on) .front { background: var(--surface-2); color: var(--muted); }
+.medal .back { background: linear-gradient(125deg, #efc6e9, #c6ddf6 30%, #cff1e3 50%, #fff 60%, #f1eec0 75%, #d8cbf3); color: #1e1b22; transform: rotateY(180deg); }
+.medal.flip .front { transform: rotateY(180deg); }
+.medal.flip .back { transform: rotateY(360deg); }
+.medal svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+@media (prefers-reduced-motion: reduce) { .medal .face { transition: none; } }
+
+:root[data-theme="light"] { --bg: #f5f6f3; --surface: #ffffff; --surface-2: #ecefe9; --line: #dde0d8; --text: #15180f; --muted: #5b6157; --accent: #5b7f00; --on-accent: #ffffff; --danger: #b3261e; color-scheme: light; }
