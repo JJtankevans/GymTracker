@@ -289,12 +289,12 @@ private fun PosterHome(state: HomeUiState, a: HomeActions, modifier: Modifier) {
             )
         }
         Button(
-            onClick = a.onStart,
+            onClick = { a.startNext(state) },
             modifier = Modifier.fillMaxWidth().height(64.dp),
         ) {
             Icon(Icons.Default.PlayArrow, null)
             Spacer(Modifier.width(8.dp))
-            Text("INICIAR TREINO", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
+            Text(state.nextName()?.let { "INICIAR: ${it.uppercase()}" } ?: "INICIAR TREINO", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedButton(a.onGroups, Modifier.weight(1f)) { Text("Grupos") }
@@ -337,7 +337,7 @@ private fun TerminalHome(state: HomeUiState, a: HomeActions, modifier: Modifier)
             Spacer(Modifier.height(12.dp))
         }
         Text("$ ls ./atalhos", style = line())
-        TermCommand("[1] iniciar_treino", cs.tertiary, a.onStart)
+        TermCommand(state.nextName()?.let { "[1] proximo_treino --grupo \"$it\"" } ?: "[1] iniciar_treino", cs.tertiary) { a.startNext(state) }
         TermCommand("[2] grupos_musculares", cs.primary, a.onGroups)
         TermCommand("[3] historico", cs.primary, a.onHistory)
         Spacer(Modifier.height(8.dp))
@@ -375,7 +375,7 @@ private fun OrbitHome(state: HomeUiState, a: HomeActions, modifier: Modifier) {
         }
         Row(horizontalArrangement = Arrangement.spacedBy(28.dp), verticalAlignment = Alignment.CenterVertically) {
             RoundAction("Grupos", Icons.Default.List, 56.dp, false, a.onGroups)
-            RoundAction("Iniciar", Icons.Default.PlayArrow, 84.dp, true, a.onStart)
+            RoundAction(state.nextName() ?: "Iniciar", Icons.Default.PlayArrow, 84.dp, true) { a.startNext(state) }
             RoundAction("Histórico", Icons.Default.DateRange, 56.dp, false, a.onHistory)
         }
         if (state.weeklyHistory.any { it.count > 0 }) WeeklyHistoryCard(state)
@@ -410,7 +410,7 @@ private fun RoundAction(label: String, icon: ImageVector, size: androidx.compose
             Icon(icon, label, Modifier.size(size * 0.45f), tint = if (primary) cs.onPrimary else cs.onSurface)
         }
         Spacer(Modifier.height(6.dp))
-        Text(label, style = MaterialTheme.typography.labelMedium)
+        Text(label, style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.widthIn(max = 110.dp))
     }
 }
 
@@ -453,7 +453,7 @@ private fun EditorialHome(state: HomeUiState, a: HomeActions, modifier: Modifier
             HorizontalDivider(color = cs.onBackground)
         }
         Text("SEÇÕES", style = MaterialTheme.typography.labelSmall, letterSpacing = 2.sp, color = cs.onSurfaceVariant)
-        EditorialRow("Iniciar treino", a.onStart, bold = true)
+        EditorialRow(state.nextName()?.let { "Próximo: $it" } ?: "Iniciar treino", { a.startNext(state) }, bold = true)
         EditorialRow("Grupos musculares", a.onGroups)
         EditorialRow("Histórico", a.onHistory)
         Spacer(Modifier.height(16.dp))
@@ -469,4 +469,14 @@ private fun EditorialRow(text: String, onClick: () -> Unit, bold: Boolean = fals
         }
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     }
+}
+
+/** Nome bonito do grupo sugerido para o próximo treino (null se ainda não há sugestão). */
+private fun HomeUiState.nextName(): String? = suggestedGroupName?.let { prettyGroupName(it) }
+
+/** Iniciar com a sugestão da rotação/agenda; sem sugestão, abre a folha de escolha. */
+private fun HomeActions.startNext(state: HomeUiState) {
+    val id = state.suggestedGroupId
+    val n = state.nextName()
+    if (id != null && n != null) onStartGroup(id, n) else onStart()
 }

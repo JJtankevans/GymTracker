@@ -220,3 +220,8 @@ Quer autonomia ("yolo, sem perguntas"), mas **antes de commitar/encerrar a sess�
 - **Alvos de 48 dp**: botões −/+ do Circuito (32→48) e favorito do catálogo (40→48). As barras superiores já usam IconButton (48 dp).
 - **Widget (#357)**: `ui/widget/WorkoutWidgetProvider.kt` (RemoteViews, sem dependência): "Próximo treino" ou, com treino aberto, o título + cronômetro; toque abre o app. A Home grava o estado em `WorkoutWidgetState`. Conferido no emulador só o estado "próximo treino" (Glúteos e Posterior); **o estado com cronômetro não foi visto**.
 - **Fila da manhã concluída.** Sobras: selenite-chips (filtros multi-seleção), cartão "Próximo treino" nos outros layouts de Home, importar backup, retrospectiva anual.
+
+## 22/11/2026 (rodada 2)
+- **Home, 4 layouts restantes** (Poster/Tinta, Terminal, Orbit/Oceano, Editorial/Papel): a ação de iniciar agora inicia o **próximo treino sugerido** no estilo de cada layout (em vez de repetir o cartão); sem sugestão, abre a folha de escolha. Conferido no emulador nos 4 temas. Card #537.
+- **Web (iPhone):** plano em `docs/WEB_APP.md` (PWA Vite + React + TS + supabase-js em `GymTracker/web/`, mesmo Supabase). 18 cards novos no Runtime (#524 a #541). Nada de código da web ainda.
+- O tema do emulador voltou para Studio depois dos testes.
