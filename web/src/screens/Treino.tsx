@@ -4,7 +4,8 @@ import {
   type Exercise, type Group, type LastPerf, type SetRow, type Workout,
 } from '../data'
 import { formatKg, prettyGroupName, staleEndsAt, suggestNextGroup } from '../rules'
-import { shareCard } from '../shareCard'
+import { shareCard, type CardSpec } from '../shareCard'
+import { PhotoShare } from './PhotoShare'
 import { restOverAlert, unlockAudio } from '../alerts'
 import { isNewRecord, recordsOf } from '../achievements'
 
@@ -105,14 +106,15 @@ export function Treino({ pending, clearPending, onDone }: { pending: string | nu
 
   async function removeSet(id: string) { await deleteSet(id); setSets((p) => p.filter((s) => s.id !== id)) }
 
+  const summarySpec = (): CardSpec | null => !summary ? null : {
+    title: summary.group ?? 'Treino livre', subtitle: new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' }),
+    stats: [[`${summary.minutes} min`, 'duração'], [String(summary.sets), 'séries'], [String(summary.reps), 'repetições'], [`${formatKg(summary.volume)} kg`, 'volume']],
+  }
+
   async function shareSummary() {
-    if (!summary) return
-    try {
-      await shareCard({
-        title: summary.group ?? 'Treino livre', subtitle: new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' }),
-        stats: [[`${summary.minutes} min`, 'duração'], [String(summary.sets), 'séries'], [String(summary.reps), 'repetições'], [`${formatKg(summary.volume)} kg`, 'volume']],
-      }, 'gymtracker_treino.png')
-    } catch (e) { if ((e as Error).name !== 'AbortError') setError((e as Error).message) }
+    const spec = summarySpec()
+    if (!spec) return
+    try { await shareCard(spec, 'gymtracker_treino.png') } catch (e) { if ((e as Error).name !== 'AbortError') setError((e as Error).message) }
   }
 
   async function finish() {
@@ -168,6 +170,7 @@ export function Treino({ pending, clearPending, onDone }: { pending: string | nu
         ))}
       </div>
       <button className="btn block" onClick={shareSummary}>Compartilhar imagem</button>
+      {summarySpec() && <PhotoShare spec={{ ...summarySpec()!, stats: summarySpec()!.stats.filter((_, i) => i !== 2) }} />}
       <button className="btn primary block" onClick={() => { setWorkout(null); onDone() }}>Concluir</button>
     </>
   )

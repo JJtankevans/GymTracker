@@ -36,3 +36,6 @@ revoke all on function public.restore_workout(timestamptz, timestamptz, uuid, js
 grant execute on function public.restore_workout(timestamptz, timestamptz, uuid, jsonb) to authenticated;
 ```
 Antes de aplicar, conferir os nomes das colunas reais em `workouts`/`workout_sets` (o esboço segue o modelo do app). O app ainda não chama essa função.
+
+### 016 — Foto do treino no post do feed (ideia 22/11)
+Arquivo pronto: `docs/supabase/016_foto_no_post.sql`. Passos: (1) criar no painel o bucket **privado** `post_photos`; (2) rodar o SQL; (3) depois o app pode enviar a foto (JPEG 1080x1350, ≤ 1 MB) para `<uid>/<post>.jpg`, gravar `feed_posts.photo_path` e mostrar a foto no feed por URL assinada. Leitura segue a visibilidade do post (`can_view_post`). **Aplicado: não.** O app só compartilha a foto por fora (WhatsApp/Instagram) por enquanto.

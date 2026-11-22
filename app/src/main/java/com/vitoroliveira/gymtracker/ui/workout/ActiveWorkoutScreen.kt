@@ -912,6 +912,19 @@ fun WorkoutSummaryDialog(summary: WorkoutSummary, onDone: () -> Unit, onShare: (
         text = cs.onBackground.toArgb(), muted = cs.onSurfaceVariant.toArgb(),
         accent = cs.primary.toArgb(), onAccent = cs.onPrimary.toArgb()
     )
+    val date = java.time.LocalDate.now().let { "%02d/%02d/%d".format(it.dayOfMonth, it.monthValue, it.year) }
+            val shareStats = ShareStats(
+                title = groupName?.takeIf { it.isNotBlank() }?.let { com.vitoroliveira.gymtracker.ui.components.prettyGroupName(it) } ?: "Treino livre",
+                dateText = date,
+                subtitle = "Treino concluído",
+                blocks = listOf(
+                    "DURAÇÃO" to "${summary.durationMinutes} min",
+                    "SÉRIES" to "${summary.totalSets}",
+                    "VOLUME" to formatVolume(summary.totalVolumeKg)
+                ),
+                records = summary.newRecords,
+                footer = "${summary.totalReps} repetições · feito no GymTracker"
+            )
     AlertDialog(
         onDismissRequest = { },
         title = { Text("Treino concluído!") },
@@ -925,23 +938,11 @@ fun WorkoutSummaryDialog(summary: WorkoutSummary, onDone: () -> Unit, onShare: (
                 // #355: o treino vira uma imagem vertical nas cores do tema, pronta para Stories/WhatsApp
                 OutlinedButton(
                     onClick = {
-                        val date = java.time.LocalDate.now().let { "%02d/%02d/%d".format(it.dayOfMonth, it.monthValue, it.year) }
-                        val stats = ShareStats(
-                            title = groupName?.takeIf { it.isNotBlank() }?.let { com.vitoroliveira.gymtracker.ui.components.prettyGroupName(it) } ?: "Treino livre",
-                            dateText = date,
-                            subtitle = "Treino concluído",
-                            blocks = listOf(
-                                "DURAÇÃO" to "${summary.durationMinutes} min",
-                                "SÉRIES" to "${summary.totalSets}",
-                                "VOLUME" to formatVolume(summary.totalVolumeKg)
-                            ),
-                            records = summary.newRecords,
-                            footer = "${summary.totalReps} repetições · feito no GymTracker"
-                        )
-                        runCatching { shareContext.shareWorkoutImage(renderWorkoutImage(stats, colors)) }
+                        runCatching { shareContext.shareWorkoutImage(renderWorkoutImage(shareStats, colors)) }
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) { Text("Compartilhar como imagem") }
+                PhotoShareButton(shareStats, colors)
                 if (summary.newRecords.isNotEmpty()) {
                     HorizontalDivider()
                     Row(verticalAlignment = Alignment.CenterVertically) {
