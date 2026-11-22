@@ -27,6 +27,8 @@ import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material3.AlertDialog
 import androidx.compose.animation.animateContentSize
 import androidx.compose.material3.Button
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.material.icons.filled.Pause
@@ -414,7 +416,7 @@ fun ActiveWorkoutScreenContent(
     }
 
     uiState.summary?.let { summary ->
-        WorkoutSummaryDialog(summary = summary, onDone = onSummaryDone, onShare = onShareSummary)
+        WorkoutSummaryDialog(summary = summary, onDone = onSummaryDone, onShare = onShareSummary, groupName = muscleGroupName)
     }
 }
 
@@ -869,7 +871,14 @@ private fun EditSetDialog(
 }
 
 @Composable
-fun WorkoutSummaryDialog(summary: WorkoutSummary, onDone: () -> Unit, onShare: (() -> Unit)? = null) {
+fun WorkoutSummaryDialog(summary: WorkoutSummary, onDone: () -> Unit, onShare: (() -> Unit)? = null, groupName: String? = null) {
+    val shareContext = androidx.compose.ui.platform.LocalContext.current
+    val cs = MaterialTheme.colorScheme
+    val colors = ShareColors(
+        bgTop = cs.background.toArgb(), bgBottom = cs.surfaceContainerHighest.compositeOver(cs.background).toArgb(),
+        text = cs.onBackground.toArgb(), muted = cs.onSurfaceVariant.toArgb(),
+        accent = cs.primary.toArgb(), onAccent = cs.onPrimary.toArgb()
+    )
     AlertDialog(
         onDismissRequest = { },
         title = { Text("Treino concluído!") },
@@ -880,6 +889,22 @@ fun WorkoutSummaryDialog(summary: WorkoutSummary, onDone: () -> Unit, onShare: (
                 SummaryRow("Séries", summary.totalSets.toString())
                 SummaryRow("Repetições", summary.totalReps.toString())
                 SummaryRow("Volume total", formatVolume(summary.totalVolumeKg))
+                // #355: o treino vira uma imagem vertical nas cores do tema, pronta para Stories/WhatsApp
+                OutlinedButton(
+                    onClick = {
+                        val date = java.time.LocalDate.now().let { "%02d/%02d/%d".format(it.dayOfMonth, it.monthValue, it.year) }
+                        val stats = ShareStats(
+                            title = groupName?.takeIf { it.isNotBlank() }?.let { com.vitoroliveira.gymtracker.ui.components.prettyGroupName(it) } ?: "Treino livre",
+                            dateText = date,
+                            durationMin = summary.durationMinutes,
+                            sets = summary.totalSets, reps = summary.totalReps,
+                            volume = formatVolume(summary.totalVolumeKg),
+                            records = summary.newRecords
+                        )
+                        runCatching { shareContext.shareWorkoutImage(renderWorkoutImage(stats, colors)) }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text("Compartilhar como imagem") }
                 if (summary.newRecords.isNotEmpty()) {
                     HorizontalDivider()
                     Row(verticalAlignment = Alignment.CenterVertically) {

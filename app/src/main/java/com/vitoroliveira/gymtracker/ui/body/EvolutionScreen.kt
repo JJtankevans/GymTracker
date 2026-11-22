@@ -104,6 +104,8 @@ private fun WeeklySetsCard(rows: List<com.vitoroliveira.gymtracker.presentation.
     com.vitoroliveira.gymtracker.ui.theme.ThemedCard(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Séries por músculo (7 dias)", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            // #353: mapa muscular (frente e costas) pintado pelas séries da semana
+            com.vitoroliveira.gymtracker.ui.components.MuscleMap(rows, fullAtSets = range.last)
             rows.forEach { r ->
                 val inRange = r.sets in range
                 Row(verticalAlignment = Alignment.CenterVertically) {
