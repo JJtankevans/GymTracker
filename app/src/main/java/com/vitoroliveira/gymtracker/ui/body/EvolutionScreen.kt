@@ -107,6 +107,7 @@ fun EvolutionContent(
 }
 
 /** Análises (porte da web): equilíbrio muscular, platôs e recordes por faixa de repetições. */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun AnalysisCard(a: com.vitoroliveira.gymtracker.presentation.body.Analysis) {
     val cs = MaterialTheme.colorScheme
@@ -119,6 +120,31 @@ private fun AnalysisCard(a: com.vitoroliveira.gymtracker.presentation.body.Analy
             }
             a.plateaus.take(5).forEach { p ->
                 Text("${p.exercise}: sem novo recorde há ${p.weeks} semanas (1RM ${kg(p.bestOneRm)} kg). Tente uma semana leve ou uma variação.", style = MaterialTheme.typography.bodyMedium, color = cs.onSurfaceVariant)
+            }
+            val refs = androidx.compose.runtime.remember(a.points) { com.vitoroliveira.gymtracker.presentation.body.workoutRefs(a.points) }
+            if (refs.size >= 2) {
+                var picks by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(listOf<String>()) }
+                val zoneC = kotlinx.datetime.TimeZone.currentSystemDefault()
+                Text("Comparar dois treinos", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    refs.forEach { r ->
+                        val d = r.at.toLocalDateTime(zoneC).date
+                        androidx.compose.material3.FilterChip(
+                            selected = r.id in picks,
+                            onClick = { picks = if (r.id in picks) picks - r.id else (picks + r.id).takeLast(2) },
+                            label = { Text("%02d/%02d".format(d.dayOfMonth, d.monthNumber) + (r.label?.let { " · ${com.vitoroliveira.gymtracker.ui.components.prettyGroupName(it)}" } ?: "")) }
+                        )
+                    }
+                }
+                if (picks.size == 2) {
+                    val (first, second) = picks.sortedBy { id -> refs.first { it.id == id }.at }
+                    com.vitoroliveira.gymtracker.presentation.body.compareWorkouts(a.points, first, second).forEach { diff ->
+                        fun fmt(p: Pair<Double, Int>?) = p?.let { "${kg(it.first)}×${it.second}" } ?: "–"
+                        Text("${diff.exercise}: ${fmt(diff.a)} → ${fmt(diff.b)}", style = MaterialTheme.typography.bodyMedium)
+                    }
+                } else {
+                    Text("Toque em dois treinos para ver o melhor de cada exercício lado a lado.", style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant)
+                }
             }
             var query by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
             androidx.compose.material3.OutlinedTextField(

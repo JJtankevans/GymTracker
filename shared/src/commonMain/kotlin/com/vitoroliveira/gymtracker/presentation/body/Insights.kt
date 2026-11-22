@@ -13,7 +13,7 @@ import kotlin.time.Instant
  * Análises (porte de `web/src/insights.ts`): recordes por faixa, desequilíbrio, platôs, sobrecarga progressiva e calorias.
  * Todas puras (sem relógio nem rede) para testar no :shared.
  */
-data class AnalysisSet(val exercise: String, val reps: Int, val kg: Double, val at: Instant)
+data class AnalysisSet(val exercise: String, val reps: Int, val kg: Double, val at: Instant, val workoutId: String? = null, val workoutLabel: String? = null)
 
 // ───────── recordes por faixa de repetições ─────────
 val RM_BANDS = listOf(1, 5, 10)
@@ -93,7 +93,7 @@ fun buildAnalysis(sets: List<com.vitoroliveira.gymtracker.data.model.ExportSet>,
     val points = sets.mapNotNull { s ->
         val name = names[s.exerciseId] ?: return@mapNotNull null
         val at = (s.completedAt ?: s.workouts?.startedAt)?.let { runCatching { Instant.parse(it) }.getOrNull() } ?: return@mapNotNull null
-        AnalysisSet(name, s.reps, s.weightKg, at)
+        AnalysisSet(name, s.reps, s.weightKg, at, s.workouts?.id, s.workouts?.muscleGroupName)
     }
     return Analysis(imbalances(points, now), plateaus(points, now), bandRecords(points), points)
 }
@@ -136,4 +136,24 @@ fun searchSets(sets: List<AnalysisSet>, query: String, limit: Int = 40): List<An
     val kgQ = q.removeSuffix("kg").trim().replace(',', '.').toDoubleOrNull()
     return sets.filter { s -> if (kgQ != null) s.kg == kgQ else foldPt(s.exercise).contains(q) }
         .sortedByDescending { it.at }.take(limit)
+}
+
+// ───────── comparar dois treinos ─────────
+data class WorkoutRef(val id: String, val at: Instant, val label: String?)
+data class ExerciseDiff(val exercise: String, val a: Pair<Double, Int>?, val b: Pair<Double, Int>?)
+
+/** Treinos distintos (mais recentes primeiro) para escolher na comparação. */
+fun workoutRefs(sets: List<AnalysisSet>, limit: Int = 12): List<WorkoutRef> =
+    sets.filter { it.workoutId != null }
+        .groupBy { it.workoutId!! }
+        .map { (id, ss) -> WorkoutRef(id, ss.minOf { it.at }, ss.firstNotNullOfOrNull { it.workoutLabel }) }
+        .sortedByDescending { it.at }.take(limit)
+
+/** Melhor série (maior 1RM estimado) de cada exercício nos dois treinos, em ordem alfabética. */
+fun compareWorkouts(sets: List<AnalysisSet>, idA: String, idB: String): List<ExerciseDiff> {
+    fun top(id: String): Map<String, Pair<Double, Int>> =
+        sets.filter { it.workoutId == id }.groupBy { it.exercise }
+            .mapValues { (_, ss) -> ss.maxBy { estimateOneRepMax(it.kg, it.reps) }.let { it.kg to it.reps } }
+    val a = top(idA); val b = top(idB)
+    return (a.keys + b.keys).toSortedSet().map { ExerciseDiff(it, a[it], b[it]) }
 }

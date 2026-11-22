@@ -70,3 +70,23 @@ class SearchTest {
         assertTrue(searchSets(sets, "  ").isEmpty())
     }
 }
+
+class CompareTest {
+    private val t = kotlin.time.Instant.parse("2026-11-22T12:00:00Z")
+    private val sets = listOf(
+        AnalysisSet("Supino", 10, 50.0, t, "a", "Peito"),
+        AnalysisSet("Supino", 10, 55.0, t + kotlin.time.Duration.parse("1d"), "b", "Peito"),
+        AnalysisSet("Remada", 8, 40.0, t + kotlin.time.Duration.parse("1d"), "b", "Costas")
+    )
+
+    @Test fun `compara o melhor de cada exercicio`() {
+        val d = compareWorkouts(sets, "a", "b")
+        assertEquals(50.0, d.first { it.exercise == "Supino" }.a?.first)
+        assertEquals(55.0, d.first { it.exercise == "Supino" }.b?.first)
+        assertEquals(null, d.first { it.exercise == "Remada" }.a)
+    }
+
+    @Test fun `lista treinos do mais recente ao mais antigo`() {
+        assertEquals(listOf("b", "a"), workoutRefs(sets).map { it.id })
+    }
+}
