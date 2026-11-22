@@ -119,16 +119,16 @@ private fun AchievementCard(a: Achievement) {
     ) {
         Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
             // Ícone por família (antes todas eram o mesmo troféu); desbloqueada ganha um disco de destaque.
-            Box(
-                Modifier.size(44.dp).background(if (a.unlocked) cs.primary else Color.Transparent, CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    if (a.unlocked) a.family.icon() else Icons.Default.Lock,
-                    contentDescription = if (a.unlocked) "Desbloqueada" else "Bloqueada",
-                    tint = if (a.unlocked) cs.onPrimary else cs.outline,
-                    modifier = Modifier.size(if (a.unlocked) 26.dp else 32.dp)
+            if (a.unlocked) {
+                // Toque no selo: vira para o verso holográfico (porte do holo-flip-badge do OriginKit)
+                com.vitoroliveira.gymtracker.ui.components.HoloFlipBadge(
+                    icon = a.family.icon(), front = cs.primary, onFront = cs.onPrimary, size = 48.dp,
+                    description = "Desbloqueada"
                 )
+            } else {
+                Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                    Icon(Icons.Default.Lock, contentDescription = "Bloqueada", tint = cs.outline, modifier = Modifier.size(32.dp))
+                }
             }
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
