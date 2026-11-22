@@ -3,7 +3,6 @@ package com.vitoroliveira.gymtracker.presentation.body
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
@@ -35,13 +34,6 @@ class InsightsTest {
         assertEquals(1, p.size); assertEquals(5, p[0].weeks)
         assertTrue(plateaus(listOf(set("Agachamento", 5, 90.0, 40), set("Agachamento", 5, 100.0, 3)), now).isEmpty())
     }
-
-    @Test fun `progressao sobe a carga ao bater as reps`() {
-        assertEquals(Progression(42.5, 12), nextProgression(40.0, 12, 12))
-        assertEquals(Progression(85.0, 8), nextProgression(80.0, 8, 8))
-        assertEquals(Progression(40.0, 10), nextProgression(40.0, 9, 12))
-        assertNull(nextProgression(0.0, 10, 10))
-    }
 }
 
 class TodayPanelTest {
@@ -56,5 +48,25 @@ class TodayPanelTest {
         assertTrue(needsDeload(listOf(5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 9.0, 9.0, 9.0, 9.0)))
         assertFalse(needsDeload(listOf(5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 9.0, 9.0, 5.0, 9.0)))
         assertFalse(needsDeload(listOf(9.0, 9.0, 9.0)))
+    }
+}
+
+class SearchTest {
+    private val now = kotlin.time.Instant.parse("2026-11-22T12:00:00Z")
+    private val sets = listOf(
+        AnalysisSet("Rosca Direta", 10, 20.0, now),
+        AnalysisSet("Supino Reto", 8, 80.0, now),
+        AnalysisSet("Elevação Lateral", 12, 8.0, now)
+    )
+
+    @Test fun `pesquisa por nome sem acento`() {
+        assertEquals(1, searchSets(sets, "ROSCA").size)
+        assertEquals(1, searchSets(sets, "elevacao").size)
+    }
+
+    @Test fun `pesquisa por carga e consulta vazia`() {
+        assertEquals("Supino Reto", searchSets(sets, "80kg").single().exercise)
+        assertEquals("Elevação Lateral", searchSets(sets, "8").single().exercise)
+        assertTrue(searchSets(sets, "  ").isEmpty())
     }
 }

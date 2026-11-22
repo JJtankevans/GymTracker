@@ -83,18 +83,8 @@ fun plateaus(sets: List<AnalysisSet>, now: Instant, minWeeks: Int = 4): List<Pla
     return out.sortedByDescending { it.weeks }
 }
 
-// ───────── sobrecarga progressiva ─────────
-data class Progression(val kg: Double, val reps: Int)
-
-/** Bateu as repetições-alvo → sobe a carga (+2,5 kg, ou +5 kg a partir de 60 kg); senão mantém a carga e pede +1 repetição. */
-fun nextProgression(lastKg: Double, lastReps: Int, targetReps: Int): Progression? {
-    if (lastKg <= 0.0 || lastReps < 1) return null
-    return if (lastReps >= targetReps) Progression(lastKg + if (lastKg >= 60.0) 5.0 else 2.5, targetReps)
-    else Progression(lastKg, lastReps + 1)
-}
-
 // ───────── pacote para a tela ─────────
-data class Analysis(val imbalances: List<Imbalance>, val plateaus: List<Plateau>, val records: List<BandRecord>) {
+data class Analysis(val imbalances: List<Imbalance>, val plateaus: List<Plateau>, val records: List<BandRecord>, val points: List<AnalysisSet> = emptyList()) {
     val isEmpty: Boolean get() = plateaus.isEmpty() && records.isEmpty() && imbalances.none { it.warn }
 }
 
@@ -105,7 +95,7 @@ fun buildAnalysis(sets: List<com.vitoroliveira.gymtracker.data.model.ExportSet>,
         val at = (s.completedAt ?: s.workouts?.startedAt)?.let { runCatching { Instant.parse(it) }.getOrNull() } ?: return@mapNotNull null
         AnalysisSet(name, s.reps, s.weightKg, at)
     }
-    return Analysis(imbalances(points, now), plateaus(points, now), bandRecords(points))
+    return Analysis(imbalances(points, now), plateaus(points, now), bandRecords(points), points)
 }
 
 // ───────── painel "Hoje" (Home): carga da semana e semana de descarga ─────────
@@ -131,4 +121,19 @@ fun needsDeload(volumes: List<Double>): Boolean {
     if (sorted.size < 6) return false
     val median = sorted[sorted.size / 2]
     return volumes.takeLast(4).all { it >= median * 1.05 }
+}
+
+// ───────── pesquisa no histórico ─────────
+private const val ACCENTS = "áàâãäéèêëíìîïóòôõöúùûüç"
+private const val PLAIN = "aaaaaeeeeiiiiooooouuuuc"
+/** Minúsculas e sem acento do português (o common não tem normalizador). */
+fun foldPt(s: String): String = buildString { for (c in s.lowercase()) { val i = ACCENTS.indexOf(c); append(if (i >= 0) PLAIN[i] else c) } }
+
+/** Procura por nome de exercício (sem acento) ou carga ("80", "80kg"); mais recentes primeiro, até [limit]. */
+fun searchSets(sets: List<AnalysisSet>, query: String, limit: Int = 40): List<AnalysisSet> {
+    val q = foldPt(query.trim())
+    if (q.isEmpty()) return emptyList()
+    val kgQ = q.removeSuffix("kg").trim().replace(',', '.').toDoubleOrNull()
+    return sets.filter { s -> if (kgQ != null) s.kg == kgQ else foldPt(s.exercise).contains(q) }
+        .sortedByDescending { it.at }.take(limit)
 }

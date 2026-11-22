@@ -1,5 +1,6 @@
 package com.vitoroliveira.gymtracker.ui.body
 
+import kotlinx.datetime.toLocalDateTime
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -118,6 +119,20 @@ private fun AnalysisCard(a: com.vitoroliveira.gymtracker.presentation.body.Analy
             }
             a.plateaus.take(5).forEach { p ->
                 Text("${p.exercise}: sem novo recorde há ${p.weeks} semanas (1RM ${kg(p.bestOneRm)} kg). Tente uma semana leve ou uma variação.", style = MaterialTheme.typography.bodyMedium, color = cs.onSurfaceVariant)
+            }
+            var query by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
+            androidx.compose.material3.OutlinedTextField(
+                value = query, onValueChange = { query = it.take(40) }, singleLine = true, modifier = Modifier.fillMaxWidth(),
+                label = { Text("Pesquisar no histórico (exercício ou carga)") }
+            )
+            if (query.isNotBlank()) {
+                val hits = com.vitoroliveira.gymtracker.presentation.body.searchSets(a.points, query)
+                if (hits.isEmpty()) Text("Nada encontrado.", style = MaterialTheme.typography.bodyMedium, color = cs.onSurfaceVariant)
+                val zone = kotlinx.datetime.TimeZone.currentSystemDefault()
+                hits.forEach { h ->
+                    val d = h.at.toLocalDateTime(zone).date
+                    Text("%02d/%02d  ${h.exercise}: ${kg(h.kg)} kg × ${h.reps}".format(d.dayOfMonth, d.monthNumber), style = MaterialTheme.typography.bodyMedium)
+                }
             }
             val top = a.records.groupBy { it.exercise }.entries.take(5)
             if (top.isNotEmpty()) {
