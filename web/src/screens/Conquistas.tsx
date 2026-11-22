@@ -3,7 +3,8 @@ import { loadHome, loadHistory } from '../data'
 import { computeAchievements, recordsOf, FAMILY_LABEL, type Achievement, type AchievementFamily } from '../achievements'
 import { realDurationMinutes } from '../rules'
 import { setsOf } from './Evolucao'
-import { monthlyBadges } from '../insights'
+import { challengeStatus, CHALLENGE_DEFS, monthlyBadges, type ChallengeKind, type PersonalChallenge } from '../insights'
+import type { HistItem } from '../data'
 
 const ICON: Record<AchievementFamily, string> = {
   WORKOUTS: 'M6 6v12M3 9v6M18 6v12M21 9v6M6 12h12',
@@ -32,12 +33,42 @@ function Badge({ a }: { a: Achievement }) {
   )
 }
 
+const CH_KEY = 'gt-challenge'
+const readChallenge = (): PersonalChallenge | null => { try { return JSON.parse(localStorage.getItem(CH_KEY) ?? 'null') } catch { return null } }
+
+function Desafio({ hist }: { hist: HistItem[] }) {
+  const [ch, setCh] = useState<PersonalChallenge | null>(readChallenge)
+  const start = (kind: ChallengeKind) => { const c = { kind, start: new Date().toISOString() }; try { localStorage.setItem(CH_KEY, JSON.stringify(c)) } catch { /* sem armazenamento */ } setCh(c) }
+  const stop = () => { try { localStorage.removeItem(CH_KEY) } catch { /* sem armazenamento */ } setCh(null) }
+  const st = ch ? challengeStatus(ch, hist) : null
+  return (
+    <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className="label">Desafio pessoal</div>
+      {ch && st ? (
+        <>
+          <b>{CHALLENGE_DEFS[ch.kind].title}</b>
+          <div className="row"><div className="prog grow"><i style={{ width: `${Math.min(100, (st.progress / st.target) * 100)}%` }} /></div><small className="num">{Math.min(st.progress, st.target)}/{st.target}</small></div>
+          <div className="muted">{st.done ? 'Desafio cumprido. Parabéns!' : st.expired ? 'O prazo acabou. Tente de novo.' : `Faltam ${st.daysLeft} dias.`}</div>
+          <button className="btn" onClick={stop}>{st.done || st.expired ? 'Novo desafio' : 'Desistir'}</button>
+        </>
+      ) : (
+        <>
+          <div className="muted">Escolha uma meta de 30 dias; o progresso vem dos seus treinos.</div>
+          {(Object.keys(CHALLENGE_DEFS) as ChallengeKind[]).map((k) => <button key={k} className="btn" onClick={() => start(k)}>{CHALLENGE_DEFS[k].title}</button>)}
+        </>
+      )}
+    </div>
+  )
+}
+
 export function Conquistas() {
+  const [hist, setHist] = useState<HistItem[]>([])
   const [list, setList] = useState<Achievement[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const load = () => {
     setError(null)
     Promise.all([loadHistory(), loadHome()]).then(([h, home]) => {
+      setHist(h)
       const sessions = h.map((w) => ({
         start: new Date(w.started_at),
         minutes: realDurationMinutes(w.finished_at ? Math.round((Date.parse(w.finished_at) - Date.parse(w.started_at)) / 60000) : null, w.started_at, w.sets.map((s) => s.completed_at)),
@@ -55,6 +86,7 @@ export function Conquistas() {
     <>
       <div className="title">Conquistas</div>
       <div className="big num" style={{ fontSize: 22 }}>{list.filter((a) => a.progress >= a.target).length} de {list.length} desbloqueadas</div>
+      <Desafio hist={hist} />
       {families.map((f) => (
         <div key={f} style={{ display: 'contents' }}>
           <div className="label" style={{ marginTop: 8 }}>{FAMILY_LABEL[f]}</div>

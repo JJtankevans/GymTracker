@@ -255,3 +255,25 @@ export function equipmentSets(sets: SetLite[]): { equipment: string; sets: numbe
   for (const s of sets) { const k = eq.get(foldName(s.exercise)) ?? 'Outros'; counts.set(k, (counts.get(k) ?? 0) + 1) }
   return [...counts].map(([equipment, n]) => ({ equipment, sets: n })).sort((a, b) => b.sets - a.sets)
 }
+
+// ───────── #592 desafios pessoais ─────────
+export type ChallengeKind = 'workouts12' | 'days20' | 'volume20t'
+export interface PersonalChallenge { kind: ChallengeKind; start: string } // start = ISO
+export const CHALLENGE_DEFS: Record<ChallengeKind, { title: string; description: string; target: number; unit: string; days: number }> = {
+  workouts12: { title: '12 treinos em 30 dias', description: 'Complete 12 treinos em 30 dias', target: 12, unit: 'treinos', days: 30 },
+  days20: { title: '20 dias ativos em 30', description: 'Treine em 20 dias diferentes em 30 dias', target: 20, unit: 'dias', days: 30 },
+  volume20t: { title: '20 toneladas em 30 dias', description: 'Some 20 t de volume em 30 dias', target: 20, unit: 't', days: 30 },
+}
+export interface ChallengeStatus { progress: number; target: number; daysLeft: number; done: boolean; expired: boolean }
+
+export function challengeStatus(c: PersonalChallenge, items: HistItem[], now = new Date()): ChallengeStatus {
+  const def = CHALLENGE_DEFS[c.kind]
+  const start = new Date(c.start).getTime()
+  const end = start + def.days * DAY
+  const ws = items.filter((w) => { const t = new Date(w.started_at).getTime(); return t >= start && t < end })
+  const progress = c.kind === 'workouts12' ? ws.length
+    : c.kind === 'days20' ? new Set(ws.map((w) => dayKey(new Date(w.started_at)))).size
+    : Math.floor(ws.reduce((a, w) => a + w.sets.reduce((b, s) => b + s.reps * Number(s.weight_kg), 0), 0) / 1000)
+  const done = progress >= def.target
+  return { progress, target: def.target, daysLeft: Math.max(0, Math.ceil((end - now.getTime()) / DAY)), done, expired: !done && now.getTime() >= end }
+}

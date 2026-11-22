@@ -106,3 +106,13 @@ describe('variações, projeção e equipamento', () => {
     expect(r[0]).toEqual({ equipment: 'Outros', sets: 2 })
   })
 })
+
+import { challengeStatus } from './insights'
+describe('desafios pessoais', () => {
+  it('conta só treinos dentro dos 30 dias', () => {
+    const items = [hist('a', 2, [['X', 10, 10]]), hist('b', 5, [['X', 10, 10]]), hist('c', 50, [['X', 10, 10]])]
+    const s = challengeStatus({ kind: 'workouts12', start: at(10) }, items, new Date(now))
+    expect(s.progress).toBe(2); expect(s.target).toBe(12); expect(s.daysLeft).toBe(20); expect(s.done).toBe(false)
+    expect(challengeStatus({ kind: 'workouts12', start: at(40) }, items, new Date(now)).expired).toBe(true)
+  })
+})

@@ -253,3 +253,4 @@ Quer autonomia ("yolo, sem perguntas"), mas **antes de commitar/encerrar a sess�
 - **Web (22/11):** variações sugeridas no platô (#588), séries por equipamento em Análises (#590), meta de peso com projeção de data na Evolução (#586; meta só em localStorage). 154 testes. Análises conferida no ?mock; o campo de meta de peso não foi visto na tela.
 - **Web (22/11):** Resumo da semana na Home (sex a dom; #585), só dentro do app (sem notificação). 154 testes.
 - **Web (22/11):** favoritar grupo (★ Atalho no detalhe do grupo) e atalhos na Home (#583; só neste aparelho). 155 testes; conferido no ?mock.
+- **Web (22/11):** desafio pessoal de 30 dias em Conquistas (#592; 3 presets, progresso calculado do histórico, estado em localStorage). 156 testes; conferido no ?mock.
