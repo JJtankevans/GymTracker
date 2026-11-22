@@ -4,11 +4,12 @@ import { applyTheme, savedAppearance, THEMES, type Mode } from '../themes'
 import { Evolucao } from './Evolucao'
 import { Recordes } from './Recordes'
 import { Conquistas } from './Conquistas'
+import { Ferramentas } from './Ferramentas'
 import { clampGoal, loadHome, setWeeklyGoal } from '../data'
 import { setSoundEnabled, soundEnabled } from '../alerts'
 import { applyImport, downloadBackup, parseBackup } from '../backup'
 
-type Sub = null | 'evolucao' | 'recordes' | 'conquistas'
+type Sub = null | 'evolucao' | 'recordes' | 'conquistas' | 'ferramentas'
 
 export function More() {
   const [sub, setSub] = useState<Sub>(null)
@@ -51,6 +52,7 @@ export function More() {
         {sub === 'evolucao' && <Evolucao />}
         {sub === 'recordes' && <Recordes />}
         {sub === 'conquistas' && <Conquistas />}
+        {sub === 'ferramentas' && <Ferramentas />}
       </>
     )
   }
@@ -65,6 +67,7 @@ export function More() {
       {item('Evolução', 'Peso corporal e cargas por exercício', 'evolucao')}
       {item('Recordes', 'Sua melhor carga em cada exercício', 'recordes')}
       {item('Conquistas', 'Selos por treinos, sequência e volume', 'conquistas')}
+      {item('Ferramentas', 'Anilhas de cada lado e aquecimento', 'ferramentas')}
 
       <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <div className="row">
