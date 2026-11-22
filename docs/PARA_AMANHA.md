@@ -9,6 +9,7 @@ Abra o **SQL Editor** e rode **nesta ordem** (todas aditivas e idempotentes; det
 - [ ] **Storage:** criar o bucket **privado** `post_photos` (painel → Storage → New bucket, *Public* desligado)
 - [ ] `docs/supabase/016_foto_no_post.sql` — foto do treino no post (libera #554)
 - [ ] `docs/supabase/017_superset_e_cadencia.sql` — supersérie e cadência na nuvem (#575, #581)
+- [ ] `docs/supabase/018_marca_da_serie.sql` — marca da série (aquecimento/drop/rest-pause/falha) e aquecimento fora dos recordes e do perfil (#603, #604). **Rodar depois da 012.** Leia antes: não foi testada em Postgres local.
 - [ ] (opcional) `015` — restaurar histórico de backup (#538); confira os nomes das colunas antes
 - Depois de cada uma, me avise: eu ligo o código (web e Android) às colunas novas.
 

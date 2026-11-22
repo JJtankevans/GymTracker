@@ -42,3 +42,6 @@ Arquivo pronto: `docs/supabase/016_foto_no_post.sql`. Passos: (1) criar no paine
 
 ### 017 — Supersérie e cadência (ideia 22/11, #575 e #581)
 Arquivo pronto: `docs/supabase/017_superset_e_cadencia.sql` (`workout_sets.tempo` com formato `3-1-2-0` e `workouts.superset_links` jsonb). **Aplicado: não.** Enquanto isso, web e app guardam a ligação e a cadência só no aparelho. Depois de aplicar, ligar o código à coluna (card a criar).
+
+### 018 — Marca da série na nuvem (22/11, #603 e #604)
+Arquivo pronto: `docs/supabase/018_marca_da_serie.sql` (`workout_sets.kind` = warmup/drop/restpause/failure; recria `vw_exercise_progression`, `records_summary()`, `profile_stats()` e o gatilho do post do feed ignorando aquecimento). **Aplicado: não. Não foi executado em Postgres local: leia antes de aplicar.** Depende da 012. Deixa de fora `challenge_standings()` de propósito (instrução no fim do arquivo). Depois de aplicar: ligar web e app à coluna e incluir `kind` em `RecentSet`/`ExportSet` no Android (card a criar).
