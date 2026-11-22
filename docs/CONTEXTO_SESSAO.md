@@ -215,3 +215,8 @@ Quer autonomia ("yolo, sem perguntas"), mas **antes de commitar/encerrar a sess�
 - **hyaline-level** no RPE (`ui/components/HyalineLevel.kt`): trilha escura com pontos, vidro, cursor, nome que rola, assenta no degrau em 0,18 s; só aparece depois de registrar uma série; grava em `RpeStore` ao soltar. Commit 2484971. Os dois: **não testados em celular real**.
 - O teste no emulador criou 3 treinos de teste na conta do emulador; já apagados pelo Histórico.
 - **Falta (fila):** Evolução "denso em dados" (#360), Grupos com "N exercícios · último treino", alvos 48 dp, widget (#357).
+- **Evolução "denso em dados" (#360)**: fileira de números tabulares (variação, mínimo, máximo, registros; 1RM atual/melhor/variação/sessões) acima de cada gráfico, gráficos mais altos. Commit 3e820d2.
+- **Grupos**: "N exercícios · último treino dd/mm" (data convertida do UTC para o fuso do aparelho; "sem treino ainda"). Commit 31e36ea.
+- **Alvos de 48 dp**: botões −/+ do Circuito (32→48) e favorito do catálogo (40→48). As barras superiores já usam IconButton (48 dp).
+- **Widget (#357)**: `ui/widget/WorkoutWidgetProvider.kt` (RemoteViews, sem dependência): "Próximo treino" ou, com treino aberto, o título + cronômetro; toque abre o app. A Home grava o estado em `WorkoutWidgetState`. Conferido no emulador só o estado "próximo treino" (Glúteos e Posterior); **o estado com cronômetro não foi visto**.
+- **Fila da manhã concluída.** Sobras: selenite-chips (filtros multi-seleção), cartão "Próximo treino" nos outros layouts de Home, importar backup, retrospectiva anual.

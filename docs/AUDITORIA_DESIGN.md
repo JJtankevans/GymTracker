@@ -46,6 +46,6 @@ Legenda: ✅ feito nesta sessão · ⏳ a fazer · 💡 ideia de funcionalidade.
 
 ## Transversal
 - ✅ FABs de Exercícios e Grupos agora na cor de marca (como a Home).
-- ⏳ Tamanho mínimo de toque 48 dp nos ícones das barras superiores.
+- ✅ Tamanho mínimo de toque 48 dp: Circuito (−/+) e favorito do catálogo corrigidos; barras superiores já em 48 dp.
 - ✅ Esqueleto de carregamento em vez de spinner (Home e as outras telas).
 - ⏳ Padronizar a gramática de rótulos: verbos no infinitivo nos botões ("Iniciar treino", "Adicionar exercícios").

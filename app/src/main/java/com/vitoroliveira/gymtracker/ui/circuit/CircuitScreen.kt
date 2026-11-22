@@ -263,9 +263,9 @@ internal fun CircuitSetup(
 private fun Mini(label: String, value: String, onMinus: () -> Unit, onPlus: () -> Unit) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onMinus, Modifier.size(32.dp)) { Icon(Icons.Default.Remove, null, Modifier.size(18.dp)) }
+            IconButton(onMinus, Modifier.size(48.dp)) { Icon(Icons.Default.Remove, null, Modifier.size(18.dp)) }
             Text(value, Modifier.widthIn(min = 38.dp), textAlign = TextAlign.Center, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            IconButton(onPlus, Modifier.size(32.dp)) { Icon(Icons.Default.Add, null, Modifier.size(18.dp)) }
+            IconButton(onPlus, Modifier.size(48.dp)) { Icon(Icons.Default.Add, null, Modifier.size(18.dp)) }
         }
         Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }

@@ -75,6 +75,16 @@ fun HomeScreen(
         }
     }
 
+    // Widget da tela inicial: próximo treino e, se houver, o treino aberto (#357)
+    LaunchedEffect(shown.suggestedGroupName, shown.hasActiveWorkout, shown.activeWorkoutStartedAt, shown.isLoading) {
+        if (!shown.isLoading) com.vitoroliveira.gymtracker.ui.widget.WorkoutWidgetState.save(
+            appContext,
+            shown.suggestedGroupName?.let { com.vitoroliveira.gymtracker.ui.components.prettyGroupName(it) },
+            if (shown.hasActiveWorkout) shown.activeWorkoutStartedAt else null,
+            shown.activeWorkoutGroupName?.let { com.vitoroliveira.gymtracker.ui.components.prettyGroupName(it) }
+        )
+    }
+
     HomeScreenContent(
         uiState = shown,
         onNavigateToMuscleGroups = onNavigateToMuscleGroups,

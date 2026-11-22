@@ -217,7 +217,7 @@ private fun CatalogCard(
             ) {
                 ExerciseArt(ex, tint, 54.dp, Modifier.fillMaxSize().padding(6.dp))
                 Box(
-                    Modifier.align(Alignment.TopStart).size(40.dp).clip(CircleShape).clickable(onClick = onFavorite),
+                    Modifier.align(Alignment.TopStart).size(48.dp).clip(CircleShape).clickable(onClick = onFavorite),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(

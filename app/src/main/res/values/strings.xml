@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">GymTracker</string>
     <string name="shortcut_start_short">Iniciar treino</string>
+    <string name="widget_description">Próximo treino e cronômetro do treino em andamento</string>
     <string name="shortcut_start_long">Iniciar um treino</string>
     <string name="shortcut_history_short">Histórico</string>
     <string name="shortcut_history_long">Ver o histórico de treinos</string>
