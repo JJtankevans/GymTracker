@@ -38,6 +38,7 @@ private fun isoLabel(iso: String): String = iso.split("-").let { if (it.size == 
 @Composable
 fun EvolutionScreen(
     onBack: () -> Unit,
+    onOpenYear: () -> Unit = {},
     bodyVm: BodyViewModel = koinViewModel(),
     evoVm: EvolutionViewModel = koinViewModel()
 ) {
@@ -46,7 +47,8 @@ fun EvolutionScreen(
     EvolutionContent(
         body, evo, onBack, bodyVm::logWeight, bodyVm::deleteWeight, bodyVm::setProfile,
         onLogMeasure = { site, cm -> bodyVm.logMeasurement(todayEpochDay(), site, cm) },
-        onDeleteMeasure = bodyVm::deleteMeasurement
+        onDeleteMeasure = bodyVm::deleteMeasurement,
+        onOpenYear = onOpenYear
     )
 }
 
@@ -55,7 +57,8 @@ fun EvolutionContent(
     body: BodyData, evo: EvolutionUiState, onBack: () -> Unit,
     onLog: (Int, Double) -> Unit, onDelete: (Int) -> Unit, onSaveProfile: (BodyProfile) -> Unit,
     onLogMeasure: (MeasureSite, Double) -> Unit = { _, _ -> },
-    onDeleteMeasure: (Int, MeasureSite) -> Unit = { _, _ -> }
+    onDeleteMeasure: (Int, MeasureSite) -> Unit = { _, _ -> },
+    onOpenYear: () -> Unit = {}
 ) {
     var showData by remember { mutableStateOf(false) }
 
@@ -75,7 +78,7 @@ fun EvolutionContent(
         ) {
             item(key = "weight") { BodyWeightCard(body, onLog = onLog, onDelete = onDelete, onEditData = { showData = true }) }
             item(key = "measures") { MeasurementsCard(body.measurements, onLogMeasure, onDeleteMeasure) }
-            if (evo.recap?.isEmpty == false || evo.yearRecap?.isEmpty == false) item(key = "recap") { RecapCard(evo.recap, evo.yearRecap) }
+            if (evo.recap?.isEmpty == false || evo.yearRecap?.isEmpty == false) item(key = "recap") { RecapCard(evo.recap, evo.yearRecap, onOpenYear) }
             if (evo.weeklySets.any { it.sets > 0 }) item(key = "weekly-sets") { WeeklySetsCard(evo.weeklySets) }
             item(key = "lifts-title") {
                 Text("Cargas nos básicos", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
@@ -105,7 +108,7 @@ private val MONTHS_PT = listOf("Janeiro", "Fevereiro", "Março", "Abril", "Maio"
 
 /** Retrospectiva do mês (#354): números do período e botão para compartilhar como imagem. */
 @Composable
-private fun RecapCard(month: com.vitoroliveira.gymtracker.presentation.body.MonthlyRecap?, year: com.vitoroliveira.gymtracker.presentation.body.MonthlyRecap?) {
+private fun RecapCard(month: com.vitoroliveira.gymtracker.presentation.body.MonthlyRecap?, year: com.vitoroliveira.gymtracker.presentation.body.MonthlyRecap?, onOpenYear: () -> Unit = {}) {
     val ctx = androidx.compose.ui.platform.LocalContext.current
     val cs = MaterialTheme.colorScheme
     var yearly by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(month?.isEmpty != false && year != null) }
@@ -154,6 +157,7 @@ private fun RecapCard(month: com.vitoroliveira.gymtracker.presentation.body.Mont
                 },
                 modifier = Modifier.fillMaxWidth()
             ) { Text("Compartilhar como imagem") }
+            if (year != null && !year.isEmpty) androidx.compose.material3.TextButton(onClick = onOpenYear, modifier = Modifier.fillMaxWidth()) { Text("Ver meu ano ›") }
         }
     }
 }

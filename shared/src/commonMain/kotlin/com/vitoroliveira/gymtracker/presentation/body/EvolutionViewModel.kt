@@ -48,7 +48,9 @@ data class EvolutionUiState(
     /** Retrospectiva do mês atual (#354); null se não carregou. */
     val recap: MonthlyRecap? = null,
     /** Retrospectiva do ano atual (#354). */
-    val yearRecap: MonthlyRecap? = null
+    val yearRecap: MonthlyRecap? = null,
+    /** "Meu ano" (#539): treinos por mês, melhor mês, grupos mais treinados, dia favorito, sequência. */
+    val yearReview: YearReview? = null
 )
 
 class EvolutionViewModel(
@@ -82,6 +84,7 @@ class EvolutionViewModel(
                 }
                 // retrospectiva do mês também é extra: se falhar, o resto da tela continua
                 var yearRecap: MonthlyRecap? = null
+                var yearReview: YearReview? = null
                 val recap = try {
                     val zone = kotlinx.datetime.TimeZone.currentSystemDefault()
                     val today = clock.now().toLocalDateTime(zone).date
@@ -89,12 +92,13 @@ class EvolutionViewModel(
                     val history = workoutRepository.getHistory()
                     val allSets = workoutRepository.getAllSetsForExport()
                     yearRecap = buildYearlyRecap(history, allSets, names, today.year, zone)
+                    yearReview = buildYearReview(history, names, today.year, zone)
                     buildMonthlyRecap(history, allSets, names, today.year, today.monthNumber, zone)
                 } catch (e: Exception) {
                     if (e is CancellationException) throw e
                     null
                 }
-                _state.value = EvolutionUiState(lifts = lifts, weeklySets = weekly, recap = recap, yearRecap = yearRecap)
+                _state.value = EvolutionUiState(lifts = lifts, weeklySets = weekly, recap = recap, yearRecap = yearRecap, yearReview = yearReview)
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 _state.value = EvolutionUiState(errorMessage = e.toUserMessage("Erro ao carregar a evolução"))

@@ -33,6 +33,7 @@ sealed class Screen(val route: String) {
     object Profile : Screen("profile")
     object Themes : Screen("themes")
     object Evolution : Screen("evolution")
+    object YearReview : Screen("year_review")
     object MuscleGroups : Screen("muscle_groups")
     object Records : Screen("records")
     object Achievements : Screen("achievements")
@@ -265,7 +266,14 @@ fun GymTrackerNavHost(launchAction: String? = null, onActionConsumed: () -> Unit
         }
 
         composable(Screen.Evolution.route) {
-            com.vitoroliveira.gymtracker.ui.body.EvolutionScreen(onBack = { navController.popBackStack() })
+            com.vitoroliveira.gymtracker.ui.body.EvolutionScreen(
+                onBack = { navController.popBackStack() },
+                onOpenYear = { navController.navigate(Screen.YearReview.route) }
+            )
+        }
+
+        composable(Screen.YearReview.route) {
+            com.vitoroliveira.gymtracker.ui.body.YearReviewScreen(onBack = { navController.popBackStack() })
         }
 
         composable(Screen.Themes.route) {
