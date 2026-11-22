@@ -249,10 +249,13 @@ private fun FeedCard(
                 )
             }
             val group = feedGroupName(item.post.stats)
+            // título forte (o grupo) e subtítulo discreto: antes todo cartão começava com "Treino finalizado ·"
             Text(
-                "Treino finalizado" + (group?.let { " · $it" } ?: ""),
-                style = MaterialTheme.typography.bodyMedium
+                group?.let { com.vitoroliveira.gymtracker.ui.components.prettyGroupName(it) } ?: "Treino",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
             )
+            Text("Treino finalizado", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             formatFeedStats(item.post.stats).takeIf { it.isNotEmpty() }?.let {
                 Text(it, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.primary)
             }

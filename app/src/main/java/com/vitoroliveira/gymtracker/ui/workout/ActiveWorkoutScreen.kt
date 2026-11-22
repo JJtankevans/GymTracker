@@ -279,7 +279,7 @@ fun ActiveWorkoutScreenContent(
                     Button(
                         onClick = { showFinishDialog = true },
                         enabled = uiState.activeWorkout != null && !uiState.isWorkoutFinished,
-                        modifier = Modifier.padding(end = 8.dp),
+                        modifier = Modifier.padding(end = 16.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.tertiary
                         )

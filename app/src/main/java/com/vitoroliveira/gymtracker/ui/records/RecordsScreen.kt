@@ -48,13 +48,13 @@ import com.vitoroliveira.gymtracker.ui.utils.formatKg
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun RecordsScreen(onBack: () -> Unit, viewModel: RecordsViewModel = koinViewModel()) {
+fun RecordsScreen(onBack: () -> Unit, onOpenAchievements: (() -> Unit)? = null, viewModel: RecordsViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsState()
-    RecordsContent(state, onBack, onRetry = viewModel::load)
+    RecordsContent(state, onBack, onRetry = viewModel::load, onOpenAchievements = onOpenAchievements)
 }
 
 @Composable
-fun RecordsContent(state: RecordsUiState, onBack: () -> Unit, onRetry: () -> Unit = {}) {
+fun RecordsContent(state: RecordsUiState, onBack: () -> Unit, onRetry: () -> Unit = {}, onOpenAchievements: (() -> Unit)? = null) {
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(state.errorMessage) { state.errorMessage?.let { snackbar.showSnackbar(it) } }
 
@@ -88,7 +88,7 @@ fun RecordsContent(state: RecordsUiState, onBack: () -> Unit, onRetry: () -> Uni
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                item(key = "summary") { Summary(state) }
+                item(key = "summary") { Summary(state, onOpenAchievements) }
                 items(state.records, key = { it.exerciseId }) { RecordCard(it, state) }
                 item(key = "foot") {
                     Text(
@@ -103,7 +103,7 @@ fun RecordsContent(state: RecordsUiState, onBack: () -> Unit, onRetry: () -> Uni
 }
 
 @Composable
-private fun Summary(state: RecordsUiState) {
+private fun Summary(state: RecordsUiState, onOpenAchievements: (() -> Unit)? = null) {
     ThemedCard(Modifier.fillMaxWidth(), containerColor = MaterialTheme.colorScheme.primaryContainer) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Default.EmojiEvents, null, Modifier.size(40.dp), tint = MaterialTheme.colorScheme.tertiary)
@@ -119,6 +119,10 @@ private fun Summary(state: RecordsUiState) {
                     else "Nenhum recorde novo nos últimos 30 dias",
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
+            }
+            if (onOpenAchievements != null) {
+                Spacer(Modifier.weight(1f))
+                androidx.compose.material3.TextButton(onClick = onOpenAchievements) { Text("Conquistas ›", color = MaterialTheme.colorScheme.onPrimaryContainer, fontWeight = FontWeight.Bold) }
             }
         }
     }

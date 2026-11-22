@@ -258,7 +258,10 @@ fun GymTrackerNavHost(launchAction: String? = null, onActionConsumed: () -> Unit
         }
 
         composable(Screen.Records.route) {
-            com.vitoroliveira.gymtracker.ui.records.RecordsScreen(onBack = { navController.popBackStack() })
+            com.vitoroliveira.gymtracker.ui.records.RecordsScreen(
+                onBack = { navController.popBackStack() },
+                onOpenAchievements = { navController.navigate(Screen.Achievements.route) }
+            )
         }
 
         composable(Screen.Evolution.route) {
