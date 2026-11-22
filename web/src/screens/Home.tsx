@@ -4,6 +4,7 @@ import { needsDeload, weeklyVolumes } from '../insights'
 import { compareWeeks, formatVolume } from '../recap'
 import { prettyGroupName, streakDays, suggestNextGroup, weeklyHistory, weekStart } from '../rules'
 import type { Tab } from '../App'
+import { loadFavs } from '../favs'
 
 export function Home({ go }: { go: (t: Tab, groupId?: string) => void }) {
   const [data, setData] = useState<HomeData | null>(null)
@@ -55,6 +56,16 @@ export function Home({ go }: { go: (t: Tab, groupId?: string) => void }) {
         <div className="big">{view.next ? prettyGroupName(view.next.name) : 'Escolher treino'}</div>
         <small>{view.next ? 'Sugerido pela sua rotação · toque para começar' : 'Toque para escolher o grupo'}</small>
       </div>
+
+      {(() => {
+        const favs = loadFavs().map((id) => data.groups.find((g) => g.id === id)).filter((g): g is NonNullable<typeof g> => !!g)
+        return favs.length > 0 && (
+          <div className="card">
+            <div className="label">Atalhos</div>
+            <div className="chips" style={{ marginTop: 8 }}>{favs.map((g) => <button key={g.id} className="chip" onClick={() => go('treino', g.id)}>{prettyGroupName(g.name)}</button>)}</div>
+          </div>
+        )
+      })()}
 
       {hist && (() => {
         const v = weeklyVolumes(hist)

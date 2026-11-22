@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { addExerciseToGroup, createGroup, deleteGroup, groupCounts, groupExercises, loadHome, removeFromGroup, type Exercise, type Group, type Workout } from '../data'
 import { prettyGroupName } from '../rules'
+import { loadFavs, saveFavs, toggleFav } from '../favs'
 import { CatalogPicker, TemplatePicker } from './CatalogPicker'
 
 const COLORS = ['#4CAF50', '#2196F3', '#3F51B5', '#E91E63', '#FF9800', '#9C27B0', '#00BCD4', '#F44336']
@@ -89,11 +90,12 @@ function GroupDetail({ group, onBack, onDeleted }: { group: Group; onBack: () =>
     try { await addExerciseToGroup(group.id, name, 3, 12); setName(''); await load() } catch (x) { setErr((x as Error).message) }
   }
   async function remove(id: string) { await removeFromGroup(group.id, id); await load() }
+  const [fav, setFav] = useState(() => loadFavs().includes(group.id))
 
   return (
     <>
       <button className="btn" style={{ alignSelf: 'flex-start' }} onClick={onBack}>‹ Grupos</button>
-      <div className="row"><span style={{ width: 28, height: 28, borderRadius: 14, background: group.color_hex }} /><div className="title" style={{ margin: 0 }}>{prettyGroupName(group.name)}</div></div>
+      <div className="row"><span style={{ width: 28, height: 28, borderRadius: 14, background: group.color_hex }} /><div className="title grow" style={{ margin: 0 }}>{prettyGroupName(group.name)}</div><button className={'chip' + (fav ? ' on' : '')} aria-pressed={fav} onClick={() => { const n = toggleFav(loadFavs(), group.id); saveFavs(n); setFav(n.includes(group.id)) }}>{fav ? '★ Atalho' : '☆ Atalho'}</button></div>
       {err && <div className="card error">{err}</div>}
       {!list && <div className="skel" />}
       {list?.length === 0 && <div className="card muted">Nenhum exercício neste grupo ainda.</div>}
