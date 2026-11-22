@@ -164,7 +164,7 @@ fun StartWorkoutSheetContent(
                                     plannedGroupId == null && suggestedGroupId != null && group.id == suggestedGroupId -> "Sugerido: próximo da sua rotação"
                                     else -> null
                                 },
-                                onClick = { start(group.id, group.name) }
+                                onClick = { start(group.id, com.vitoroliveira.gymtracker.ui.components.prettyGroupName(group.name)) }
                             )
                         }
                     }
@@ -206,7 +206,7 @@ fun MuscleGroupSelectItem(
 
             Column(Modifier.weight(1f)) {
                 Text(
-                    text = muscleGroup.name,
+                    text = com.vitoroliveira.gymtracker.ui.components.prettyGroupName(muscleGroup.name),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Medium
                 )

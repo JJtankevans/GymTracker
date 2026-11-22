@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Atalhos do ícone do app (tocar e segurar no launcher): vão direto para a ação, sem passar por menus. -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="start_workout"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_start_short"
+        android:shortcutLongLabel="@string/shortcut_start_long">
+        <intent
+            android:action="com.vitoroliveira.gymtracker.action.START"
+            android:targetPackage="com.vitoroliveira.gymtracker"
+            android:targetClass="com.vitoroliveira.gymtracker.MainActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="history"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_history_short"
+        android:shortcutLongLabel="@string/shortcut_history_long">
+        <intent
+            android:action="com.vitoroliveira.gymtracker.action.HISTORY"
+            android:targetPackage="com.vitoroliveira.gymtracker"
+            android:targetClass="com.vitoroliveira.gymtracker.MainActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="evolution"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_evolution_short"
+        android:shortcutLongLabel="@string/shortcut_evolution_long">
+        <intent
+            android:action="com.vitoroliveira.gymtracker.action.EVOLUTION"
+            android:targetPackage="com.vitoroliveira.gymtracker"
+            android:targetClass="com.vitoroliveira.gymtracker.MainActivity" />
+    </shortcut>
+</shortcuts>

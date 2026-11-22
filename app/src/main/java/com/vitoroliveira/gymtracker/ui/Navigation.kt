@@ -95,8 +95,15 @@ private fun NavController.backToFreshHome() {
     }
 }
 
+/** Ações dos atalhos do ícone do app (res/xml/shortcuts.xml). */
+object LaunchActions {
+    const val START = "com.vitoroliveira.gymtracker.action.START"
+    const val HISTORY = "com.vitoroliveira.gymtracker.action.HISTORY"
+    const val EVOLUTION = "com.vitoroliveira.gymtracker.action.EVOLUTION"
+}
+
 @Composable
-fun GymTrackerNavHost() {
+fun GymTrackerNavHost(launchAction: String? = null, onActionConsumed: () -> Unit = {}) {
     val navController = rememberNavController()
 
     NavHost(
@@ -142,6 +149,16 @@ fun GymTrackerNavHost() {
 
         composable(Screen.Home.route) {
             var showStartWorkoutSheet by remember { mutableStateOf(false) }
+
+            // Atalho do ícone do app: só chega aqui depois do login (a Home só existe com a pessoa entrada).
+            androidx.compose.runtime.LaunchedEffect(launchAction) {
+                when (launchAction) {
+                    LaunchActions.START -> { showStartWorkoutSheet = true; onActionConsumed() }
+                    LaunchActions.HISTORY -> { navController.navigate(Screen.History.route); onActionConsumed() }
+                    LaunchActions.EVOLUTION -> { navController.navigate(Screen.Evolution.route); onActionConsumed() }
+                    else -> if (launchAction != null && launchAction != android.content.Intent.ACTION_MAIN) onActionConsumed()
+                }
+            }
 
             HomeScreen(
                 onNavigateToMuscleGroups = {
