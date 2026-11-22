@@ -34,7 +34,8 @@ function Heatmap({ items }: { items: HistItem[] }) {
 export function Historico() {
   const [items, setItems] = useState<HistItem[] | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [filter, setFilter] = useState<string>('todos')
+  const [picked, setPicked] = useState<string[]>([])
+  const toggle = (g: string) => setPicked((p) => (p.includes(g) ? p.filter((x) => x !== g) : [...p, g]))
   const [open, setOpen] = useState<HistItem | null>(null)
   const [undo, setUndo] = useState<{ item: HistItem } | null>(null)
   const timer = useRef<number | undefined>(undefined)
@@ -95,14 +96,14 @@ export function Historico() {
     )
   }
 
-  const shown = filter === 'todos' ? items : items.filter((w) => nameOf(w) === filter)
+  const shown = picked.length === 0 ? items : items.filter((w) => picked.includes(nameOf(w)))
   return (
     <>
       <div className="title">Histórico</div>
       <Heatmap items={items} />
-      <div className="chips" role="tablist" aria-label="Filtrar por grupo">
-        <button className={'chip' + (filter === 'todos' ? ' on' : '')} onClick={() => setFilter('todos')}>Todos ({items.length})</button>
-        {groups.map(([g, n]) => <button key={g} className={'chip' + (filter === g ? ' on' : '')} onClick={() => setFilter(g)}>{g} ({n})</button>)}
+      <div className="chips" aria-label="Filtrar por grupo (pode escolher vários)">
+        <button className={'chip' + (picked.length === 0 ? ' on' : '')} aria-pressed={picked.length === 0} onClick={() => setPicked([])}>Todos ({items.length})</button>
+        {groups.map(([g, n]) => <button key={g} className={'chip' + (picked.includes(g) ? ' on' : '')} aria-pressed={picked.includes(g)} onClick={() => toggle(g)}>{g} ({n})</button>)}
       </div>
       {shown.length === 0 && <div className="card muted">Nenhum treino por aqui ainda.</div>}
       {shown.map((w) => (
