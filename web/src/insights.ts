@@ -185,3 +185,24 @@ export function needsDeload(volumes: number[]): boolean {
   const last4 = volumes.slice(-4)
   return last4.every((v) => v >= median * 1.05)
 }
+
+// ───────── #564 metas do mês (selos sazonais) ─────────
+import type { Achievement } from './achievements'
+const MONTH_NAMES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+
+/** Três selos que valem só para o mês corrente: treinos (meta semanal × 4), dias diferentes e volume. */
+export function monthlyBadges(items: HistItem[], weeklyGoal: number, now = new Date()): Achievement[] {
+  const ws = items.filter((w) => { const d = new Date(w.started_at); return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() })
+  const days = new Set(ws.map((w) => dayKey(new Date(w.started_at)))).size
+  const volume = ws.reduce((a, w) => a + w.sets.reduce((b, s) => b + s.reps * Number(s.weight_kg), 0), 0)
+  const mk = (suffix: string, title: string, description: string, progress: number, target: number): Achievement => ({
+    id: `month-${now.getFullYear()}-${now.getMonth() + 1}-${suffix}`, family: 'SPECIAL', title, description, progress, target,
+  })
+  const name = MONTH_NAMES[now.getMonth()]
+  const target = Math.max(4, weeklyGoal * 4)
+  return [
+    mk('workouts', `${name} em dia`, `Faça ${target} treinos em ${name.toLowerCase()}`, ws.length, target),
+    mk('days', `${name} constante`, 'Treine em 12 dias diferentes no mês', days, 12),
+    mk('volume', `${name} pesado`, 'Levante 50 toneladas no mês', Math.round(volume / 1000), 50),
+  ]
+}

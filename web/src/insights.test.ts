@@ -71,3 +71,11 @@ describe('progressão e descarga', () => {
     expect(v).toHaveLength(12); expect(v[11]).toBe(100); expect(v[10]).toBe(200)
   })
 })
+
+import { monthlyBadges } from './insights'
+describe('metas do mês', () => {
+  it('conta treinos, dias e toneladas só do mês corrente', () => {
+    const b = monthlyBadges([hist('a', 1, [['X', 10, 100]]), hist('b', 40, [['X', 10, 100]])], 3, new Date(now))
+    expect(b).toHaveLength(3); expect(b[0].target).toBe(12); expect(b[0].progress).toBe(1); expect(b[1].progress).toBe(1)
+  })
+})

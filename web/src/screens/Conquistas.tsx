@@ -3,6 +3,7 @@ import { loadHome, loadHistory } from '../data'
 import { computeAchievements, recordsOf, FAMILY_LABEL, type Achievement, type AchievementFamily } from '../achievements'
 import { realDurationMinutes } from '../rules'
 import { setsOf } from './Evolucao'
+import { monthlyBadges } from '../insights'
 
 const ICON: Record<AchievementFamily, string> = {
   WORKOUTS: 'M6 6v12M3 9v6M18 6v12M21 9v6M6 12h12',
@@ -42,7 +43,7 @@ export function Conquistas() {
         minutes: realDurationMinutes(w.finished_at ? Math.round((Date.parse(w.finished_at) - Date.parse(w.started_at)) / 60000) : null, w.started_at, w.sets.map((s) => s.completed_at)),
       }))
       const sets = setsOf(h)
-      setList(computeAchievements({ sessions, weeklyGoal: home.goal, totalVolumeKg: sets.reduce((a, s) => a + s.reps * s.kg, 0), exercisesWithRecord: recordsOf(sets).length }))
+      setList([...monthlyBadges(h, home.goal), ...computeAchievements({ sessions, weeklyGoal: home.goal, totalVolumeKg: sets.reduce((a, s) => a + s.reps * s.kg, 0), exercisesWithRecord: recordsOf(sets).length })])
     }).catch((e: Error) => setError(e.message))
   }
   useEffect(load, [])

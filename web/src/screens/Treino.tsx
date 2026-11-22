@@ -11,6 +11,8 @@ import { restOverAlert, unlockAudio } from '../alerts'
 import { isNewRecord, recordsOf } from '../achievements'
 
 const REST_OPTIONS = [30, 45, 60, 90, 120]
+/** Descanso próprio de cada exercício (#576): o último tempo escolhido depois de uma série dele. */
+const restMap = (): Record<string, number> => { try { return JSON.parse(localStorage.getItem('gt-rest-ex') ?? '{}') } catch { return {} } }
 const restLabel = (s: number) => (s < 60 ? `${s}s` : s % 60 === 0 ? `${s / 60}min` : `${Math.floor(s / 60)}min${s % 60}`)
 const clock = (ms: number) => { const t = Math.max(0, Math.floor(ms / 1000)); return `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}` }
 const parseNum = (s: string) => { const n = parseFloat(s.replace(',', '.')); return Number.isFinite(n) ? n : NaN }
@@ -40,6 +42,8 @@ export function Treino({ pending, clearPending, onDone }: { pending: string | nu
   const [error, setError] = useState<string | null>(null)
   const [note, setNote] = useState<string | null>(null)
   const [restEnd, setRestEnd] = useState<number>(() => Number(localStorage.getItem('gt-rest-end') ?? 0))
+  const lastRestEx = useRef<string | null>(null)
+  const [restSelected, setRestSelected] = useState<number | null>(null)
   const [restSec, setRestSec] = useState<number>(() => Number(localStorage.getItem('gt-rest') ?? 90))
   const [confirmEnd, setConfirmEnd] = useState(false)
   const bests = useRef<Record<string, number>>({}) // melhor carga por exercício (nome) no histórico, para avisar de recorde
@@ -99,7 +103,10 @@ export function Treino({ pending, clearPending, onDone }: { pending: string | nu
       try { navigator.vibrate?.([60, 40, 60, 40, 140]) } catch { /* sem vibração */ }
       setTimeout(() => setPrBanner(null), 6000)
     }
-    const end = Date.now() + restSec * 1000
+    lastRestEx.current = ex.id
+    const sec = restMap()[ex.id] ?? restSec
+    setRestSelected(sec)
+    const end = Date.now() + sec * 1000
     setRestEnd(end)
     localStorage.setItem('gt-rest-end', String(end))
     return row
@@ -209,7 +216,7 @@ export function Treino({ pending, clearPending, onDone }: { pending: string | nu
           </div>
           <div className="opts">
             {REST_OPTIONS.map((s) => (
-              <button key={s} className={'chip' + (s === restSec ? ' on' : '')} onClick={() => { setRestSec(s); localStorage.setItem('gt-rest', String(s)); const end = Date.now() + s * 1000; setRestEnd(end); localStorage.setItem('gt-rest-end', String(end)) }}>{restLabel(s)}</button>
+              <button key={s} className={'chip' + (s === (restSelected ?? restSec) ? ' on' : '')} onClick={() => { setRestSec(s); setRestSelected(s); localStorage.setItem('gt-rest', String(s)); if (lastRestEx.current) localStorage.setItem('gt-rest-ex', JSON.stringify({ ...restMap(), [lastRestEx.current]: s })); const end = Date.now() + s * 1000; setRestEnd(end); localStorage.setItem('gt-rest-end', String(end)) }}>{restLabel(s)}</button>
             ))}
           </div>
         </div>
