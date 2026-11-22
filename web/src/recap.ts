@@ -1,6 +1,6 @@
 import type { HistItem } from './data'
 import { shareCard, type CardSpec } from './shareCard'
-import { dayKey, formatKg, prettyGroupName } from './rules'
+import { dayKey, formatKg, prettyGroupName, weekStart } from './rules'
 
 /** Retrospectiva de um mês (month 1–12) ou do ano inteiro (month 0): porte do MonthlyRecap do Android. */
 export interface Recap {
@@ -92,4 +92,21 @@ export function buildYearReview(items: HistItem[], year: number, topN = 3): Year
     favoriteWeekday: wdMax > 0 ? wd.indexOf(wdMax) : null,
     longestStreakDays: best,
   }
+}
+
+/** Semana atual (segunda a hoje) contra a semana anterior inteira. */
+export interface WeekCompare { workouts: [number, number]; sets: [number, number]; volumeKg: [number, number] }
+export function compareWeeks(items: HistItem[], now = new Date()): WeekCompare {
+  const cur = weekStart(now).getTime()
+  const prev = cur - 7 * 86400000
+  const out: WeekCompare = { workouts: [0, 0], sets: [0, 0], volumeKg: [0, 0] }
+  for (const w of items) {
+    const t = weekStart(new Date(w.started_at)).getTime()
+    if (t !== cur && t !== prev) continue
+    const i = t === cur ? 0 : 1
+    out.workouts[i]++
+    out.sets[i] += w.sets.length
+    out.volumeKg[i] += w.sets.reduce((a, s) => a + s.reps * Number(s.weight_kg), 0)
+  }
+  return out
 }

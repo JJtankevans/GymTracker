@@ -8,6 +8,7 @@ import { weeklySetsByMuscle, WEEKLY_SETS_RANGE } from '../muscle'
 import { MuscleMap } from './MuscleMap'
 import { RecapCard } from './RecapCard'
 import { LineChart } from './LineChart'
+import { compareWeeks, formatVolume } from '../recap'
 
 const short = (iso: string) => { const [, m, d] = iso.slice(0, 10).split('-'); return `${d}/${m}` }
 const signed = (v: number) => { const r = Math.round(v * 10) / 10; return (r > 0 ? '+' : '') + formatKg(r) + ' kg' }
@@ -76,6 +77,20 @@ export function Evolucao() {
           <div key={w.id} className="row"><span className="grow num">{short(w.measured_on)} · {formatKg(w.weight_kg)} kg</span><button className="icon" aria-label={`Apagar ${short(w.measured_on)}`} onClick={async () => { await deleteWeight(w.id); setWeights(await loadWeights()) }}>×</button></div>
         ))}
       </div>
+
+      {hist && (() => {
+        const c = compareWeeks(hist)
+        const rows: [string, [number, number], (n: number) => string][] = [['Treinos', c.workouts, String], ['Séries', c.sets, String], ['Volume', c.volumeKg, formatVolume]]
+        return (
+          <div className="card">
+            <div className="label">Esta semana vs. anterior</div>
+            {rows.map(([name, [a, b], fmt]) => {
+              const d = a - b
+              return <div key={name} className="row"><span className="grow">{name}</span><span className="num">{fmt(a)}</span><span className="muted num" style={{ marginLeft: 10 }}>{b === 0 ? '—' : `${d >= 0 ? '+' : '−'}${Math.round(Math.abs(d) / b * 100)}%`}</span></div>
+            })}
+          </div>
+        )
+      })()}
 
       <RecapCard items={hist} />
 

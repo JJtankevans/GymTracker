@@ -60,3 +60,13 @@ describe('meu ano', () => {
     expect(r.longestStreakDays).toBe(0)
   })
 })
+
+import { compareWeeks } from './recap'
+describe('compareWeeks', () => {
+  it('separa semana atual e anterior', () => {
+    const mk = (iso: string, reps: number, kg: number) => ({ id: iso, started_at: iso, finished_at: iso, muscle_group_id: null, muscle_group_name: null, sets: [{ reps, weight_kg: kg }] }) as never
+    const now = new Date(2026, 10, 18, 12) // quarta
+    const r = compareWeeks([mk(new Date(2026, 10, 17, 9).toISOString(), 10, 20), mk(new Date(2026, 10, 11, 9).toISOString(), 5, 40), mk(new Date(2026, 9, 1).toISOString(), 1, 1)], now)
+    expect(r.workouts).toEqual([1, 1]); expect(r.volumeKg).toEqual([200, 200]); expect(r.sets).toEqual([1, 1])
+  })
+})

@@ -1,5 +1,5 @@
 # HANDOFF — GymTracker
-status: PENDENTE
+status: RETOMADO (2026-11-22)
 atualizado: 2026-11-22 (fim da noite)
 
 > Como funciona: o Thiago digita `/handoff` → a sessão atualiza este arquivo, commita, marca `status: PENDENTE` e limpa a conversa.
