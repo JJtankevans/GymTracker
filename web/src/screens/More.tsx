@@ -5,11 +5,12 @@ import { Evolucao } from './Evolucao'
 import { Recordes } from './Recordes'
 import { Conquistas } from './Conquistas'
 import { Ferramentas } from './Ferramentas'
+import { Feed } from './Feed'
 import { clampGoal, loadHome, setWeeklyGoal } from '../data'
 import { setSoundEnabled, soundEnabled } from '../alerts'
 import { applyImport, downloadBackup, parseBackup } from '../backup'
 
-type Sub = null | 'evolucao' | 'recordes' | 'conquistas' | 'ferramentas'
+type Sub = null | 'evolucao' | 'recordes' | 'conquistas' | 'ferramentas' | 'feed'
 
 export function More() {
   const [sub, setSub] = useState<Sub>(null)
@@ -53,6 +54,7 @@ export function More() {
         {sub === 'recordes' && <Recordes />}
         {sub === 'conquistas' && <Conquistas />}
         {sub === 'ferramentas' && <Ferramentas />}
+        {sub === 'feed' && <Feed />}
       </>
     )
   }
@@ -64,6 +66,7 @@ export function More() {
   return (
     <>
       <div className="title">Mais</div>
+      {item('Feed', 'Treinos de quem você segue, com reações', 'feed')}
       {item('Evolução', 'Peso corporal e cargas por exercício', 'evolucao')}
       {item('Recordes', 'Sua melhor carga em cada exercício', 'recordes')}
       {item('Conquistas', 'Selos por treinos, sequência e volume', 'conquistas')}
