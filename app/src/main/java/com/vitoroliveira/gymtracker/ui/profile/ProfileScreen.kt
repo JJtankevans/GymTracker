@@ -265,11 +265,12 @@ fun ProfileScreenContent(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Slider(
-                    value = weeklyGoal.toFloat(),
-                    onValueChange = { weeklyGoal = it.toInt() },
-                    valueRange = 1f..7f,
-                    steps = 5,
+                // Wake Slider (OriginKit): barras finas, esteira ao arrastar rápido. Mesmo valor/intervalo do Slider antigo.
+                com.vitoroliveira.gymtracker.ui.components.WakeSlider(
+                    value = weeklyGoal,
+                    onValueChange = { weeklyGoal = it },
+                    range = 1..7,
+                    contentDescription = "Meta semanal de treinos, de 1 a 7 dias",
                     modifier = Modifier.fillMaxWidth()
                 )
 
