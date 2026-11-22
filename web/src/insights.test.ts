@@ -1,0 +1,54 @@
+import { describe, expect, it } from 'vitest'
+import { bandRecords, compareWorkouts, estimateKcal, heatmap, historyCsv, imbalances, plateaus, searchHistory } from './insights'
+import type { HistItem } from './data'
+
+const DAY = 86_400_000
+const now = new Date(2026, 10, 22, 12).getTime()
+const at = (daysAgo: number) => new Date(now - daysAgo * DAY).toISOString()
+const set = (exercise: string, reps: number, kg: number, daysAgo: number) => ({ exercise, reps, kg, at: at(daysAgo) })
+const hist = (id: string, daysAgo: number, sets: [string, number, number][]): HistItem => ({
+  id, muscle_group_id: null, muscle_group_name: 'Peito', started_at: at(daysAgo), finished_at: at(daysAgo),
+  sets: sets.map(([n, reps, kg], i) => ({ id: `${id}${i}`, reps, weight_kg: kg, set_number: i + 1, completed_at: at(daysAgo), exercise: { name: n } })),
+}) as HistItem
+
+describe('insights', () => {
+  it('recorde por faixa usa a maior carga com pelo menos N reps', () => {
+    const r = bandRecords([set('Supino', 10, 60, 5), set('Supino', 5, 80, 4), set('Supino', 1, 100, 3)])
+    const kg = (b: number) => r.find((x) => x.band === b)!.kg
+    expect([kg(1), kg(5), kg(10)]).toEqual([100, 80, 60])
+  })
+  it('calorias', () => { expect(estimateKcal(60, 80)).toBe(400); expect(estimateKcal(-5, 80)).toBe(0) })
+  it('desequilíbrio avisa quando um lado passa do dobro', () => {
+    const s = Array.from({ length: 12 }, () => set('Supino Reto com Barra', 10, 50, 2))
+    const r = imbalances(s, now)
+    expect(r[0].setsA).toBe(12); expect(r[0].setsB).toBe(0); expect(r[0].warn).toBe(true)
+    expect(r[1].warn).toBe(false)
+  })
+  it('platô: sem recorde há 5 semanas mas treinado recentemente', () => {
+    const s = [set('Agachamento', 5, 100, 40), set('Agachamento', 5, 90, 3)]
+    const p = plateaus(s, now)
+    expect(p).toHaveLength(1); expect(p[0].weeks).toBe(5)
+    expect(plateaus([set('Agachamento', 5, 90, 40), set('Agachamento', 5, 100, 3)], now)).toHaveLength(0)
+  })
+  it('mapa de calor: 26 colunas de 7 dias e dia futuro zerado', () => {
+    const h = heatmap([hist('a', 0, [['X', 10, 10]])], new Date(now))
+    expect(h).toHaveLength(26); expect(h[0]).toHaveLength(7)
+    expect(h.flat().filter((c) => c.count > 0)).toHaveLength(1)
+  })
+  it('CSV com BOM, ; e vírgula decimal', () => {
+    const csv = historyCsv([hist('a', 1, [['Supino', 10, 52.5]])])
+    expect(csv.startsWith('﻿data;grupo')).toBe(true)
+    expect(csv).toContain(';Supino;1;10;52,5')
+  })
+  it('compara treinos pelo melhor 1RM de cada exercício', () => {
+    const d = compareWorkouts(hist('a', 9, [['Supino', 10, 50]]), hist('b', 2, [['Supino', 10, 55], ['Remada', 8, 40]]))
+    expect(d.find((x) => x.exercise === 'Supino')).toMatchObject({ a: { kg: 50 }, b: { kg: 55 } })
+    expect(d.find((x) => x.exercise === 'Remada')!.a).toBeNull()
+  })
+  it('pesquisa por nome sem acento e por carga', () => {
+    const h = [hist('a', 5, [['Rosca direta', 10, 20], ['Supino', 8, 80]])]
+    expect(searchHistory(h, 'ROSCA')).toHaveLength(1)
+    expect(searchHistory(h, '80kg')).toHaveLength(1)
+    expect(searchHistory(h, '')).toHaveLength(0)
+  })
+})
