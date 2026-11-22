@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Surface
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material.icons.filled.Headphones
@@ -147,11 +148,32 @@ fun SocialContent(state: SocialUiState, a: SocialActions, onBack: () -> Unit) {
                 Box(Modifier.fillMaxSize(), Alignment.Center) { com.vitoroliveira.gymtracker.ui.components.ErrorState(state.loadError!!, a.refresh) }
             } else if (state.isLoading && state.feed.isEmpty() && state.myGroups.isEmpty() && state.challenges.isEmpty()) {
                 com.vitoroliveira.gymtracker.ui.components.ListSkeleton(rows = 4, rowHeight = 150.dp)
-            } else when (tab) {
-                0 -> FeedTab(state, a, onOpenSettings = { showSettings = true })
-                1 -> GroupsTab(state, a, onCreate = { showGroupDialog = true }, onCode = { showCodeDialog = true })
-                2 -> ChallengesTab(state, a, onCreate = { showChallengeDialog = true }, onOpen = { openChallenge = it })
-                else -> PeopleTab(state, a)
+            } else {
+                // Abas com direção (Cult UI direction-aware-tabs): o conteúdo entra do lado para onde a aba está.
+                // Entrada 220 ms com curva do DESIGN.md; saída mais curta e sutil (120 ms). Sem animação se o sistema pediu.
+                val tabContext = androidx.compose.ui.platform.LocalContext.current
+                val reduceMotion = remember(tabContext) { !com.vitoroliveira.gymtracker.ui.theme.animationsEnabled(tabContext) }
+                androidx.compose.animation.AnimatedContent(
+                    targetState = tab,
+                    transitionSpec = {
+                        if (reduceMotion) androidx.compose.animation.EnterTransition.None togetherWith androidx.compose.animation.ExitTransition.None
+                        else {
+                            val dir = if (targetState > initialState) 1 else -1
+                            (androidx.compose.animation.slideInHorizontally(androidx.compose.animation.core.tween(220, easing = androidx.compose.animation.core.CubicBezierEasing(0.23f, 1f, 0.32f, 1f))) { dir * it / 5 } +
+                                androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(200))) togetherWith
+                                (androidx.compose.animation.slideOutHorizontally(androidx.compose.animation.core.tween(120)) { -dir * it / 10 } +
+                                    androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(90)))
+                        }
+                    },
+                    label = "social-tab"
+                ) { current ->
+                    when (current) {
+                        0 -> FeedTab(state, a, onOpenSettings = { showSettings = true })
+                        1 -> GroupsTab(state, a, onCreate = { showGroupDialog = true }, onCode = { showCodeDialog = true })
+                        2 -> ChallengesTab(state, a, onCreate = { showChallengeDialog = true }, onOpen = { openChallenge = it })
+                        else -> PeopleTab(state, a)
+                    }
+                }
             }
         }
     }
