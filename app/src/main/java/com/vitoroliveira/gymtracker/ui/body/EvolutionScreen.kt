@@ -11,6 +11,9 @@ import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import com.vitoroliveira.gymtracker.ui.workout.shareWorkoutImage
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -72,6 +75,7 @@ fun EvolutionContent(
         ) {
             item(key = "weight") { BodyWeightCard(body, onLog = onLog, onDelete = onDelete, onEditData = { showData = true }) }
             item(key = "measures") { MeasurementsCard(body.measurements, onLogMeasure, onDeleteMeasure) }
+            evo.recap?.takeIf { !it.isEmpty }?.let { r -> item(key = "recap") { RecapCard(r) } }
             if (evo.weeklySets.any { it.sets > 0 }) item(key = "weekly-sets") { WeeklySetsCard(evo.weeklySets) }
             item(key = "lifts-title") {
                 Text("Cargas nos básicos", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
@@ -95,6 +99,62 @@ fun EvolutionContent(
     }
 
     if (showData) BodyDataDialog(body.profile, onSave = { onSaveProfile(it); showData = false }, onDismiss = { showData = false })
+}
+
+private val MONTHS_PT = listOf("Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro")
+
+/** Retrospectiva do mês (#354): números do período e botão para compartilhar como imagem. */
+@Composable
+private fun RecapCard(r: com.vitoroliveira.gymtracker.presentation.body.MonthlyRecap) {
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val cs = MaterialTheme.colorScheme
+    val monthName = MONTHS_PT[(r.month - 1).coerceIn(0, 11)]
+    com.vitoroliveira.gymtracker.ui.theme.ThemedCard(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text("Retrospectiva de $monthName", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                RecapStat("${r.workouts}", if (r.workouts == 1) "treino" else "treinos")
+                RecapStat("${r.daysTrained}", if (r.daysTrained == 1) "dia" else "dias")
+                RecapStat("${r.sets}", "séries")
+                RecapStat(com.vitoroliveira.gymtracker.ui.utils.formatVolume(r.volumeKg), "volume")
+            }
+            r.topGroup?.let {
+                Text("Mais treinado: ${com.vitoroliveira.gymtracker.ui.components.prettyGroupName(it)} (${r.topGroupWorkouts}x)", style = MaterialTheme.typography.bodyMedium, color = cs.onSurfaceVariant)
+            }
+            androidx.compose.material3.OutlinedButton(
+                onClick = {
+                    val colors = com.vitoroliveira.gymtracker.ui.workout.ShareColors(
+                        bgTop = cs.background.toArgb(),
+                        bgBottom = cs.surfaceContainerHighest.compositeOver(cs.background).toArgb(),
+                        text = cs.onBackground.toArgb(), muted = cs.onSurfaceVariant.toArgb(),
+                        accent = cs.primary.toArgb(), onAccent = cs.onPrimary.toArgb()
+                    )
+                    val stats = com.vitoroliveira.gymtracker.ui.workout.ShareStats(
+                        title = "$monthName de ${r.year}",
+                        dateText = "${r.year}",
+                        subtitle = "Minha retrospectiva do mês",
+                        blocks = listOf(
+                            "TREINOS" to "${r.workouts}",
+                            "SÉRIES" to "${r.sets}",
+                            "VOLUME" to com.vitoroliveira.gymtracker.ui.utils.formatVolume(r.volumeKg)
+                        ),
+                        records = emptyList(),
+                        footer = "${r.daysTrained} dias treinados" + (r.topGroup?.let { " · mais treinado: ${com.vitoroliveira.gymtracker.ui.components.prettyGroupName(it)}" } ?: "") + " · GymTracker"
+                    )
+                    runCatching { ctx.shareWorkoutImage(com.vitoroliveira.gymtracker.ui.workout.renderWorkoutImage(stats, colors), "gymtracker_retrospectiva.png") }
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) { Text("Compartilhar como imagem") }
+        }
+    }
+}
+
+@Composable
+private fun RecapStat(value: String, label: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.primary)
+        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
 }
 
 /** Séries por músculo nos últimos 7 dias, com a faixa de referência marcada. */

@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 
@@ -43,13 +44,16 @@ data class EvolutionUiState(
     val lifts: List<LiftSeries> = emptyList(),
     val errorMessage: String? = null,
     /** Séries por músculo nos últimos 7 dias (vazio se não carregou). */
-    val weeklySets: List<MuscleSets> = emptyList()
+    val weeklySets: List<MuscleSets> = emptyList(),
+    /** Retrospectiva do mês atual (#354); null se não carregou. */
+    val recap: MonthlyRecap? = null
 )
 
 class EvolutionViewModel(
     private val exerciseRepository: ExerciseRepository,
     private val workoutRepository: WorkoutRepository,
-    private val clock: Clock = Clock.System
+    private val clock: Clock = Clock.System,
+    private val groupRepository: com.vitoroliveira.gymtracker.domain.repository.MuscleGroupRepository? = null
 ) : ViewModel() {
     private val _state = MutableStateFlow(EvolutionUiState())
     val state: StateFlow<EvolutionUiState> = _state.asStateFlow()
@@ -74,7 +78,17 @@ class EvolutionViewModel(
                     if (e is CancellationException) throw e
                     emptyList()
                 }
-                _state.value = EvolutionUiState(lifts = lifts, weeklySets = weekly)
+                // retrospectiva do mês também é extra: se falhar, o resto da tela continua
+                val recap = try {
+                    val zone = kotlinx.datetime.TimeZone.currentSystemDefault()
+                    val today = clock.now().toLocalDateTime(zone).date
+                    val names = groupRepository?.getAll()?.mapNotNull { g -> g.id?.let { it to g.name } }?.toMap().orEmpty()
+                    buildMonthlyRecap(workoutRepository.getHistory(), workoutRepository.getAllSetsForExport(), names, today.year, today.monthNumber, zone)
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                    null
+                }
+                _state.value = EvolutionUiState(lifts = lifts, weeklySets = weekly, recap = recap)
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 _state.value = EvolutionUiState(errorMessage = e.toUserMessage("Erro ao carregar a evolução"))

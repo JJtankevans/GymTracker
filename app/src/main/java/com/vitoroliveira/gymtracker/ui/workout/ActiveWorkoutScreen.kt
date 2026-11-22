@@ -896,10 +896,14 @@ fun WorkoutSummaryDialog(summary: WorkoutSummary, onDone: () -> Unit, onShare: (
                         val stats = ShareStats(
                             title = groupName?.takeIf { it.isNotBlank() }?.let { com.vitoroliveira.gymtracker.ui.components.prettyGroupName(it) } ?: "Treino livre",
                             dateText = date,
-                            durationMin = summary.durationMinutes,
-                            sets = summary.totalSets, reps = summary.totalReps,
-                            volume = formatVolume(summary.totalVolumeKg),
-                            records = summary.newRecords
+                            subtitle = "Treino concluído",
+                            blocks = listOf(
+                                "DURAÇÃO" to "${summary.durationMinutes} min",
+                                "SÉRIES" to "${summary.totalSets}",
+                                "VOLUME" to formatVolume(summary.totalVolumeKg)
+                            ),
+                            records = summary.newRecords,
+                            footer = "${summary.totalReps} repetições · feito no GymTracker"
                         )
                         runCatching { shareContext.shareWorkoutImage(renderWorkoutImage(stats, colors)) }
                     },

@@ -15,14 +15,15 @@ import java.io.File
 /** Cores (ARGB) que o cartão usa; vêm do tema ativo para a imagem combinar com o app. */
 data class ShareColors(val bgTop: Int, val bgBottom: Int, val text: Int, val muted: Int, val accent: Int, val onAccent: Int)
 
+/** Conteúdo do cartão: serve para o treino (#355) e para a retrospectiva do mês (#354). */
 data class ShareStats(
     val title: String,
     val dateText: String,
-    val durationMin: Long?,
-    val sets: Int,
-    val reps: Int,
-    val volume: String,
-    val records: List<String>
+    val subtitle: String,
+    /** Até 3 números em destaque: rótulo → valor. */
+    val blocks: List<Pair<String, String>>,
+    val records: List<String>,
+    val footer: String
 )
 
 /**
@@ -56,18 +57,13 @@ fun renderWorkoutImage(stats: ShareStats, c: ShareColors): Bitmap {
     val lines = wrap(stats.title, titlePaint, w - 2 * pad).take(2)
     var y = 300f
     lines.forEach { cv.drawText(it, pad, y, titlePaint); y += 126f }
-    cv.drawText("Treino concluído", pad, y + 6f, paint(44f, c.muted))
+    cv.drawText(stats.subtitle, pad, y + 6f, paint(44f, c.muted))
 
     // três números
     val labelPaint = paint(30f, c.muted, spacing = 0.18f)
     val numPaint = paint(132f, c.accent, bold = true)
-    val blocks = listOf(
-        "DURAÇÃO" to (stats.durationMin?.let { "$it" } ?: "—") + (if (stats.durationMin != null) " min" else ""),
-        "SÉRIES" to "${stats.sets}",
-        "VOLUME" to stats.volume
-    )
     var by = 540f
-    blocks.forEach { (label, value) ->
+    stats.blocks.take(3).forEach { (label, value) ->
         cv.drawText(label, pad, by, labelPaint)
         cv.drawText(value, pad, by + 128f, numPaint)
         by += 200f
@@ -84,7 +80,7 @@ fun renderWorkoutImage(stats: ShareStats, c: ShareColors): Bitmap {
         cv.drawRoundRect(rect, 45f, 45f, chip)
         cv.drawText(shown, pad + 36f, h - 170f, chipText)
     }
-    cv.drawText("${stats.reps} repetições · feito no GymTracker", pad, h - 70f, paint(30f, c.muted))
+    cv.drawText(stats.footer, pad, h - 70f, paint(30f, c.muted))
     return bmp
 }
 
