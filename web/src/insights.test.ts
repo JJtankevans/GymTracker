@@ -52,3 +52,22 @@ describe('insights', () => {
     expect(searchHistory(h, '')).toHaveLength(0)
   })
 })
+
+import { needsDeload, nextProgression, weeklyVolumes } from './insights'
+describe('progressão e descarga', () => {
+  it('sobe a carga ao bater as reps, senão pede +1 rep', () => {
+    expect(nextProgression({ kg: 40, reps: 12 }, 12)).toMatchObject({ kg: 42.5, reps: 12 })
+    expect(nextProgression({ kg: 80, reps: 8 }, 8)).toMatchObject({ kg: 85 })
+    expect(nextProgression({ kg: 40, reps: 9 }, 12)).toMatchObject({ kg: 40, reps: 10 })
+    expect(nextProgression(undefined, 10)).toBeNull()
+  })
+  it('descarga: 4 semanas acima da mediana', () => {
+    expect(needsDeload([5, 5, 5, 5, 5, 5, 5, 5, 9, 9, 9, 9])).toBe(true)
+    expect(needsDeload([5, 5, 5, 5, 5, 5, 5, 5, 9, 9, 5, 9])).toBe(false)
+    expect(needsDeload([9, 9, 9])).toBe(false)
+  })
+  it('volume por semana', () => {
+    const v = weeklyVolumes([hist('a', 0, [['X', 10, 10]]), hist('b', 8, [['X', 10, 20]])], new Date(now))
+    expect(v).toHaveLength(12); expect(v[11]).toBe(100); expect(v[10]).toBe(200)
+  })
+})

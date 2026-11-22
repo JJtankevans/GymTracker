@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { loadHome, type HomeData } from '../data'
+import { loadHistory, loadHome, type HistItem, type HomeData } from '../data'
+import { needsDeload, weeklyVolumes } from '../insights'
+import { formatVolume } from '../recap'
 import { prettyGroupName, streakDays, suggestNextGroup, weeklyHistory, weekStart } from '../rules'
 import type { Tab } from '../App'
 
@@ -7,6 +9,8 @@ export function Home({ go }: { go: (t: Tab, groupId?: string) => void }) {
   const [data, setData] = useState<HomeData | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  const [hist, setHist] = useState<HistItem[] | null>(null)
+  useEffect(() => { loadHistory().then(setHist).catch(() => {}) }, [])
   const load = () => { setError(null); loadHome().then(setData).catch((e: Error) => setError(e.message)) }
   useEffect(load, [])
 
@@ -51,6 +55,20 @@ export function Home({ go }: { go: (t: Tab, groupId?: string) => void }) {
         <div className="big">{view.next ? prettyGroupName(view.next.name) : 'Escolher treino'}</div>
         <small>{view.next ? 'Sugerido pela sua rotação · toque para começar' : 'Toque para escolher o grupo'}</small>
       </div>
+
+      {hist && (() => {
+        const v = weeklyVolumes(hist)
+        const cur = v[v.length - 1], prev = v[v.length - 2]
+        const lastDay = view.last ? Math.floor((Date.now() - new Date(view.last.started_at).getTime()) / 86400000) : null
+        return (
+          <div className="card">
+            <div className="label">Hoje</div>
+            <div className="row"><span className="grow">Carga da semana</span><b className="num">{formatVolume(cur)}</b><span className="muted num" style={{ marginLeft: 10 }}>{prev > 0 ? `${cur >= prev ? '+' : '−'}${Math.round(Math.abs(cur - prev) / prev * 100)}% vs. anterior` : ''}</span></div>
+            {lastDay !== null && <div className="row"><span className="grow">Descanso</span><b className="num">{lastDay === 0 ? 'treinou hoje' : `${lastDay} ${lastDay === 1 ? 'dia' : 'dias'} sem treinar`}</b></div>}
+            {needsDeload(v) && <div className="muted" style={{ marginTop: 6 }}>Quatro semanas pesadas seguidas: considere uma semana de descarga (cerca de 60% do volume).</div>}
+          </div>
+        )
+      })()}
 
       <div className="card">
         <div className="label">Meta semanal</div>

@@ -149,3 +149,39 @@ export function searchHistory(items: HistItem[], query: string, limit = 60): Sea
 }
 
 export { loadForReps }
+
+// ───────── #559 sobrecarga progressiva ─────────
+export interface Progression { kg: number; reps: number; text: string }
+
+/** Sugestão para a próxima vez: bateu as repetições-alvo → sobe a carga (+2,5 kg, ou +5 kg se a carga passa de 60); senão mantém a carga e pede +1 repetição. */
+export function nextProgression(last: { kg: number; reps: number } | undefined, targetReps: number): Progression | null {
+  if (!last || last.kg <= 0 || last.reps < 1) return null
+  if (last.reps >= targetReps) {
+    const step = last.kg >= 60 ? 5 : 2.5
+    return { kg: last.kg + step, reps: targetReps, text: `Sugestão: ${String(last.kg + step).replace('.', ',')} kg × ${targetReps}` }
+  }
+  return { kg: last.kg, reps: last.reps + 1, text: `Sugestão: ${String(last.kg).replace('.', ',')} kg × ${last.reps + 1}` }
+}
+
+// ───────── #560 semana de descarga ─────────
+/** Volume (kg) por semana nas últimas [n] semanas (a atual por último). */
+export function weeklyVolumes(items: HistItem[], now = new Date(), n = 12): number[] {
+  const mondayOf = (d: Date) => { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x.getTime() }
+  const cur = mondayOf(now)
+  const out = Array<number>(n).fill(0)
+  for (const w of items) {
+    const i = n - 1 - Math.round((cur - mondayOf(new Date(w.started_at))) / (7 * DAY))
+    if (i >= 0 && i < n) out[i] += w.sets.reduce((a, s) => a + s.reps * Number(s.weight_kg), 0)
+  }
+  return out
+}
+
+/** Sugere descarga quando as 4 últimas semanas (a atual conta só se já passou do volume) ficaram todas acima da mediana de 12 semanas e a semana atual não é de descarga. */
+export function needsDeload(volumes: number[]): boolean {
+  if (volumes.length < 8) return false
+  const sorted = [...volumes].filter((v) => v > 0).sort((a, b) => a - b)
+  if (sorted.length < 6) return false
+  const median = sorted[Math.floor(sorted.length / 2)]
+  const last4 = volumes.slice(-4)
+  return last4.every((v) => v >= median * 1.05)
+}

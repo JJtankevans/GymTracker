@@ -1,3 +1,4 @@
+import { nextProgression } from '../insights'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   activeWorkout, addSet, deleteSet, deleteWorkout, finishWorkout, groupExercises, lastPerformance, loadHistory, loadHome, startWorkout, workoutSets,
@@ -240,7 +241,7 @@ function ExerciseCard({ ex, last, sets, onRegister, onRemove }: {
     setBusy(true); setErr(null)
     try { await onRegister(ex, Math.round(repsN), kgN) } catch (e) { setErr((e as Error).message) } finally { setBusy(false) }
   }
-  const sugg = useMemo(() => (last ? `Última vez: ${formatKg(last.weight_kg)} kg × ${last.reps}` : null), [last])
+  const sugg = useMemo(() => { if (!last) return null; const p = nextProgression({ kg: last.weight_kg, reps: last.reps }, ex.default_reps); return `Última vez: ${formatKg(last.weight_kg)} kg × ${last.reps}` + (p ? ` · ${p.text}` : '') }, [last, ex.default_reps])
 
   return (
     <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
