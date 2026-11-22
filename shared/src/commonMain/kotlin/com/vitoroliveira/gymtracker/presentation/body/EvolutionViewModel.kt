@@ -46,7 +46,9 @@ data class EvolutionUiState(
     /** Séries por músculo nos últimos 7 dias (vazio se não carregou). */
     val weeklySets: List<MuscleSets> = emptyList(),
     /** Retrospectiva do mês atual (#354); null se não carregou. */
-    val recap: MonthlyRecap? = null
+    val recap: MonthlyRecap? = null,
+    /** Retrospectiva do ano atual (#354). */
+    val yearRecap: MonthlyRecap? = null
 )
 
 class EvolutionViewModel(
@@ -79,16 +81,20 @@ class EvolutionViewModel(
                     emptyList()
                 }
                 // retrospectiva do mês também é extra: se falhar, o resto da tela continua
+                var yearRecap: MonthlyRecap? = null
                 val recap = try {
                     val zone = kotlinx.datetime.TimeZone.currentSystemDefault()
                     val today = clock.now().toLocalDateTime(zone).date
                     val names = groupRepository?.getAll()?.mapNotNull { g -> g.id?.let { it to g.name } }?.toMap().orEmpty()
-                    buildMonthlyRecap(workoutRepository.getHistory(), workoutRepository.getAllSetsForExport(), names, today.year, today.monthNumber, zone)
+                    val history = workoutRepository.getHistory()
+                    val allSets = workoutRepository.getAllSetsForExport()
+                    yearRecap = buildYearlyRecap(history, allSets, names, today.year, zone)
+                    buildMonthlyRecap(history, allSets, names, today.year, today.monthNumber, zone)
                 } catch (e: Exception) {
                     if (e is CancellationException) throw e
                     null
                 }
-                _state.value = EvolutionUiState(lifts = lifts, weeklySets = weekly, recap = recap)
+                _state.value = EvolutionUiState(lifts = lifts, weeklySets = weekly, recap = recap, yearRecap = yearRecap)
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 _state.value = EvolutionUiState(errorMessage = e.toUserMessage("Erro ao carregar a evolução"))

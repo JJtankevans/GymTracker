@@ -75,7 +75,7 @@ fun EvolutionContent(
         ) {
             item(key = "weight") { BodyWeightCard(body, onLog = onLog, onDelete = onDelete, onEditData = { showData = true }) }
             item(key = "measures") { MeasurementsCard(body.measurements, onLogMeasure, onDeleteMeasure) }
-            evo.recap?.takeIf { !it.isEmpty }?.let { r -> item(key = "recap") { RecapCard(r) } }
+            if (evo.recap?.isEmpty == false || evo.yearRecap?.isEmpty == false) item(key = "recap") { RecapCard(evo.recap, evo.yearRecap) }
             if (evo.weeklySets.any { it.sets > 0 }) item(key = "weekly-sets") { WeeklySetsCard(evo.weeklySets) }
             item(key = "lifts-title") {
                 Text("Cargas nos básicos", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
@@ -105,13 +105,22 @@ private val MONTHS_PT = listOf("Janeiro", "Fevereiro", "Março", "Abril", "Maio"
 
 /** Retrospectiva do mês (#354): números do período e botão para compartilhar como imagem. */
 @Composable
-private fun RecapCard(r: com.vitoroliveira.gymtracker.presentation.body.MonthlyRecap) {
+private fun RecapCard(month: com.vitoroliveira.gymtracker.presentation.body.MonthlyRecap?, year: com.vitoroliveira.gymtracker.presentation.body.MonthlyRecap?) {
     val ctx = androidx.compose.ui.platform.LocalContext.current
     val cs = MaterialTheme.colorScheme
-    val monthName = MONTHS_PT[(r.month - 1).coerceIn(0, 11)]
+    var yearly by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(month?.isEmpty != false && year != null) }
+    val r = (if (yearly) year else month) ?: return
+    val monthName = if (r.month == 0) "${r.year}" else MONTHS_PT[(r.month - 1).coerceIn(0, 11)]
     com.vitoroliveira.gymtracker.ui.theme.ThemedCard(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("Retrospectiva de $monthName", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text("Retrospectiva de $monthName", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                if (month != null && year != null) {
+                    androidx.compose.material3.FilterChip(!yearly, { yearly = false }, { Text("Mês") })
+                    Spacer(Modifier.width(6.dp))
+                    androidx.compose.material3.FilterChip(yearly, { yearly = true }, { Text("Ano") })
+                }
+            }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 RecapStat("${r.workouts}", if (r.workouts == 1) "treino" else "treinos")
                 RecapStat("${r.daysTrained}", if (r.daysTrained == 1) "dia" else "dias")
@@ -130,9 +139,9 @@ private fun RecapCard(r: com.vitoroliveira.gymtracker.presentation.body.MonthlyR
                         accent = cs.primary.toArgb(), onAccent = cs.onPrimary.toArgb()
                     )
                     val stats = com.vitoroliveira.gymtracker.ui.workout.ShareStats(
-                        title = "$monthName de ${r.year}",
+                        title = if (r.month == 0) "Meu ${r.year}" else "$monthName de ${r.year}",
                         dateText = "${r.year}",
-                        subtitle = "Minha retrospectiva do mês",
+                        subtitle = if (r.month == 0) "Minha retrospectiva do ano" else "Minha retrospectiva do mês",
                         blocks = listOf(
                             "TREINOS" to "${r.workouts}",
                             "SÉRIES" to "${r.sets}",

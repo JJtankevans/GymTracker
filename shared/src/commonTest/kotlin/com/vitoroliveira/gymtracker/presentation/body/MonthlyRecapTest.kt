@@ -36,6 +36,22 @@ class MonthlyRecapTest {
     }
 
     @Test
+    fun anoSomaTodosOsMesesDoAno() {
+        val workouts = listOf(
+            w("1", "2026-01-10T10:00:00Z", "a"), w("2", "2026-11-05T10:00:00Z", "a"), w("3", "2026-12-24T10:00:00Z", "b"),
+            w("4", "2025-12-31T10:00:00Z", "b")
+        )
+        val sets = listOf(s("2026-01-10T10:00:00Z", 10, 10.0), s("2026-12-24T10:00:00Z", 5, 20.0), s("2025-12-31T10:00:00Z", 99, 99.0))
+        val r = buildYearlyRecap(workouts, sets, mapOf("a" to "Peito", "b" to "Costas"), 2026, utc)
+
+        assertEquals(3, r.workouts)
+        assertEquals(0, r.month)
+        assertEquals(2, r.sets)
+        assertEquals(200.0, r.volumeKg)
+        assertEquals("Peito", r.topGroup)
+    }
+
+    @Test
     fun mesSemTreinoFicaVazio() {
         val r = buildMonthlyRecap(listOf(w("1", "2026-10-30T10:00:00Z", null)), emptyList(), emptyMap(), 2026, 11, utc)
         assertTrue(r.isEmpty)

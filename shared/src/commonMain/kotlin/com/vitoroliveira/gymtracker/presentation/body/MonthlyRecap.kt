@@ -36,8 +36,26 @@ fun buildMonthlyRecap(
     year: Int,
     month: Int,
     zone: TimeZone = TimeZone.currentSystemDefault()
+): MonthlyRecap = buildRecap(workouts, sets, groupNames, year, month, zone)
+
+/** Retrospectiva do ano inteiro (#354): mesmos números, somando os 12 meses; `month` vem 0. */
+fun buildYearlyRecap(
+    workouts: List<Workout>,
+    sets: List<ExportSet>,
+    groupNames: Map<String, String>,
+    year: Int,
+    zone: TimeZone = TimeZone.currentSystemDefault()
+): MonthlyRecap = buildRecap(workouts, sets, groupNames, year, null, zone)
+
+private fun buildRecap(
+    workouts: List<Workout>,
+    sets: List<ExportSet>,
+    groupNames: Map<String, String>,
+    year: Int,
+    month: Int?,
+    zone: TimeZone
 ): MonthlyRecap {
-    fun inMonth(d: LocalDate?) = d != null && d.year == year && d.monthNumber == month
+    fun inMonth(d: LocalDate?) = d != null && d.year == year && (month == null || d.monthNumber == month)
     val ws = workouts.filter { inMonth(dateOf(it.startedAt, zone)) }
     val days = ws.mapNotNull { dateOf(it.startedAt, zone) }.distinct().size
     val ss = sets.filter { inMonth(dateOf(it.workouts?.startedAt, zone)) }
@@ -46,7 +64,7 @@ fun buildMonthlyRecap(
         .eachCount()
         .maxByOrNull { it.value }
     return MonthlyRecap(
-        year = year, month = month, workouts = ws.size, daysTrained = days,
+        year = year, month = month ?: 0, workouts = ws.size, daysTrained = days,
         sets = ss.size, reps = ss.sumOf { it.reps }, volumeKg = ss.sumOf { it.reps * it.weightKg },
         topGroup = top?.key, topGroupWorkouts = top?.value ?: 0
     )
