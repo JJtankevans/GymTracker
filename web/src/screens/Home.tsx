@@ -6,6 +6,7 @@ import { prettyGroupName, streakDays, suggestNextGroup, weeklyHistory, weekStart
 import type { Tab } from '../App'
 import { loadFavs } from '../favs'
 import { loadWellness, saveWellness } from '../wellness'
+import { addCardio, loadCardio, loadPhase, PHASES, removeCardio, smartReminder, weeklyCardio, type Cardio } from '../training'
 import { dayKey } from '../rules'
 
 export function Home({ go }: { go: (t: Tab, groupId?: string) => void }) {
@@ -13,6 +14,10 @@ export function Home({ go }: { go: (t: Tab, groupId?: string) => void }) {
   const [error, setError] = useState<string | null>(null)
 
   const [hist, setHist] = useState<HistItem[] | null>(null)
+  const [cardio, setCardio] = useState<Cardio[]>(() => loadCardio())
+  const [cMin, setCMin] = useState('')
+  const [cKm, setCKm] = useState('')
+  const [cKind, setCKind] = useState('Corrida')
   const [well, setWell] = useState(() => loadWellness()[dayKey(new Date())] ?? {})
   useEffect(() => { loadHistory().then(setHist).catch(() => {}) }, [])
   const load = () => { setError(null); loadHome().then(setData).catch((e: Error) => setError(e.message)) }
@@ -69,6 +74,24 @@ export function Home({ go }: { go: (t: Tab, groupId?: string) => void }) {
           </div>
         )
       })()}
+
+      {(() => {
+        const reminder = smartReminder({ now: new Date(), weeklyDone: view.weekly, goal, trainedToday: !!view.last && dayKey(new Date(view.last.started_at)) === dayKey(new Date()), nextGroup: view.next ? prettyGroupName(view.next.name) : null })
+        return reminder ? <div className="card" role="status"><div className="label">Lembrete</div><div>{reminder}</div></div> : null
+      })()}
+
+      <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div className="label">Cardio da semana</div>
+        {(() => { const w = weeklyCardio(cardio); return <div className="muted">{w.sessions === 0 ? 'Nenhum cardio registrado esta semana.' : `${w.sessions} ${w.sessions === 1 ? 'sessão' : 'sessões'} · ${w.minutes} min${w.km ? ` · ${String(w.km).replace('.', ',')} km` : ''}`}</div> })()}
+        <div className="chips" role="group" aria-label="Tipo de cardio">{['Corrida', 'Bike', 'Caminhada', 'Aquecimento'].map((k) => <button key={k} className={'chip' + (cKind === k ? ' on' : '')} aria-pressed={cKind === k} onClick={() => setCKind(k)}>{k}</button>)}</div>
+        <form className="row" onSubmit={(e) => { e.preventDefault(); const m = parseInt(cMin, 10); if (!(m > 0 && m < 600)) return; const km = parseFloat(cKm.replace(',', '.')); setCardio(addCardio({ day: dayKey(new Date()), kind: cKind, minutes: m, ...(km > 0 ? { km } : {}) })); setCMin(''); setCKm('') }}>
+          <label className="field grow"><span className="label">Minutos</span><input inputMode="numeric" value={cMin} onChange={(e) => setCMin(e.target.value.replace(/\D/g, '').slice(0, 3))} /></label>
+          <label className="field grow"><span className="label">Km (opcional)</span><input inputMode="decimal" value={cKm} onChange={(e) => setCKm(e.target.value.replace(/[^0-9,.]/g, '').slice(0, 5))} /></label>
+          <button className="btn primary" style={{ alignSelf: 'flex-end' }} disabled={!cMin}>Registrar</button>
+        </form>
+        {cardio.slice(-3).reverse().map((c) => <div key={c.id} className="row"><span className="grow muted num">{c.day.slice(8)}/{c.day.slice(5, 7)} · {c.kind} · {c.minutes} min{c.km ? ` · ${String(c.km).replace('.', ',')} km` : ''}</span><button className="icon" aria-label={`Apagar cardio de ${c.day}`} onClick={() => setCardio(removeCardio(c.id))}>×</button></div>)}
+        <div className="muted" style={{ fontSize: 12 }}>Fase atual: {PHASES[loadPhase()].name}. {PHASES[loadPhase()].tip} Cardio fica só neste aparelho.</div>
+      </div>
 
       {hist && (() => {
         const v = weeklyVolumes(hist)

@@ -62,7 +62,7 @@ export function Historico() {
   const timer = useRef<number | undefined>(undefined)
   const pendingDelete = useRef<HistItem | null>(null)
 
-  const load = () => { setError(null); loadHistory().then(setItems).catch((e: Error) => setError(e.message)) }
+  const load = () => { setError(null); loadHistory({ keepWarmups: true }).then(setItems).catch((e: Error) => setError(e.message)) }
   useEffect(load, [])
   // Ao sair da tela com um apagar pendente, conclui o apagar.
   useEffect(() => () => { window.clearTimeout(timer.current); if (pendingDelete.current) void deleteWorkout(pendingDelete.current.id) }, [])

@@ -18,6 +18,12 @@ Onde ficam as regras: web em `web/src/insights.ts`, `superset.ts`, `tempo.ts`, `
 | Nota por exercício (banco, pegada) — #582 | ❌ | Web: só no aparelho (`gt-note-<id>`) |
 | Descanso próprio por exercício — #576 | ❌ | Android lembra um descanso único; falta por exercício |
 | Modo foco (um exercício por vez) — #584 | ❌ | |
+| Série cronometrada ao vivo (fases da cadência com bip) — #599 | ❌ | Web: `training.ts` (`liveSchedule`/`phaseAt`) + `LiveTimer.tsx` |
+| 1RM estimado na série e aviso de recorde estimado — #605 | ❌ | Web: `liveOneRm`/`isEstimatedRecord` |
+| Marcas de série: aquecimento (não conta em volume/recordes), drop-set, rest-pause, falha — #603/#604 | ❌ | Web: `FlagMap` no aparelho; aquecimento sai de `loadHistory()` (use `keepWarmups` onde quiser ver tudo) |
+| Modelos de treino salvos (cargas, reps, cadência, supersérie) — #602 | ❌ | Web: `Template` no aparelho; lista na tela de escolha |
+| Notas de voz (ditado) nas notas do exercício — #607 | ❌ | Web: Web Speech API; no Android usar `SpeechRecognizer` |
+| Fase do treino (Volume/Força/Definição) ajusta a meta de repetições da sugestão — #609 | ❌ | Web: Mais → Fase do treino; `phaseTargetReps` |
 
 ## Home
 | Funcionalidade (web) | Android | Notas |
@@ -26,6 +32,8 @@ Onde ficam as regras: web em `web/src/insights.ts`, `superset.ts`, `tempo.ts`, `
 | Resumo da semana (sex–dom) — #585 | ❌ | Só cartão; notificação depende de push |
 | Atalhos de grupos favoritos — #583 | ❌ | O Android tem linha "Atalhos" fixa (Grupos/Histórico), não favoritos |
 | Sono e energia do dia — #587 | ❌ | Só no aparelho |
+| Lembrete inteligente (meta da semana não batida e há dia livre) — #610 | ❌ | Web: `smartReminder`; só cartão (notificação real depende de push #534) |
+| Cardio da semana (registrar tempo/km, soma na Home) — #601 | ❌ | Web: só no aparelho |
 
 ## Evolução / Análises
 | Funcionalidade (web) | Android | Notas |
@@ -43,6 +51,8 @@ Onde ficam as regras: web em `web/src/insights.ts`, `superset.ts`, `tempo.ts`, `
 | Séries por equipamento — #590 | ❌ | |
 | Intensidade (RPE médio) e fadiga — #591 | ❌ | Android tem `RpeStore`; ligar |
 | Energia × desempenho — #587 | ❌ | Depende do registro de energia |
+| TUT semanal por músculo — #600 | ❌ | Web: `weeklyTutByMuscle` (só séries com cadência) |
+| Fadiga semanal (RPE + sono + energia, nota 0–100) — #606 | ❌ | Web: `fatigueWeeks` |
 | Meta de peso com projeção de data — #586 | ❌ | |
 
 ## Conquistas
@@ -55,6 +65,7 @@ Onde ficam as regras: web em `web/src/insights.ts`, `superset.ts`, `tempo.ts`, `
 | Funcionalidade (web) | Android | Notas |
 |---|---|---|
 | Feed com reações e legenda — #533 (parte) | ✅ | O app já tinha tudo isso |
+| Compartilhar/importar grupo de treino por código — #608 | ✅ | O Android já tinha (`RoutineShareRepository`); a web ganhou em 22/11 (`share.ts`, Grupos → Código) |
 
 ## Como atualizar
 1. Criou algo na web? Acrescente a linha na tabela certa com ❌.

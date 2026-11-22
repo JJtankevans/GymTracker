@@ -34,7 +34,7 @@ export function buildBackup(createdAt: string, groups: G[], exercisesByGroup: Re
 }
 
 export async function collectBackup(): Promise<BackupFile> {
-  const [home, hist] = await Promise.all([loadHome(), loadHistory()])
+  const [home, hist] = await Promise.all([loadHome(), loadHistory({ keepWarmups: true })])
   const byGroup: Record<string, E[]> = {}
   await Promise.all(home.groups.map(async (g) => { byGroup[g.id] = await groupExercises(g.id) }))
   const workouts: W[] = []

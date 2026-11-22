@@ -9,6 +9,7 @@ import { Feed } from './Feed'
 import { Analises } from './Analises'
 import { clampGoal, loadHome, setWeeklyGoal } from '../data'
 import { setSoundEnabled, soundEnabled } from '../alerts'
+import { loadPhase, PHASES, savePhase, type PhaseId } from '../training'
 import { applyImport, downloadBackup, parseBackup } from '../backup'
 
 type Sub = null | 'evolucao' | 'recordes' | 'conquistas' | 'ferramentas' | 'feed' | 'analises'
@@ -34,6 +35,7 @@ export function More() {
     try { setGoal(await setWeeklyGoal(next)) } catch (e) { setGoal(goal); setGoalErr('Não foi possível salvar: ' + (e as Error).message) }
   }
   const [sound, setSound] = useState(soundEnabled)
+  const [phase, setPhaseState] = useState<PhaseId>(loadPhase)
   const fileRef = useRef<HTMLInputElement>(null)
   const doImport = async (f: File | undefined) => {
     if (!f) return
@@ -83,6 +85,11 @@ export function More() {
           <button className="btn" aria-label="Aumentar meta" disabled={goal === null || goal >= 7} onClick={() => changeGoal(1)}>+</button>
         </div>
         {goalErr && <p className="error">{goalErr}</p>}
+      </div>
+
+      <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div><b>Fase do treino</b><div className="muted">{PHASES[phase].tip}</div></div>
+        <div className="chips" role="group" aria-label="Fase do treino">{(Object.keys(PHASES) as PhaseId[]).map((id) => <button key={id} className={'chip' + (phase === id ? ' on' : '')} aria-pressed={phase === id} onClick={() => { setPhaseState(id); savePhase(id) }}>{PHASES[id].name}</button>)}</div>
       </div>
 
       <div className="card row">

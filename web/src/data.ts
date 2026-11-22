@@ -1,4 +1,5 @@
 import { MOCK, supabase } from './supabase'
+import { countsForStats, loadFlags } from './training'
 import type { GroupLite, WorkoutLite } from './rules'
 import { mockStore } from './mock'
 
@@ -103,7 +104,16 @@ export async function deleteWorkout(id: string): Promise<void> {
 export interface HistSet { id: string; reps: number; weight_kg: number; set_number: number; completed_at: string; exercise: { name: string } | null }
 export interface HistItem extends Workout { sets: HistSet[] }
 
-export async function loadHistory(): Promise<HistItem[]> {
+/** Histórico de treinos. Séries marcadas como aquecimento ficam de fora (não contam em volume, recordes nem análises), a não ser com [keepWarmups]. */
+export async function loadHistory(opts: { keepWarmups?: boolean } = {}): Promise<HistItem[]> {
+  const items = await loadHistoryRaw()
+  if (opts.keepWarmups) return items
+  const flags = loadFlags()
+  if (Object.keys(flags).length === 0) return items
+  return items.map((w) => ({ ...w, sets: w.sets.filter((s) => countsForStats(s.id, flags)) }))
+}
+
+async function loadHistoryRaw(): Promise<HistItem[]> {
   if (MOCK) return mockStore.history()
   const rows = await must<(Workout & { workout_sets: (Omit<HistSet, 'exercise'> & { exercise: { name: string } | null })[] })[]>(
     supabase

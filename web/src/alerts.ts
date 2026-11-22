@@ -37,3 +37,18 @@ export function restOverAlert(): void {
     o.start(t0 + dt); o.stop(t0 + dt + 0.16)
   })
 }
+
+/** Bip curto (660 Hz) a cada mudança de fase da série cronometrada (#599). */
+export function phaseBeep(): void {
+  if (!soundEnabled()) return
+  try { navigator.vibrate?.(40) } catch { /* sem vibração */ }
+  if (!ctx || ctx.state !== 'running') return
+  const t0 = ctx.currentTime
+  const o = ctx.createOscillator(); const g = ctx.createGain()
+  o.type = 'sine'; o.frequency.value = 660
+  g.gain.setValueAtTime(0.0001, t0)
+  g.gain.exponentialRampToValueAtTime(0.15, t0 + 0.01)
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.09)
+  o.connect(g).connect(ctx.destination)
+  o.start(t0); o.stop(t0 + 0.1)
+}

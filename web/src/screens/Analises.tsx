@@ -5,6 +5,8 @@ import { fatigued, intensityByWeek, equipmentSets, variationsFor, bandRecords, c
 import { formatKg, prettyGroupName, realDurationMinutes } from '../rules'
 import { setsOf } from './Evolucao'
 import { energyCompare, loadWellness } from '../wellness'
+import { fatigueWeeks, weeklyTutByMuscle, loadFlags } from '../training'
+import { tempoOfSet, formatTut } from '../tempo'
 import { formatVolume } from '../recap'
 
 const LEVEL_OPACITY = [0.12, 0.35, 0.65, 1]
@@ -33,7 +35,7 @@ export function Analises() {
     const now = new Date()
     const month = hist.filter((w) => { const d = new Date(w.started_at); return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() })
     const minutes = month.reduce((a, w) => a + (realDurationMinutes(null, w.started_at, w.sets.map((s) => s.completed_at)) ?? 0), 0)
-    return { bands: bandRecords(sets), imb: imbalances(sets), plat: plateaus(sets), heat: heatmap(hist, now), equip: equipmentSets(sets), energy: energyCompare(hist, loadWellness()), inten: intensityByWeek(hist, (() => { try { return JSON.parse(localStorage.getItem('gt-rpe') ?? '{}') } catch { return {} } })()), month: month.length, minutes }
+    return { bands: bandRecords(sets), imb: imbalances(sets), plat: plateaus(sets), heat: heatmap(hist, now), equip: equipmentSets(sets), tut: weeklyTutByMuscle(hist, tempoOfSet, loadFlags()), fatigue: fatigueWeeks(hist, (() => { try { return JSON.parse(localStorage.getItem('gt-rpe') ?? '{}') } catch { return {} } })(), loadWellness()), energy: energyCompare(hist, loadWellness()), inten: intensityByWeek(hist, (() => { try { return JSON.parse(localStorage.getItem('gt-rpe') ?? '{}') } catch { return {} } })()), month: month.length, minutes }
   }, [hist])
 
   if (error) return <><div className="title">Análises</div><div className="card"><p className="error">{error}</p><button className="btn" onClick={load}>Tentar de novo</button></div></>
@@ -97,6 +99,25 @@ export function Analises() {
               {v.inten.map((w, i) => <div key={i} className="row"><span className="grow">{i === v.inten.length - 1 ? 'Esta semana' : `Semana de ${w.start.getDate()}/${w.start.getMonth() + 1}`}</span><b className="num">{w.avgRpe === null ? '–' : formatKg(w.avgRpe)}</b><span className="muted num" style={{ minWidth: 70, textAlign: 'right' }}>{w.hard} no limite</span></div>)}
               <div className="muted">{fatigued(v.inten) ? 'Esforço alto por duas semanas: fadiga acumulada, considere uma semana mais leve.' : 'Sem sinal de fadiga acumulada.'}</div>
             </>}
+      </div>
+
+      <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div className="label">Tempo sob tensão (7 dias)</div>
+        {v.tut.length === 0
+          ? <div className="muted">Preencha a cadência (ex.: 3-1-2-0) nas séries para ver o TUT por músculo. Só neste aparelho.</div>
+          : v.tut.map((m) => <div key={m.muscle ?? 'outros'} className="row"><span className="grow">{m.muscle ?? 'Outros'}</span><b className="num">{formatTut(m.seconds)}</b></div>)}
+      </div>
+
+      <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div className="label">Fadiga semanal (esforço + sono + energia)</div>
+        {v.fatigue.every((w) => w.score === null)
+          ? <div className="muted">Marque o esforço (RPE) no treino e o sono/energia na Home para ver a fadiga. Só neste aparelho.</div>
+          : v.fatigue.map((w, i) => (
+            <div key={i} className="row"><span style={{ width: 92 }}>{i === v.fatigue.length - 1 ? 'Esta semana' : `${w.start.getDate()}/${w.start.getMonth() + 1}`}</span>
+              <div className="prog grow"><i style={{ width: `${w.score ?? 0}%` }} /></div>
+              <span className="num muted" style={{ minWidth: 34, textAlign: 'right' }}>{w.score ?? '–'}</span></div>
+          ))}
+        <div className="muted" style={{ fontSize: 12 }}>0 = descansado, 100 = muito cansado. Estimativa simples, não é diagnóstico.</div>
       </div>
 
       <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

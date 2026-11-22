@@ -3,6 +3,7 @@ import { addExerciseToGroup, createGroup, deleteGroup, groupCounts, groupExercis
 import { prettyGroupName } from '../rules'
 import { loadFavs, saveFavs, toggleFav } from '../favs'
 import { CatalogPicker, TemplatePicker } from './CatalogPicker'
+import { importRoutine, lookupCode, publishGroup, type SharedRoutine } from '../share'
 
 const COLORS = ['#4CAF50', '#2196F3', '#3F51B5', '#E91E63', '#FF9800', '#9C27B0', '#00BCD4', '#F44336']
 
@@ -19,6 +20,7 @@ export function Grupos() {
   const [open, setOpen] = useState<Group | null>(null)
   const [creating, setCreating] = useState(false)
   const [templates, setTemplates] = useState(false)
+  const [importing, setImporting] = useState(false)
 
   const load = () => {
     setError(null)
@@ -32,7 +34,8 @@ export function Grupos() {
 
   return (
     <>
-      <div className="row"><div className="title grow">Grupos</div><button className="btn" onClick={() => setTemplates(true)}>Prontos</button><button className="btn primary" onClick={() => setCreating(true)}>+ Novo</button></div>
+      <div className="row"><div className="title grow">Grupos</div><button className="btn" onClick={() => setImporting(true)}>Código</button><button className="btn" onClick={() => setTemplates(true)}>Prontos</button><button className="btn primary" onClick={() => setCreating(true)}>+ Novo</button></div>
+      {importing && <ImportByCode onClose={() => setImporting(false)} onImported={() => { setImporting(false); load() }} />}
       {templates && <TemplatePicker onClose={() => setTemplates(false)} onCreated={() => { setTemplates(false); load() }} />}
       {creating && <NewGroup onCancel={() => setCreating(false)} onCreated={() => { setCreating(false); load() }} />}
       {groups.length === 0 && !creating && <div className="card muted">Nenhum grupo ainda. Toque em “+ Novo” para criar o primeiro.</div>}
@@ -91,6 +94,8 @@ function GroupDetail({ group, onBack, onDeleted }: { group: Group; onBack: () =>
   }
   async function remove(id: string) { await removeFromGroup(group.id, id); await load() }
   const [fav, setFav] = useState(() => loadFavs().includes(group.id))
+  const [shareCode, setShareCode] = useState<string | null>(null)
+  const [shareErr, setShareErr] = useState('')
 
   return (
     <>
@@ -105,6 +110,13 @@ function GroupDetail({ group, onBack, onDeleted }: { group: Group; onBack: () =>
           <button className="icon" aria-label={`Tirar ${ex.name} do grupo`} onClick={() => remove(ex.id)}>×</button>
         </div>
       ))}
+      <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {shareCode
+          ? <><div className="label">Código do compartilhamento</div><div className="big num" style={{ letterSpacing: 2 }}>{shareCode}</div><div className="muted">Quem tiver o código importa uma cópia deste grupo (nomes, séries e reps). Nada do seu histórico vai junto.</div>
+              <button className="btn" onClick={() => navigator.clipboard?.writeText(shareCode)}>Copiar código</button></>
+          : <button className="btn" onClick={async () => { setShareErr(''); try { setShareCode(await publishGroup(group, list ?? [])) } catch (e) { setShareErr((e as Error).message) } }}>Compartilhar este grupo por código</button>}
+        {shareErr && <div className="error">{shareErr}</div>}
+      </div>
       {catalog ? <CatalogPicker groupId={group.id} existing={(list ?? []).map((e) => e.name)} onChanged={load} onClose={() => setCatalog(false)} /> : <button className="btn primary block" onClick={() => setCatalog(true)}>+ Adicionar do catálogo</button>}
       <form className="card row" onSubmit={add}>
         <label className="field grow"><span className="label">Ou criar pelo nome</span><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Supino Reto" maxLength={60} /></label>
@@ -118,5 +130,31 @@ function GroupDetail({ group, onBack, onDeleted }: { group: Group; onBack: () =>
         </div>
       )}
     </>
+  )
+}
+
+function ImportByCode({ onClose, onImported }: { onClose: () => void; onImported: () => void }) {
+  const [code, setCode] = useState('')
+  const [found, setFound] = useState<SharedRoutine | null>(null)
+  const [err, setErr] = useState('')
+  const [busy, setBusy] = useState(false)
+  return (
+    <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className="label">Importar treino por código</div>
+      {!found ? (
+        <form className="row" onSubmit={async (e) => { e.preventDefault(); setErr(''); setBusy(true); try { setFound(await lookupCode(code)) } catch (x) { setErr((x as Error).message) } finally { setBusy(false) } }}>
+          <input className="grow" aria-label="Código" placeholder="Ex.: AB12CD34" value={code} maxLength={12} onChange={(e) => setCode(e.target.value)} />
+          <button className="btn primary" disabled={busy || !code.trim()}>Buscar</button>
+        </form>
+      ) : (
+        <>
+          <div><b>{found.name}</b><div className="muted">{found.owner_username ? `de ${found.owner_username} · ` : ''}{found.exercises.length} exercícios · importado {found.imports}×</div></div>
+          {found.exercises.map((e, i) => <div key={i} className="row"><span className="grow">{e.name}</span><span className="muted num">{e.sets}×{e.reps}</span></div>)}
+          <button className="btn primary" disabled={busy} onClick={async () => { setBusy(true); setErr(''); try { await importRoutine(found); onImported() } catch (x) { setErr((x as Error).message); setBusy(false) } }}>{busy ? 'Importando…' : 'Criar este grupo'}</button>
+        </>
+      )}
+      {err && <div className="error">{err}</div>}
+      <button className="btn" onClick={onClose}>Fechar</button>
+    </div>
   )
 }
