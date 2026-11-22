@@ -218,6 +218,19 @@ fun ActiveWorkoutScreenContent(
     topSlot: @Composable () -> Unit = {}
 ) {
     var showFinishDialog by remember { mutableStateOf(false) }
+    // Vibração (#365): série registrada e recorde. Ignora a primeira composição (séries já existentes ao abrir/retomar).
+    val hapticContext = androidx.compose.ui.platform.LocalContext.current
+    var lastSetCount by remember { mutableIntStateOf(uiState.completedSets.size) }
+    LaunchedEffect(uiState.completedSets.size) {
+        if (uiState.completedSets.size > lastSetCount) com.vitoroliveira.gymtracker.ui.components.Haptics.setLogged(hapticContext)
+        lastSetCount = uiState.completedSets.size
+    }
+    var lastRecordCount by remember { mutableIntStateOf(uiState.newRecordExerciseIds.size) }
+    LaunchedEffect(uiState.newRecordExerciseIds.size) {
+        if (uiState.newRecordExerciseIds.size > lastRecordCount) com.vitoroliveira.gymtracker.ui.components.Haptics.record(hapticContext)
+        lastRecordCount = uiState.newRecordExerciseIds.size
+    }
+
     var editingSet by remember { mutableStateOf<WorkoutSet?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
 

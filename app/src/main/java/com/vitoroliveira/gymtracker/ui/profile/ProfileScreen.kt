@@ -21,7 +21,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Download
@@ -55,7 +57,11 @@ fun ProfileScreen(
     val exportVm: com.vitoroliveira.gymtracker.presentation.workout.ExportViewModel = koinViewModel()
     val export by exportVm.state.collectAsState()
     // CSV pronto: salva e abre o compartilhar; erro vira mensagem na tela
-    LaunchedEffect(export.csv, export.errorMessage) {
+    LaunchedEffect(export.csv, export.backupJson, export.errorMessage) {
+        export.backupJson?.let { json ->
+            runCatching { context.shareBackup(json) }.onFailure { viewModel.onExternalError("Não foi possível compartilhar o backup") }
+            exportVm.consumed()
+        }
         export.csv?.let { csv ->
             runCatching { context.shareCsv(csv) }.onFailure { viewModel.onExternalError("Não foi possível compartilhar o arquivo") }
             exportVm.consumed()
@@ -91,7 +97,8 @@ fun ProfileScreen(
         onPickPhoto = { photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
         onRemovePhoto = { viewModel.removeAvatar() },
         isExporting = export.isExporting,
-        onExport = exportVm::export
+        onExport = exportVm::export,
+        onBackup = exportVm::backup
     )
 }
 
@@ -135,7 +142,8 @@ fun ProfileScreenContent(
     onPickPhoto: () -> Unit = {},
     onRemovePhoto: () -> Unit = {},
     isExporting: Boolean = false,
-    onExport: () -> Unit = {}
+    onExport: () -> Unit = {},
+    onBackup: () -> Unit = {}
 ) {
     var weeklyGoal by remember(uiState.profile) {
         mutableStateOf(uiState.profile?.weeklyGoal ?: 3)
@@ -316,6 +324,14 @@ fun ProfileScreenContent(
                         ProfileRow(Icons.Default.ShowChart, "Evolução e meus dados", "Peso, medidas e progresso de carga", onNavigateToEvolution)
                         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                         ProfileRow(
+                            Icons.Default.Backup,
+                            if (isExporting) "Gerando..." else "Backup completo",
+                            "Tudo num arquivo (JSON): grupos, exercícios, treinos e séries",
+                            onBackup,
+                            enabled = !isExporting
+                        )
+                        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+                        ProfileRow(
                             Icons.Default.Download,
                             if (isExporting) "Exportando..." else "Exportar treinos",
                             "Baixar todo o histórico em planilha (CSV)",
@@ -335,7 +351,27 @@ fun ProfileScreenContent(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 ThemedCard(Modifier.fillMaxWidth()) {
-                    ProfileRow(Icons.Default.Palette, "Aparência e temas", "Tema, cores e intensidade", onNavigateToThemes)
+                    Column {
+                        ProfileRow(Icons.Default.Palette, "Aparência e temas", "Tema, cores e intensidade", onNavigateToThemes)
+                        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+                        val hapticContext = androidx.compose.ui.platform.LocalContext.current
+                        var haptics by remember { mutableStateOf(com.vitoroliveira.gymtracker.ui.components.Haptics.enabled(hapticContext)) }
+                        Row(
+                            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Vibration, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                            Spacer(Modifier.width(16.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text("Vibração no treino", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                                Text("Ao registrar série e bater recorde", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            Switch(checked = haptics, onCheckedChange = {
+                                haptics = it
+                                com.vitoroliveira.gymtracker.ui.components.Haptics.setEnabled(hapticContext, it)
+                            })
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))

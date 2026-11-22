@@ -16,6 +16,8 @@ data class ExportUiState(
     val isExporting: Boolean = false,
     /** CSV pronto para a tela salvar e compartilhar; a tela chama [ExportViewModel.consumed] depois. */
     val csv: String? = null,
+    /** Backup completo em JSON pronto para a tela salvar e compartilhar (#364). */
+    val backupJson: String? = null,
     val rows: Int = 0,
     val errorMessage: String? = null
 )
@@ -45,6 +47,29 @@ class ExportViewModel(
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 _state.value = ExportUiState(errorMessage = e.toUserMessage("Erro ao exportar os treinos"))
+            }
+        }
+    }
+
+    /** Backup completo: grupos, exercícios, treinos finalizados e séries, num arquivo só. */
+    fun backup() {
+        if (_state.value.isExporting) return
+        viewModelScope.launch {
+            _state.value = ExportUiState(isExporting = true)
+            try {
+                val sets = workouts.getAllSetsForExport()
+                val history = workouts.getHistory()
+                val json = buildBackupJson(
+                    createdAt = kotlin.time.Clock.System.now().toString(),
+                    groups = groups.getAll(),
+                    exercises = exercises.getAll(),
+                    workouts = history,
+                    sets = sets
+                )
+                _state.value = ExportUiState(backupJson = json, rows = sets.size)
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                _state.value = ExportUiState(errorMessage = e.toUserMessage("Erro ao gerar o backup"))
             }
         }
     }
