@@ -23,10 +23,10 @@ No Supabase → Authentication → URL Configuration: acrescente o endereço do 
 
 ## O que tem
 Login · Início (próximo treino, meta, sequência, frequência) · Treino (séries com −1/+1 e −2,5/+2,5, descanso, RPE local, finalizar, treino esquecido) ·
-Histórico (mapa de calor, filtro, detalhe, apagar com Desfazer) · Grupos (criar, exercícios, remover) · Evolução (peso e 1RM) · Recordes · Conquistas (selo que vira) · claro/escuro.
+Histórico (mapa de calor, filtro, detalhe, apagar com Desfazer) · Grupos (criar, exercícios, remover) · Evolução (peso e 1RM) · Recordes · Conquistas (selo que vira) · catálogo de 70 exercícios e treinos prontos · níveis de força · mapa muscular da semana · retrospectiva do mês/ano e imagem para compartilhar (também no resumo do treino) · meta semanal · backup/importar · 9 temas (claro/escuro).
 
 ## Limites conhecidos
 - Recordes e conquistas olham os últimos 300 treinos (sem a função `records_summary()` do servidor).
-- Sem catálogo de 70 exercícios, treinos prontos, Social, backup, push e temas extras (cards #529 a #535 no Runtime).
+- Sem Social, push, medidas com fita e importação do histórico (cards #533, #534; medidas dependem da migração 013). Backup: exporta tudo, importa só grupos e exercícios.
 - No iPhone a tela apaga e o JavaScript para: cronômetros usam horários, não contagem. RPE por série fica só neste aparelho (a coluna ainda não existe no banco).
 - Nada disto foi testado com login real nem num iPhone de verdade.
