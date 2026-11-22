@@ -1,4 +1,11 @@
-﻿# GymTracker — contexto para retomar (atualizado em 14/11/2026)
+﻿
+## Sessão de 21/11/2026 (PC do Thiago, AGORA COM Android SDK) — COMPILADO
+- **Ambiente local pronto:** Android SDK 36 em `C:AndroidSdk` (`local.properties` com `sdk.dir=C:/Android/Sdk`, barras normais; não versionado). **Armadilha:** o Bash tool do Claude enxerga um AppData virtualizado; instalar o SDK por ele deixa o Gradle cego. Compile pelo terminal real (`.gradlew.bat :app:assembleDebug`, JDK 17 + toolchain 21 baixada sozinha). Dentro do Bash tool o Gradle falha com "Unable to establish loopback connection".
+- **Verificado:** `:app:assembleDebug` OK (APK 33 MB), `:shared:testDebugUnitTest` 260 testes / 0 falhas, `:app:compileDebugUnitTestKotlin` OK. **Não testado em aparelho/emulador.**
+- **#442 feito:** apagados `ui/music/*` (MiniPlayer, MusicController, WorkoutTrackRecorder, SocialPrefs), `MusicCard`, `ThemePreferences.musicReactive`, o registro no Koin e `MusicGalleryTest`; MainActivity/Home/Circuito/treino ativo sem mini-player. As opções de música do Social (privacidade) continuam, sempre vazias.
+- Consertado `SocialGalleryTest` (ChallengeSheet ganhou `titles`).
+- **Não feito:** #350 esforço por série (precisa coluna nova em `workout_sets` no Supabase do GymTracker; não serializar antes da migração). Componentes do OriginKit baixados para ele: `hyaline-level` (slider do RPE), `like` (Social), `holo-flip-badge` (Conquistas), em `Runtime/docs/originkit-cache`. Card #523: criar o ícone do app (o app ainda usa o padrão).
+# GymTracker — contexto para retomar (atualizado em 21/11/2026)
 
 ## Sessão de 18/11/2026 (PC do Thiago, sem Android SDK) — NÃO COMPILADO
 - **Commit local no branch `claude/remover-leitura-notificacoes`** (f2881ac: remoção da leitura de notificações + assinatura fixa do CI + migração 013), sem push.

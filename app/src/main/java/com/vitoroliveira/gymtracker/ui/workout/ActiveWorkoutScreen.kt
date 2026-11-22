@@ -103,8 +103,6 @@ fun ActiveWorkoutScreen(
     val context = LocalContext.current
     val view = LocalView.current
 
-    com.vitoroliveira.gymtracker.ui.music.TrackRecording(uiState.activeWorkout?.id, uiState.summary != null)
-
     // Inicia o treino ao abrir a tela (o ViewModel ignora chamadas repetidas, ex.: ao girar a tela)
     LaunchedEffect(Unit) {
         viewModel.startWorkout(muscleGroupId)
@@ -172,8 +170,7 @@ fun ActiveWorkoutScreen(
                 }
                 context.startActivity(android.content.Intent.createChooser(send, "Compartilhar treino"))
             },
-            onBack = onBack,
-            topSlot = { com.vitoroliveira.gymtracker.ui.music.MiniPlayer() }
+            onBack = onBack
         )
         // explosão de confete ao bater recorde de carga
         RecordCelebration(uiState.recordBursts)

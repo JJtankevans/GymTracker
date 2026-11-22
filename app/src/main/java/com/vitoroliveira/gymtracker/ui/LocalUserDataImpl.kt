@@ -6,7 +6,6 @@ import com.vitoroliveira.gymtracker.presentation.body.BodyRepository
 import com.vitoroliveira.gymtracker.presentation.circuit.TimingStore
 import com.vitoroliveira.gymtracker.presentation.schedule.ScheduleRepository
 import com.vitoroliveira.gymtracker.ui.exercise.CatalogPrefs
-import com.vitoroliveira.gymtracker.ui.music.WorkoutTrackRecorder
 import java.io.File
 
 /**
@@ -18,9 +17,8 @@ class LocalUserDataImpl(
     private val body: BodyRepository,
     private val schedule: ScheduleRepository,
     private val catalog: CatalogPrefs,
-    private val timing: TimingStore,
-    private val tracks: WorkoutTrackRecorder
-) : LocalUserData {
+    private val timing: TimingStore
+): LocalUserData {
     private val cacheDir = context.applicationContext.cacheDir
 
     /** Peso e perfil corporal pendentes vão para a nuvem antes de sair (as medidas ainda não têm tabela). */
@@ -31,7 +29,6 @@ class LocalUserDataImpl(
         schedule.clear()
         catalog.clear()
         timing.save(emptyMap())
-        tracks.discard()
         // CSV exportado tem o histórico inteiro
         File(cacheDir, "exports").deleteRecursively()
     }

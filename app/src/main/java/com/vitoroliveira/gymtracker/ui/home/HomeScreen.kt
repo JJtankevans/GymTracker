@@ -63,8 +63,7 @@ fun HomeScreen(
         onNavigateToEvolution = onNavigateToEvolution,
         onNavigateToRecords = onNavigateToRecords,
         onNavigateToSocial = onNavigateToSocial,
-        onClearError = { viewModel.clearError() },
-        topSlot = { com.vitoroliveira.gymtracker.ui.music.MiniPlayer() }
+        onClearError = { viewModel.clearError() }
     )
 }
 
