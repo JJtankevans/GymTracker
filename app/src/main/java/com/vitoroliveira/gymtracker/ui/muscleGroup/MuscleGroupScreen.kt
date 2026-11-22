@@ -32,6 +32,7 @@ import com.vitoroliveira.gymtracker.data.model.MuscleGroup
 import com.vitoroliveira.gymtracker.presentation.viewmodel.MuscleGroupUiState
 import com.vitoroliveira.gymtracker.presentation.viewmodel.MuscleGroupViewModel
 import com.vitoroliveira.gymtracker.ui.theme.GymTrackerTheme
+import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.viewmodel.koinViewModel
 
 // Cores disponíveis para o usuário escolher
@@ -48,6 +49,31 @@ fun MuscleGroupScreen(
     viewModel: MuscleGroupViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    // "N exercícios · último treino 21/11" em cada grupo
+    val exerciseRepo: com.vitoroliveira.gymtracker.domain.repository.ExerciseRepository = org.koin.compose.koinInject()
+    val workoutRepo: com.vitoroliveira.gymtracker.domain.repository.WorkoutRepository = org.koin.compose.koinInject()
+    var groupSubtitles by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
+    LaunchedEffect(uiState.muscleGroups) {
+        groupSubtitles = runCatching {
+            val exercises = exerciseRepo.getAll()
+            val lastByGroup = workoutRepo.getHistory()
+                .filter { it.finishedAt != null && it.muscleGroupId != null && it.startedAt != null }
+                .groupBy { it.muscleGroupId!! }
+                .mapValues { (_, list) -> list.maxOf { it.startedAt!! } }
+            uiState.muscleGroups.mapNotNull { g ->
+                val id = g.id ?: return@mapNotNull null
+                val n = exercises.count { id in it.groupIds }
+                // started_at vem em UTC: converte para o fuso do aparelho (o Histórico mostra a data local)
+                val last = lastByGroup[id]?.let { iso ->
+                    runCatching {
+                        val d = kotlinx.datetime.Instant.parse(iso).toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault())
+                        "%02d/%02d".format(d.dayOfMonth, d.monthNumber)
+                    }.getOrNull()
+                }
+                id to ("$n " + (if (n == 1) "exercício" else "exercícios") + (last?.let { " · último treino $it" } ?: " · sem treino ainda"))
+            }.toMap()
+        }.getOrDefault(emptyMap())
+    }
     val scheduleVm: com.vitoroliveira.gymtracker.presentation.schedule.ScheduleViewModel = koinViewModel()
     val plan by scheduleVm.plan.collectAsState()
     var showSchedule by remember { mutableStateOf(false) }
@@ -92,7 +118,8 @@ fun MuscleGroupScreen(
         onOpenImport = { shareVm.clearMessages(); showImport = true },
         isSharing = share.isWorking && !showImport,
         extraMessage = share.message ?: share.error.takeIf { !showImport },
-        onExtraMessageShown = shareVm::clearMessages
+        onExtraMessageShown = shareVm::clearMessages,
+        groupSubtitles = groupSubtitles
     )
 }
 
@@ -112,7 +139,8 @@ fun MuscleGroupScreenContent(
     onOpenImport: () -> Unit = {},
     isSharing: Boolean = false,
     extraMessage: String? = null,
-    onExtraMessageShown: () -> Unit = {}
+    onExtraMessageShown: () -> Unit = {},
+    groupSubtitles: Map<String, String> = emptyMap()
 ) {
     var showTemplates by remember { mutableStateOf(false) }
     var showCreateDialog by remember { mutableStateOf(false) }
@@ -223,7 +251,8 @@ fun MuscleGroupScreenContent(
                         },
                         onEdit = { groupToEdit = group },
                         onDelete = { groupToDelete = group },
-                        onShare = { onShare(group) }
+                        onShare = { onShare(group) },
+                        subtitle = group.id?.let { groupSubtitles[it] }
                     )
                 }
             }
@@ -296,7 +325,8 @@ fun MuscleGroupItem(
     onClick: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
-    onShare: (() -> Unit)? = null
+    onShare: (() -> Unit)? = null,
+    subtitle: String? = null
 ) {
     val color = runCatching {
         Color(android.graphics.Color.parseColor(muscleGroup.colorHex))
@@ -323,12 +353,17 @@ fun MuscleGroupItem(
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            Text(
-                text = com.vitoroliveira.gymtracker.ui.components.prettyGroupName(muscleGroup.name),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.weight(1f)
-            )
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = com.vitoroliveira.gymtracker.ui.components.prettyGroupName(muscleGroup.name),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium
+                )
+                if (subtitle != null) Text(
+                    subtitle, style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
             var menuOpen by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
             Box {
