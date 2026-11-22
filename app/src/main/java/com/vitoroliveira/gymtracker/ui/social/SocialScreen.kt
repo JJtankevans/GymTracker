@@ -291,25 +291,13 @@ private fun FeedCard(
     }
 }
 
-/** Botão de reação: ícone desenhado na cor do tema (cheio quando é seu) + contagem. */
+/** Botão de reação com o estalo do `like` do OriginKit (LikeReactionButton): ícone na cor do tema + contagem. */
 @Composable
 private fun ReactionPill(kind: ReactionKind, count: Int, mine: Boolean, onClick: () -> Unit) {
-    val cs = MaterialTheme.colorScheme
-    val tint = if (mine) cs.primary else cs.onSurfaceVariant
-    Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(50),
-        color = if (mine) cs.primary.copy(alpha = 0.16f) else Color.Transparent,
-        border = BorderStroke(1.dp, if (mine) cs.primary else cs.outlineVariant)
-    ) {
-        Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(kind.icon(), kind.label, Modifier.size(20.dp), tint = tint)
-            if (count > 0) {
-                Spacer(Modifier.width(6.dp))
-                Text("$count", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = tint)
-            }
-        }
-    }
+    com.vitoroliveira.gymtracker.ui.components.LikeReactionButton(
+        icon = kind.icon(), label = kind.label, count = count, on = mine,
+        thumbStyle = kind == ReactionKind.CLAP, onClick = onClick
+    )
 }
 
 private fun ReactionKind.icon(): ImageVector = when (this) {

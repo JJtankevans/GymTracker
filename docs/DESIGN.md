@@ -43,11 +43,11 @@ auditoria de 21/11/2026 (`AUDITORIA_DESIGN.md`) e na pesquisa de UX de treino. R
 Os do OriginKit são web; portamos a **ideia** com código próprio (cache em `Runtime/docs/originkit-cache/`).
 | OriginKit | Uso no GymTracker | Estado |
 |---|---|---|
-| `rolling-counter` | números da Home (série/meta/total) e resumo do treino: dígitos que rolam | ⏳ |
+| `rolling-counter` / Cult UI `rolling-number` | números da Home (meta/sequência) com a mola do original | ✅ |
 | `gooey-delete-confirm` | apagar treino/grupo: lixeira que abre "Confirmar / Cancelar" | ⏳ |
-| `bouncing-dot-tabs` | abas do Social e filtros de categoria dos temas | ⏳ |
+| `direction-aware-tabs` (Cult UI) | abas do Social com direção | ✅ |
 | `selenite-chips` | filtros multi-seleção (histórico por grupo) | ⏳ |
-| `like` | reação "curtir" do feed | ⏳ |
+| `like` | reação do feed (estalo, anel e 12 partículas) | ✅ |
 | `holo-flip-badge` | selos de Conquistas | ⏳ |
 | `hyaline-level` / `wake-slider` | meta semanal e RPE da série (#350) | ⏳ |
 | `stretch-pill-toggle` | interruptores (modo circuito, privacidade) | ⏳ |
