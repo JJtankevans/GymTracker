@@ -43,3 +43,18 @@ class InsightsTest {
         assertNull(nextProgression(0.0, 10, 10))
     }
 }
+
+class TodayPanelTest {
+    private val today = kotlinx.datetime.LocalDate(2026, 11, 22) // domingo
+
+    @Test fun `volume por semana separa a atual da anterior`() {
+        val v = weeklyVolumes(listOf(kotlinx.datetime.LocalDate(2026, 11, 20) to 100.0, kotlinx.datetime.LocalDate(2026, 11, 14) to 200.0, kotlinx.datetime.LocalDate(2026, 11, 22) to 50.0), today)
+        assertEquals(12, v.size); assertEquals(150.0, v[11]); assertEquals(200.0, v[10])
+    }
+
+    @Test fun `descarga quando 4 semanas ficam acima da mediana`() {
+        assertTrue(needsDeload(listOf(5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 9.0, 9.0, 9.0, 9.0)))
+        assertFalse(needsDeload(listOf(5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 9.0, 9.0, 5.0, 9.0)))
+        assertFalse(needsDeload(listOf(9.0, 9.0, 9.0)))
+    }
+}

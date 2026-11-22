@@ -6,6 +6,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import com.vitoroliveira.gymtracker.ui.theme.ThemedScaffold
 import com.vitoroliveira.gymtracker.ui.theme.ThemedTopAppBar
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -408,5 +409,33 @@ fun HomeScreenEmptyPreview() {
             onStartWorkoutClick = {},
             onClearError = {}
         )
+    }
+}
+/** Painel "Hoje": carga da semana contra a anterior, dias sem treinar e aviso de semana de descarga. */
+@Composable
+fun TodayCard(state: HomeUiState) {
+    val week = state.weekVolumeKg ?: return
+    val cs = MaterialTheme.colorScheme
+    ThemedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text("Hoje", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Carga da semana", modifier = Modifier.weight(1f))
+                Text(com.vitoroliveira.gymtracker.ui.utils.formatVolume(week), fontWeight = FontWeight.Bold)
+                if (state.prevWeekVolumeKg > 0) {
+                    val pct = kotlin.math.abs(week - state.prevWeekVolumeKg) / state.prevWeekVolumeKg * 100
+                    Text("  ${if (week >= state.prevWeekVolumeKg) "+" else "−"}${pct.toInt()}%", style = MaterialTheme.typography.labelMedium, color = cs.onSurfaceVariant)
+                }
+            }
+            state.daysSinceLastWorkout?.let { d ->
+                Row {
+                    Text("Descanso", modifier = Modifier.weight(1f))
+                    Text(if (d == 0) "treinou hoje" else if (d == 1) "1 dia sem treinar" else "$d dias sem treinar", fontWeight = FontWeight.Bold)
+                }
+            }
+            if (state.suggestDeload) {
+                Text("Quatro semanas pesadas seguidas: considere uma semana de descarga (cerca de 60% do volume).", style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant)
+            }
+        }
     }
 }

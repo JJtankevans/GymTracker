@@ -93,6 +93,7 @@ private fun ClassicHome(state: HomeUiState, a: HomeActions, modifier: Modifier) 
             StreakCard(state.streakDays, Modifier.weight(1f))
             LastWorkoutCard(state.lastWorkoutDate, state.lastWorkoutMuscleGroupName, Modifier.weight(1f))
         }
+        TodayCard(state)
         if (state.weeklyHistory.any { it.count > 0 }) WeeklyHistoryCard(state)
         Spacer(Modifier.height(8.dp))
         Text("Atalhos", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
@@ -216,6 +217,7 @@ private fun BentoHome(state: HomeUiState, a: HomeActions, modifier: Modifier) {
                 }
             }
         }
+        TodayCard(state)
         if (state.weeklyHistory.any { it.count > 0 }) WeeklyHistoryCard(state)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             BentoTile("Grupos", Icons.Default.List, Modifier.weight(1f), a.onGroups)
@@ -378,6 +380,7 @@ private fun OrbitHome(state: HomeUiState, a: HomeActions, modifier: Modifier) {
             RoundAction(state.nextName() ?: "Iniciar", Icons.Default.PlayArrow, 84.dp, true) { a.startNext(state) }
             RoundAction("Histórico", Icons.Default.DateRange, 56.dp, false, a.onHistory)
         }
+        TodayCard(state)
         if (state.weeklyHistory.any { it.count > 0 }) WeeklyHistoryCard(state)
         Spacer(Modifier.height(16.dp))
     }

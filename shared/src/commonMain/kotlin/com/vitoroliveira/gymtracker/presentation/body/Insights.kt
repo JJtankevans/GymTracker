@@ -3,6 +3,9 @@ package com.vitoroliveira.gymtracker.presentation.body
 import com.vitoroliveira.gymtracker.data.catalog.CatalogMuscle
 import com.vitoroliveira.gymtracker.data.catalog.ExerciseCatalog
 import kotlin.math.roundToInt
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.daysUntil
+import kotlinx.datetime.minus
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
 
@@ -103,4 +106,29 @@ fun buildAnalysis(sets: List<com.vitoroliveira.gymtracker.data.model.ExportSet>,
         AnalysisSet(name, s.reps, s.weightKg, at)
     }
     return Analysis(imbalances(points, now), plateaus(points, now), bandRecords(points))
+}
+
+// ───────── painel "Hoje" (Home): carga da semana e semana de descarga ─────────
+private fun mondayOf(d: kotlinx.datetime.LocalDate): kotlinx.datetime.LocalDate =
+    d.minus(d.dayOfWeek.ordinal, kotlinx.datetime.DateTimeUnit.DAY)
+
+/** Volume (kg) por semana nas últimas [n] semanas (a atual por último); [points] = (dia, volume da série). */
+fun weeklyVolumes(points: List<Pair<kotlinx.datetime.LocalDate, Double>>, today: kotlinx.datetime.LocalDate, n: Int = 12): List<Double> {
+    val cur = mondayOf(today)
+    val out = MutableList(n) { 0.0 }
+    for ((day, kg) in points) {
+        val weeksAgo = mondayOf(day).daysUntil(cur) / 7
+        val i = n - 1 - weeksAgo
+        if (mondayOf(day) <= cur && i in 0 until n) out[i] += kg
+    }
+    return out
+}
+
+/** Sugere descarga quando as 4 últimas semanas ficaram todas ≥ 5% acima da mediana das semanas com treino (mín. 6 semanas e 8 de histórico). */
+fun needsDeload(volumes: List<Double>): Boolean {
+    if (volumes.size < 8) return false
+    val sorted = volumes.filter { it > 0 }.sorted()
+    if (sorted.size < 6) return false
+    val median = sorted[sorted.size / 2]
+    return volumes.takeLast(4).all { it >= median * 1.05 }
 }

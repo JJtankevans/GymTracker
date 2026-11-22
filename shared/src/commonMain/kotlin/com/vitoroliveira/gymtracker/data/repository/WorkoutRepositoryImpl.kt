@@ -132,12 +132,25 @@ class WorkoutRepositoryImpl(
             .decodeList()
     }
 
-    override suspend fun getSetsSince(sinceIso: String): List<RecentSet> =
-        supabase.postgrest["workout_sets"]
-            .select(Columns.raw("exercise_id, reps, weight_kg, workouts!inner(started_at)")) {
-                filter { gte("workouts.started_at", sinceIso) }
-            }
-            .decodeList()
+    override suspend fun getSetsSince(sinceIso: String): List<RecentSet> {
+        // o Supabase devolve no máximo 1000 linhas por chamada (janelas longas, como as 12 semanas do painel Hoje, passam disso)
+        val page = 1000L
+        val all = mutableListOf<RecentSet>()
+        var from = 0L
+        while (true) {
+            val chunk = supabase.postgrest["workout_sets"]
+                .select(Columns.raw("exercise_id, reps, weight_kg, workouts!inner(started_at)")) {
+                    filter { gte("workouts.started_at", sinceIso) }
+                    order("completed_at", Order.ASCENDING)
+                    range(from, from + page - 1)
+                }
+                .decodeList<RecentSet>()
+            all += chunk
+            if (chunk.size < page) break
+            from += page
+        }
+        return all
+    }
 
     override suspend fun getAllSetsForExport(): List<com.vitoroliveira.gymtracker.data.model.ExportSet> {
         // o Supabase devolve no máximo 1000 linhas por chamada: busca em páginas até acabar

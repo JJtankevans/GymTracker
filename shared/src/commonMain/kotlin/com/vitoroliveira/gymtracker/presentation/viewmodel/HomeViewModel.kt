@@ -25,7 +25,9 @@ import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.daysUntil
 import kotlinx.datetime.todayIn
+import kotlin.time.Duration.Companion.days
 import kotlinx.datetime.toLocalDateTime
 
 /** Resultado das consultas paralelas da Home. */
@@ -63,6 +65,11 @@ data class HomeUiState(
     val hasActiveWorkout: Boolean = false,
     /** Pedidos para me seguir esperando resposta (selo no ícone do Social). */
     val pendingFollowRequests: Int = 0,
+    /** Painel "Hoje": volume (kg) da semana atual e da anterior; null se não carregou. */
+    val weekVolumeKg: Double? = null,
+    val prevWeekVolumeKg: Double = 0.0,
+    val daysSinceLastWorkout: Int? = null,
+    val suggestDeload: Boolean = false,
     val errorMessage: String? = null
 )
 
@@ -116,6 +123,18 @@ class HomeViewModel(
                 val weeklyHistory = DashboardCalculator.weeklyBuckets(workoutDates, today, weeks = 8)
 
                 val lastWorkout = history.firstOrNull()
+                // painel "Hoje" é um extra: se a consulta das séries falhar, a Home segue sem ele
+                val volumes = try {
+                    val since = (Clock.System.now() - 84.days).toString()
+                    val raw = workoutRepository.getSetsSince(since)
+                    val pts = raw.mapNotNull { s -> parseLocalDate(s.workouts?.startedAt)?.let { it to s.reps * s.weightKg } }
+                    val v = com.vitoroliveira.gymtracker.presentation.body.weeklyVolumes(pts, today)
+                    v
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                    null
+                }
+                val lastDate = lastWorkout?.let { parseLocalDate(it.startedAt) }
                 val lastWorkoutGroupName = lastWorkout?.resolveGroupName(muscleGroups.associateBy { it.id })
 
                 _uiState.value = _uiState.value.copy(
@@ -129,6 +148,10 @@ class HomeViewModel(
                     groupNames = muscleGroups.mapNotNull { g -> g.id?.let { it to g.name } }.toMap(),
                     suggestedGroupName = suggestNextGroup(muscleGroups, history)?.let { id -> muscleGroups.firstOrNull { it.id == id }?.name },
                     pendingFollowRequests = pendingFollows,
+                    weekVolumeKg = volumes?.last(),
+                    prevWeekVolumeKg = volumes?.getOrNull(volumes.size - 2) ?: 0.0,
+                    daysSinceLastWorkout = lastDate?.let { it.daysUntil(today) },
+                    suggestDeload = volumes?.let { com.vitoroliveira.gymtracker.presentation.body.needsDeload(it) } ?: false,
                     hasActiveWorkout = active != null,
                     activeWorkoutStartedAt = active?.startedAt,
                     activeWorkoutGroupId = active?.muscleGroupId,
