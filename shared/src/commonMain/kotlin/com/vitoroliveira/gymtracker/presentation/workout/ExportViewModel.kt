@@ -18,6 +18,8 @@ data class ExportUiState(
     val csv: String? = null,
     /** Backup completo em JSON pronto para a tela salvar e compartilhar (#364). */
     val backupJson: String? = null,
+    /** Resultado de "Restaurar catálogo" (#364), para a tela mostrar e limpar. */
+    val restoredMessage: String? = null,
     val rows: Int = 0,
     val errorMessage: String? = null
 )
@@ -70,6 +72,49 @@ class ExportViewModel(
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 _state.value = ExportUiState(errorMessage = e.toUserMessage("Erro ao gerar o backup"))
+            }
+        }
+    }
+
+    /**
+     * Restaura o catálogo (grupos e exercícios) de um backup JSON: só cria o que ainda não existe na conta, nunca apaga.
+     * O histórico não é restaurado (ver BackupRestore.kt).
+     */
+    fun restoreCatalog(json: String) {
+        if (_state.value.isExporting) return
+        viewModelScope.launch {
+            _state.value = ExportUiState(isExporting = true)
+            try {
+                val backup = try {
+                    parseBackupJson(json)
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                    _state.value = ExportUiState(errorMessage = "Esse arquivo não parece um backup do GymTracker")
+                    return@launch
+                }
+                val existingGroups = groups.getAll()
+                val plan = planCatalogRestore(backup, existingGroups, exercises.getAll())
+                val idMap = mutableMapOf<String, String>()
+                // grupos que já existiam (mesmo nome): o id antigo aponta para o da conta
+                backup.groups.forEach { g ->
+                    val mine = existingGroups.firstOrNull { it.name.trim().equals(g.name.trim(), ignoreCase = true) }?.id
+                    if (mine != null && g.id != null) idMap[g.id] = mine
+                }
+                plan.newGroups.forEach { g ->
+                    val created = groups.insert(g.copy(id = null, profileId = null, createdAt = null))
+                    if (g.id != null && created.id != null) idMap[g.id] = created.id
+                }
+                plan.newExercises.forEach { e ->
+                    exercises.insert(
+                        e.copy(id = null, profileId = null, createdAt = null, updatedAt = null, groupIds = remapExerciseGroups(e.id, backup, idMap))
+                    )
+                }
+                _state.value = ExportUiState(
+                    restoredMessage = "Catálogo restaurado: ${plan.newGroups.size} grupos e ${plan.newExercises.size} exercícios novos (${plan.skipped} já existiam)"
+                )
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                _state.value = ExportUiState(errorMessage = e.toUserMessage("Erro ao restaurar o backup"))
             }
         }
     }

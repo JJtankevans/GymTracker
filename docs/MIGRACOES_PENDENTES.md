@@ -17,3 +17,22 @@ comment on column public.workout_sets.rpe is 'Esforço percebido 1-10 (10 = falh
 Depois de aplicar: o app pode passar a enviar `rpe` (hoje fica só no aparelho).
 
 *(Outras migrações da noite entram abaixo, com data.)*
+
+### 015 (opcional) — Restaurar histórico de um backup (#364)
+O app já restaura o **catálogo** (grupos e exercícios). Para restaurar também **treinos e séries com as datas antigas** é preciso uma função no servidor, porque o cliente só consegue criar treino "agora". Esboço (SECURITY INVOKER, respeita RLS):
+```sql
+create or replace function public.restore_workout(p_started timestamptz, p_finished timestamptz, p_group uuid, p_sets jsonb)
+returns uuid language plpgsql security invoker as $$
+declare w uuid;
+begin
+  insert into public.workouts(profile_id, muscle_group_id, started_at, finished_at)
+  values (auth.uid(), p_group, p_started, p_finished) returning id into w;
+  insert into public.workout_sets(workout_id, exercise_id, set_number, reps, weight_kg, completed_at)
+  select w, (s->>'exercise_id')::uuid, (s->>'set_number')::int, (s->>'reps')::int, (s->>'weight_kg')::numeric, (s->>'completed_at')::timestamptz
+  from jsonb_array_elements(p_sets) s;
+  return w;
+end $$;
+revoke all on function public.restore_workout(timestamptz, timestamptz, uuid, jsonb) from public, anon;
+grant execute on function public.restore_workout(timestamptz, timestamptz, uuid, jsonb) to authenticated;
+```
+Antes de aplicar, conferir os nomes das colunas reais em `workouts`/`workout_sets` (o esboço segue o modelo do app). O app ainda não chama essa função.

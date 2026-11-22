@@ -57,6 +57,16 @@ fun ProfileScreen(
     val exportVm: com.vitoroliveira.gymtracker.presentation.workout.ExportViewModel = koinViewModel()
     val export by exportVm.state.collectAsState()
     // CSV pronto: salva e abre o compartilhar; erro vira mensagem na tela
+    // Restaurar catálogo: escolhe o arquivo JSON no seletor do sistema (sem pedir permissão de armazenamento)
+    val restorePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            val text = runCatching { context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() } }.getOrNull()
+            if (text != null) exportVm.restoreCatalog(text) else viewModel.onExternalError("Não consegui ler o arquivo")
+        }
+    }
+    LaunchedEffect(export.restoredMessage) {
+        export.restoredMessage?.let { android.widget.Toast.makeText(context, it, android.widget.Toast.LENGTH_LONG).show(); exportVm.consumed() }
+    }
     LaunchedEffect(export.csv, export.backupJson, export.errorMessage) {
         export.backupJson?.let { json ->
             runCatching { context.shareBackup(json) }.onFailure { viewModel.onExternalError("Não foi possível compartilhar o backup") }
@@ -98,7 +108,8 @@ fun ProfileScreen(
         onRemovePhoto = { viewModel.removeAvatar() },
         isExporting = export.isExporting,
         onExport = exportVm::export,
-        onBackup = exportVm::backup
+        onBackup = exportVm::backup,
+        onRestore = { restorePicker.launch(arrayOf("application/json", "*/*")) }
     )
 }
 
@@ -143,7 +154,8 @@ fun ProfileScreenContent(
     onRemovePhoto: () -> Unit = {},
     isExporting: Boolean = false,
     onExport: () -> Unit = {},
-    onBackup: () -> Unit = {}
+    onBackup: () -> Unit = {},
+    onRestore: () -> Unit = {}
 ) {
     var weeklyGoal by remember(uiState.profile) {
         mutableStateOf(uiState.profile?.weeklyGoal ?: 3)
@@ -324,6 +336,14 @@ fun ProfileScreenContent(
                             if (isExporting) "Gerando..." else "Backup completo",
                             "Tudo num arquivo (JSON): grupos, exercícios, treinos e séries",
                             onBackup,
+                            enabled = !isExporting
+                        )
+                        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+                        ProfileRow(
+                            Icons.Default.Backup,
+                            "Restaurar catálogo",
+                            "Cria os grupos e exercícios de um backup que ainda não existem (não apaga nada)",
+                            onRestore,
                             enabled = !isExporting
                         )
                         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
