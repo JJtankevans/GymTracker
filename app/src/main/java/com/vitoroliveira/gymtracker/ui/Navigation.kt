@@ -64,9 +64,10 @@ sealed class Screen(val route: String) {
             "circuit/${routeArg(muscleGroupId)}/${routeArg(muscleGroupName ?: "Treino Livre")}"
     }
 
-    object ActiveWorkout : Screen("active_workout/{muscleGroupId}/{muscleGroupName}") {
-        fun createRoute(muscleGroupId: String?, muscleGroupName: String?) =
-            "active_workout/${routeArg(muscleGroupId)}/${routeArg(muscleGroupName ?: "Treino Livre")}"
+    /** `resume=true` (vindo do aviso "Retomar" da Home) continua o treino aberto sem perguntar de novo. */
+    object ActiveWorkout : Screen("active_workout/{muscleGroupId}/{muscleGroupName}?resume={resume}") {
+        fun createRoute(muscleGroupId: String?, muscleGroupName: String?, resume: Boolean = false) =
+            "active_workout/${routeArg(muscleGroupId)}/${routeArg(muscleGroupName ?: "Treino Livre")}?resume=$resume"
     }
 }
 
@@ -158,7 +159,7 @@ fun GymTrackerNavHost() {
                 onNavigateToRecords = { navController.navigate(Screen.Records.route) },
                 onNavigateToSocial = { navController.navigate(Screen.Social.route) },
                 onStartGroup = { id, name -> navController.navigate(Screen.ActiveWorkout.createRoute(id, name)) },
-                onResumeWorkout = { id, name -> navController.navigate(Screen.ActiveWorkout.createRoute(id, name)) }
+                onResumeWorkout = { id, name -> navController.navigate(Screen.ActiveWorkout.createRoute(id, name, resume = true)) }
             )
 
             if (showStartWorkoutSheet) {
@@ -262,13 +263,18 @@ fun GymTrackerNavHost() {
             )
         }
 
-        composable(Screen.ActiveWorkout.route) { backStackEntry ->
+        composable(
+            Screen.ActiveWorkout.route,
+            arguments = listOf(androidx.navigation.navArgument("resume") { type = androidx.navigation.NavType.BoolType; defaultValue = false })
+        ) { backStackEntry ->
+            val autoResume = backStackEntry.arguments?.getBoolean("resume") ?: false
             val muscleGroupId = backStackEntry.arguments.routeText("muscleGroupId")
             val muscleGroupName = backStackEntry.arguments.routeText("muscleGroupName")
 
             ActiveWorkoutScreen(
                 muscleGroupId = muscleGroupId,
                 muscleGroupName = muscleGroupName,
+                autoResume = autoResume,
                 onWorkoutFinished = { navController.backToFreshHome() },
                 onBack = { navController.popBackStack() },
                 onAddExercises = muscleGroupId?.takeIf { it.isNotBlank() }?.let { gid ->

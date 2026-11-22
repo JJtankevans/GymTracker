@@ -1,4 +1,15 @@
 ﻿
+## Noite de 21/11/2026 — design, temas e funcionalidades (PC do Thiago, emulador gym35)
+Plano e fila: `docs/NOITE_21_11.md`. Processos (puxados do Vault): `docs/PROCESSOS.md`. Regras de design e mapa de todas as referências: `docs/DESIGN.md`. Auditoria: `docs/AUDITORIA_DESIGN.md`. Migrações para você aplicar: `docs/MIGRACOES_PENDENTES.md`.
+Tudo abaixo foi **compilado, testado (:shared 270+ testes, contraste dos temas) e conferido no emulador**; **nada foi testado em celular de verdade**. Branch `claude/remover-leitura-notificacoes` (commits pequenos, push feito).
+- **Design:** Home com cartão **Próximo treino** (rotação) e aviso **Retomar** (todos os 29 temas); FABs na cor de marca; Perfil em seções; Grupos com menu ⋮; Histórico sem durações absurdas e com **Desfazer** ao apagar; Recordes (NOVO só 7 dias); Social sem a reação do fone; **seletor de temas em grade** com miniaturas e filtro; **ilha flutuante do descanso** (mola do Dynamic Island); descanso **automático** com a última duração (rótulo 1min30 corrigido); números que rolam (Cult UI rolling-number) e esqueleto de carregamento.
+- **Temas:** teste de contraste (`ThemeContrastTest`): corrigidos Brutal e Arena. Os 29 temas × layouts (6 de Home, 2 de treino) foram fotografados (folhas de contato em `scratchpad/themes`).
+- **Treino esquecido:** >1 h sem série ⇒ encerra no horário da última série (ou apaga se não houve série). `StaleWorkoutPolicy` + 6 testes. Diálogo de retomada diz há quanto tempo; **Retomar** da Home continua direto (sem diálogo).
+- **Funcionalidades:** #523 ícone do app (halter lima/grafite); #364 backup completo em JSON (falta importar); #365 vibração ao registrar série/recorde (+ chave no Perfil); #355 compartilhar treino como imagem; #353 mapa muscular da semana; #354 retrospectiva do mês (+ imagem); #350 esforço por série (RPE) **local** até a migração 014.
+- **Vault:** 277 itens (+20 notas do GymTracker; o importador lê `GymTracker/docs/*.md`).
+- **Cards (Runtime):** movidos para Revisão: #523, #445, #364, #365, #355, #353, #354; comentados #348 e #346. Falta você conferir no celular (roteiro em PROCESSOS.md §5).
+- **Pendências/ideias:** importar backup; retrospectiva anual; layouts de Home além de CLASSIC/BENTO ainda sem o cartão Próximo treino; Social (abas com direção, `like`); Evolução (Data-Dense Pro); 2–3 temas novos (Refero); onboarding; esqueleto no Perfil; toque mínimo 48 dp na barra superior.
+
 ## Sessão de 21/11/2026 (PC do Thiago, AGORA COM Android SDK) — COMPILADO
 - **Ambiente local pronto:** Android SDK 36 em `C:AndroidSdk` (`local.properties` com `sdk.dir=C:/Android/Sdk`, barras normais; não versionado). **Armadilha:** o Bash tool do Claude enxerga um AppData virtualizado; instalar o SDK por ele deixa o Gradle cego. Compile pelo terminal real (`.gradlew.bat :app:assembleDebug`, JDK 17 + toolchain 21 baixada sozinha). Dentro do Bash tool o Gradle falha com "Unable to establish loopback connection".
 - **Verificado:** `:app:assembleDebug` OK (APK 33 MB), `:shared:testDebugUnitTest` 260 testes / 0 falhas, `:app:compileDebugUnitTestKotlin` OK. **Não testado em aparelho/emulador.**

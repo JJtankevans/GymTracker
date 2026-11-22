@@ -113,6 +113,8 @@ fun ActiveWorkoutScreen(
     onWorkoutFinished: () -> Unit,
     onBack: () -> Unit = {},
     onAddExercises: (() -> Unit)? = null,
+    /** Vindo de "Retomar" na Home: continua o treino aberto direto, sem o diálogo de escolha. */
+    autoResume: Boolean = false,
     viewModel: WorkoutViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -123,6 +125,11 @@ fun ActiveWorkoutScreen(
     // Inicia o treino ao abrir a tela (o ViewModel ignora chamadas repetidas, ex.: ao girar a tela)
     LaunchedEffect(Unit) {
         viewModel.startWorkout(muscleGroupId)
+    }
+    if (autoResume) {
+        LaunchedEffect(uiState.activeWorkoutToRecover) {
+            uiState.activeWorkoutToRecover?.let { viewModel.resumeWorkout(it) }
+        }
     }
 
     // Tela ligada durante o treino: ninguém quer desbloquear com a mão suada entre as séries.
@@ -698,8 +705,10 @@ fun ExerciseWorkoutCard(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.weight(1f)
                         )
+                        val rpeContext = androidx.compose.ui.platform.LocalContext.current
+                        val savedRpe = RpeStore.get(rpeContext, set.id)
                         Text(
-                            text = "${set.reps} reps × ${formatKg(set.weightKg)} kg",
+                            text = "${set.reps} reps × ${formatKg(set.weightKg)} kg" + (if (savedRpe > 0) " · RPE $savedRpe" else ""),
                             style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.Medium
                         )
@@ -789,6 +798,28 @@ fun ExerciseWorkoutCard(
                 Icon(Icons.Default.Add, contentDescription = null)
                 Spacer(modifier = Modifier.width(4.dp))
                 Text("Registrar série ${completedSets.size + 1}")
+            }
+
+            if (showTimerOptions && completedSets.isNotEmpty()) {
+                val lastSet = completedSets.last()
+                val rpeContext = androidx.compose.ui.platform.LocalContext.current
+                var rpe by remember(lastSet.id) { mutableIntStateOf(RpeStore.get(rpeContext, lastSet.id)) }
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = if (rpe > 0) "Esforço da série ${completedSets.size}: ${RpeStore.describe(rpe)}" else "Quanto esforço foi a série ${completedSets.size}? (opcional)",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    (6..10).forEach { v ->
+                        FilterChip(
+                            selected = rpe == v,
+                            onClick = { rpe = v; RpeStore.put(rpeContext, lastSet.id, v) },
+                            label = { Text("$v") }
+                        )
+                    }
+                }
             }
 
             if (showTimerOptions) {
