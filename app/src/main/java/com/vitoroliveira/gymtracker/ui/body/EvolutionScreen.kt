@@ -268,10 +268,20 @@ private fun BodyWeightCard(body: BodyData, onLog: (Int, Double) -> Unit, onDelet
             }
             val range = h?.let { Bmi.normalRangeKg(it) }
             if (body.weights.size >= 2) {
+                val kgs = body.weights.map { it.kg }
+                // Data-Dense Pro: números tabulares em fileira, gráfico como herói logo abaixo
+                DataStatRow(
+                    listOf(
+                        "Variação" to signedKg(kgs.last() - kgs.first()),
+                        "Mínimo" to "${formatKg(kgs.min())} kg",
+                        "Máximo" to "${formatKg(kgs.max())} kg",
+                        "Registros" to "${kgs.size}"
+                    )
+                )
                 LineChart(
                     values = body.weights.map { it.kg },
                     xLabels = body.weights.map { dayLabel(it.epochDay) },
-                    modifier = Modifier.fillMaxWidth().height(190.dp),
+                    modifier = Modifier.fillMaxWidth().height(220.dp),
                     band = range, bandLabel = range?.let { "faixa normal (IMC)" }
                 )
             } else Text(
@@ -294,6 +304,27 @@ private fun BodyWeightCard(body: BodyData, onLog: (Int, Double) -> Unit, onDelet
                     Text("${dayLabel(w.epochDay)}  ·  ${formatKg(w.kg)} kg", Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
                     IconButton({ onDelete(w.epochDay) }) { Icon(Icons.Default.Close, "Apagar") }
                 }
+            }
+        }
+    }
+}
+
+private fun signedKg(v: Double): String {
+    val r = Math.round(v * 10) / 10.0
+    return (if (r > 0) "+" else "") + formatKg(r) + " kg"
+}
+
+/** Fileira de números "densos": rótulo pequeno em cima, valor em algarismos tabulares (não dançam ao mudar). */
+@Composable
+private fun DataStatRow(stats: List<Pair<String, String>>) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        stats.forEach { (label, value) ->
+            Column(Modifier.weight(1f)) {
+                Text(label.uppercase(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+                Text(
+                    value, style = MaterialTheme.typography.titleSmall.copy(fontFeatureSettings = "tnum"),
+                    fontWeight = FontWeight.Bold, maxLines = 1
+                )
             }
         }
     }
@@ -322,9 +353,21 @@ private fun LiftCard(s: LiftSeries, body: BodyData) {
                 }
                 if (bw != null) AssistChip(onClick = {}, label = { Text(level?.label ?: "Abaixo de Iniciante") })
             }
+            if (s.oneRepMaxes.size >= 2) {
+                val first = s.oneRepMaxes.first()
+                val last = s.oneRepMaxes.last()
+                DataStatRow(
+                    listOf(
+                        "Atual" to "${formatKg(Math.round(last * 10) / 10.0)} kg",
+                        "Melhor" to "${formatKg(Math.round(s.bestOneRm * 10) / 10.0)} kg",
+                        "Variação" to (signedKg(last - first) + if (first > 0) " (${"%+.0f".format((last - first) / first * 100)}%)" else ""),
+                        "Sessões" to "${s.oneRepMaxes.size}"
+                    )
+                )
+            }
             LineChart(
                 values = s.oneRepMaxes, xLabels = s.dates.map(::isoLabel),
-                modifier = Modifier.fillMaxWidth().height(180.dp), references = refs
+                modifier = Modifier.fillMaxWidth().height(200.dp), references = refs
             )
             if (bw == null) Text("Registre seu peso corporal para ver as referências de nível.", style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
