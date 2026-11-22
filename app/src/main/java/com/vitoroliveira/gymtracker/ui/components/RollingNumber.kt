@@ -35,9 +35,13 @@ fun RollingNumber(
     fontWeight: FontWeight? = null,
     suffix: String = ""
 ) {
-    val animated = remember { Animatable(0f) }
-    LaunchedEffect(value) {
-        animated.animateTo(
+    val context = androidx.compose.ui.platform.LocalContext.current
+    // DESIGN.md §3: respeitar "remover animações" do sistema (o número aparece direto, sem rolar).
+    val reduceMotion = remember(context) { !com.vitoroliveira.gymtracker.ui.theme.animationsEnabled(context) }
+    val animated = remember { Animatable(if (reduceMotion) value.toFloat() else 0f) }
+    LaunchedEffect(value, reduceMotion) {
+        if (reduceMotion) animated.snapTo(value.toFloat())
+        else animated.animateTo(
             value.toFloat(),
             spring(dampingRatio = SPRING_DAMPING_RATIO, stiffness = SPRING_STIFFNESS)
         )

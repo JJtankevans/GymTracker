@@ -468,13 +468,15 @@ fun RestIsland(
     modifier: Modifier = Modifier
 ) {
     val visible = timer.totalSeconds > 0
+    val islandContext = androidx.compose.ui.platform.LocalContext.current
+    val reduceMotion = remember(islandContext) { !com.vitoroliveira.gymtracker.ui.theme.animationsEnabled(islandContext) }
     androidx.compose.animation.AnimatedVisibility(
         visible = visible,
         modifier = modifier,
-        enter = androidx.compose.animation.slideInVertically(
+        enter = if (reduceMotion) androidx.compose.animation.EnterTransition.None else androidx.compose.animation.slideInVertically(
             androidx.compose.animation.core.spring(dampingRatio = 0.75f, stiffness = 400f)
         ) { it } + androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(150)),
-        exit = androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(120)) +
+        exit = if (reduceMotion) androidx.compose.animation.ExitTransition.None else androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(120)) +
             androidx.compose.animation.slideOutVertically(androidx.compose.animation.core.tween(120)) { it / 3 }
     ) {
         val done = timer.isFinished

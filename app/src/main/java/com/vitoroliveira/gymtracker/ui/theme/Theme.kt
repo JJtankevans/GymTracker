@@ -55,7 +55,8 @@ private fun Context.findActivity(): Activity? {
     return null
 }
 
-private fun animationsEnabled(context: Context): Boolean = try {
+/** Falso quando a pessoa desligou as animações do sistema (Acessibilidade → remover animações). */
+fun animationsEnabled(context: Context): Boolean = try {
     Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) > 0f
 } catch (_: Exception) {
     true
