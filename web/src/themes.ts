@@ -15,6 +15,8 @@ const MONO = "ui-monospace, 'SF Mono', Menlo, Consolas, 'Courier New', monospace
 const carbonDark: Tokens = { bg: '#0c0d0f', surface: '#16181b', surface2: '#1e2125', line: '#2a2d30', text: '#f4f5f2', muted: '#8e948f', accent: '#c6f24e', onAccent: '#10130a', danger: '#ff6b5e', radius: '18px', font: SANS, fontH: SANS }
 const carbonLight: Tokens = { bg: '#f5f6f3', surface: '#ffffff', surface2: '#ecefe9', line: '#dde0d8', text: '#15180f', muted: '#5b6157', accent: '#5b7f00', onAccent: '#ffffff', danger: '#b3261e', radius: '18px', font: SANS, fontH: SANS }
 
+const single = (id: string, name: string, tagline: string, t: Tokens): Theme => ({ id, name, tagline, dark: t, light: t })
+
 export const THEMES: Theme[] = [
   { id: 'carbon', name: 'Carbon', tagline: 'Grafite com verde-limão. Cara de academia', dark: carbonDark, light: carbonLight },
   {
@@ -32,6 +34,12 @@ export const THEMES: Theme[] = [
     dark: { bg: '#000000', surface: '#06130a', surface2: '#0b2013', line: '#145a2a', text: '#39ff6e', muted: '#1fa846', accent: '#ffb000', onAccent: '#000000', danger: '#ff5a4d', radius: '2px', font: MONO, fontH: MONO },
     light: { bg: '#000000', surface: '#06130a', surface2: '#0b2013', line: '#145a2a', text: '#39ff6e', muted: '#1fa846', accent: '#ffb000', onAccent: '#000000', danger: '#ff5a4d', radius: '2px', font: MONO, fontH: MONO },
   },
+  // Temas de um modo só (como no app Android): o modo escolhido não os muda.
+  single('oceano', 'Oceano', 'Azul-marinho profundo', { bg: '#08111f', surface: '#0f1b2e', surface2: '#14243b', line: '#1f3556', text: '#e6eef9', muted: '#8da2bf', accent: '#38bdf8', onAccent: '#04121c', danger: '#ff7b70', radius: '14px', font: SANS, fontH: SANS }),
+  single('comando', 'Comando', 'Quase preto, uma única cor coral', { bg: '#040506', surface: '#111214', surface2: '#1a1b1e', line: '#2a2b2e', text: '#e6e6e6', muted: '#9c9c9d', accent: '#ff6363', onAccent: '#1a0505', danger: '#ffb020', radius: '12px', font: SANS, fontH: SANS }),
+  single('cobalto', 'Cobalto', 'Azul-aço, luz suave', { bg: '#0e1420', surface: '#141c2b', surface2: '#1a2438', line: '#26344f', text: '#e8eef9', muted: '#93a3c0', accent: '#6ea0ff', onAccent: '#06142e', danger: '#ff7b70', radius: '16px', font: SANS, fontH: SANS }),
+  single('pergaminho', 'Pergaminho', 'Papel quente, vinho e violeta', { bg: '#f2f0eb', surface: '#faf8f4', surface2: '#eae6dc', line: '#d8d3c8', text: '#292827', muted: '#6b665c', accent: '#421d24', onAccent: '#f7efe8', danger: '#b3261e', radius: '16px', font: SANS, fontH: SERIF }),
+  single('industrial', 'Industrial', 'Catálogo técnico, azul de painel', { bg: '#f6f8f7', surface: '#ffffff', surface2: '#edf1ef', line: '#c9d0cd', text: '#0f0e12', muted: '#5a6360', accent: '#0071bb', onAccent: '#ffffff', danger: '#b3261e', radius: '8px', font: SANS, fontH: SANS }),
 ]
 
 export type Mode = 'auto' | 'dark' | 'light'
