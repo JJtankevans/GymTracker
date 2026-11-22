@@ -64,6 +64,7 @@ describe('fadiga semanal', () => {
 
 describe('fases', () => {
   it('mantém o alvo do exercício se cabe na faixa; senão usa o topo', () => {
+    expect(phaseTargetReps('auto', 15)).toBe(15)
     expect(phaseTargetReps('volume', 10)).toBe(10)
     expect(phaseTargetReps('strength', 10)).toBe(6)
     expect(phaseTargetReps('cut', 8)).toBe(15)
@@ -77,7 +78,7 @@ describe('lembrete inteligente', () => {
     expect(smartReminder({ ...base, trainedToday: true })).toBeNull()
   })
   it('urgente quando faltam mais treinos que dias (domingo = 1 dia)', () => {
-    expect(smartReminder(base)).toContain('só restam 1 dias')
+    expect(smartReminder(base)).toContain('só restam 1 dia:')
   })
   it('tom leve quando sobra tempo (segunda)', () => {
     expect(smartReminder({ ...base, now: new Date(2026, 10, 16, 9) })).toContain('Que tal hoje')

@@ -455,7 +455,14 @@ fun ActiveWorkoutScreenContent(
     }
 
     uiState.summary?.let { summary ->
-        WorkoutSummaryDialog(summary = summary, onDone = onSummaryDone, onShare = onShareSummary, groupName = muscleGroupName)
+        // séries marcadas como aquecimento não contam no resumo (volume, séries e repetições)
+        val warm = uiState.completedSets.filter { FlagStore.get(appCtx, it.id) == com.vitoroliveira.gymtracker.presentation.workout.SetFlag.WARMUP }
+        val adjusted = if (warm.isEmpty()) summary else summary.copy(
+            totalSets = (summary.totalSets - warm.size).coerceAtLeast(0),
+            totalReps = (summary.totalReps - warm.sumOf { it.reps }).coerceAtLeast(0),
+            totalVolumeKg = (summary.totalVolumeKg - warm.sumOf { it.reps * it.weightKg }).coerceAtLeast(0.0)
+        )
+        WorkoutSummaryDialog(summary = adjusted, onDone = onSummaryDone, onShare = onShareSummary, groupName = muscleGroupName)
     }
 }
 
@@ -610,6 +617,7 @@ fun TimerCard(
     }
 }
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun ExerciseWorkoutCard(
     exercise: Exercise,
@@ -635,6 +643,7 @@ fun ExerciseWorkoutCard(
 ) {
     val tempoCtx = androidx.compose.ui.platform.LocalContext.current
     var tempo by remember { mutableStateOf(TempoStore.getDefault(tempoCtx, exercise.id)) }
+    var setFlag by remember { mutableStateOf<com.vitoroliveira.gymtracker.presentation.workout.SetFlag?>(null) }
     var reps by remember { mutableStateOf(exercise.defaultReps.toString()) }
     var weight by remember { mutableStateOf("") }
     var weightError by remember { mutableStateOf(false) }
@@ -646,7 +655,7 @@ fun ExerciseWorkoutCard(
     var rememberedRest by remember { mutableIntStateOf(restPrefs.getInt("rest_seconds", 0)) }
 
     val suggestion = com.vitoroliveira.gymtracker.ui.components.rememberLoadSuggestion(
-        exercise.name, baseline?.lastWeightKg, baseline?.lastReps, exercise.defaultReps
+        exercise.name, baseline?.lastWeightKg, baseline?.lastReps, com.vitoroliveira.gymtracker.presentation.workout.phaseTargetReps(PhaseStore.get(tempoCtx), exercise.defaultReps)
     )
     // Pré-preenche com a última vez (sem sobrescrever o que o usuário já digitou)
     LaunchedEffect(baseline, suggestion?.weightKg) {
@@ -663,6 +672,8 @@ fun ExerciseWorkoutCard(
             com.vitoroliveira.gymtracker.presentation.workout.parseTempo(tempo)?.let { t ->
                 completedSets.maxByOrNull { it.setNumber }?.let { TempoStore.putForSet(tempoCtx, it.id, com.vitoroliveira.gymtracker.presentation.workout.tempoText(t)) }
             }
+            setFlag?.let { f -> completedSets.maxByOrNull { it.setNumber }?.let { FlagStore.put(tempoCtx, it.id, f) } }
+            setFlag = null
             if (!skipRest) {
                 showTimerOptions = true
                 if (rememberedRest > 0) onStartTimer(rememberedRest)
@@ -768,7 +779,7 @@ fun ExerciseWorkoutCard(
                         val rpeContext = androidx.compose.ui.platform.LocalContext.current
                         val savedRpe = RpeStore.get(rpeContext, set.id)
                         Text(
-                            text = "${set.reps} reps × ${formatKg(set.weightKg)} kg" + (if (savedRpe > 0) " · RPE $savedRpe" else "") +
+                            text = (FlagStore.get(rpeContext, set.id)?.let { "${it.label} · " } ?: "") + "${set.reps} reps × ${formatKg(set.weightKg)} kg" + (if (savedRpe > 0) " · RPE $savedRpe" else "") +
                                 (TempoStore.getForSet(rpeContext, set.id)?.let { com.vitoroliveira.gymtracker.presentation.workout.parseTempo(it) }
                                     ?.let { " · TUT ${com.vitoroliveira.gymtracker.presentation.workout.formatTut(com.vitoroliveira.gymtracker.presentation.workout.tutSeconds(set.reps, it))}" } ?: ""),
                             style = MaterialTheme.typography.bodySmall,
@@ -842,6 +853,28 @@ fun ExerciseWorkoutCard(
             }
 
             Spacer(modifier = Modifier.height(8.dp))
+            val workKg = weight.replace(",", ".").toDoubleOrNull()
+            val repsNow = reps.toIntOrNull()
+            if (completedSets.isEmpty() && workKg != null) {
+                val warm = com.vitoroliveira.gymtracker.presentation.workout.warmupSets(workKg)
+                if (warm.isNotEmpty()) Text(
+                    "Aquecimento: " + warm.joinToString(" → ") { "${formatKg(it.weightKg)}×${it.reps}" },
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            val rm = if (workKg != null && repsNow != null) com.vitoroliveira.gymtracker.presentation.workout.liveOneRm(workKg, repsNow) else null
+            if (rm != null) {
+                val lastRm = if (baseline?.lastWeightKg != null && baseline.lastReps != null) com.vitoroliveira.gymtracker.presentation.workout.liveOneRm(baseline.lastWeightKg!!, baseline.lastReps!!) else null
+                Text(
+                    "1RM estimado: ${formatKg(rm)} kg" + (if (lastRm != null && rm > lastRm + 0.05) " · acima da última vez" else ""),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                com.vitoroliveira.gymtracker.presentation.workout.SetFlag.entries.forEach { f ->
+                    FilterChip(selected = setFlag == f, onClick = { setFlag = if (setFlag == f) null else f }, label = { Text(f.label) })
+                }
+            }
             val tempoInvalid = tempo.isNotBlank() && com.vitoroliveira.gymtracker.presentation.workout.parseTempo(tempo) == null
             OutlinedTextField(
                 value = tempo,
@@ -856,6 +889,7 @@ fun ExerciseWorkoutCard(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
+            com.vitoroliveira.gymtracker.presentation.workout.parseTempo(tempo)?.let { tp -> reps.toIntOrNull()?.takeIf { it >= 1 }?.let { r -> LiveSetTimer(tp, r) } }
             if (linkable) {
                 Spacer(modifier = Modifier.height(4.dp))
                 FilterChip(

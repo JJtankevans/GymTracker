@@ -1,5 +1,6 @@
 package com.vitoroliveira.gymtracker.ui.home
 
+import kotlinx.datetime.todayIn
 import com.vitoroliveira.gymtracker.ui.theme.ThemedCard
 import com.vitoroliveira.gymtracker.ui.components.BarChart
 import androidx.compose.foundation.rememberScrollState
@@ -436,6 +437,95 @@ fun TodayCard(state: HomeUiState) {
             if (state.suggestDeload) {
                 Text("Quatro semanas pesadas seguidas: considere uma semana de descarga (cerca de 60% do volume).", style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant)
             }
+        }
+    }
+}
+
+
+/** Lembrete inteligente: só aparece se a meta da semana ainda não foi batida e há dias para cumprir. */
+@Composable
+fun ReminderCard(state: HomeUiState) {
+    val today = kotlin.time.Clock.System.todayIn(kotlinx.datetime.TimeZone.currentSystemDefault())
+    val msg = com.vitoroliveira.gymtracker.presentation.workout.smartReminder(
+        weeklyDone = state.weeklyCount, goal = state.weeklyGoal, trainedToday = state.daysSinceLastWorkout == 0,
+        daysLeftInWeek = com.vitoroliveira.gymtracker.presentation.workout.daysLeftInWeek(today), nextGroup = state.suggestedGroupName?.let { com.vitoroliveira.gymtracker.ui.components.prettyGroupName(it) }
+    ) ?: return
+    ThemedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text("Lembrete", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(msg, style = MaterialTheme.typography.bodyMedium)
+        }
+    }
+}
+
+/** Cardio da semana (registrado só neste aparelho) e escolha da fase do treino (ajusta a meta de repetições da sugestão). */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+fun CardioCard(state: HomeUiState) {
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val today = kotlin.time.Clock.System.todayIn(kotlinx.datetime.TimeZone.currentSystemDefault())
+    var entries by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(com.vitoroliveira.gymtracker.ui.workout.CardioStore.load(ctx)) }
+    var kind by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("Corrida") }
+    var minutes by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
+    var km by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
+    var phase by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(com.vitoroliveira.gymtracker.ui.workout.PhaseStore.get(ctx)) }
+    val week = com.vitoroliveira.gymtracker.presentation.workout.weeklyCardio(entries, today)
+    ThemedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Cardio da semana", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(
+                if (week.sessions == 0) "Nenhum cardio registrado esta semana."
+                else "${week.sessions} ${if (week.sessions == 1) "sessão" else "sessões"} · ${week.minutes} min" + (if (week.km > 0) " · ${week.km.toString().replace('.', ',')} km" else ""),
+                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                listOf("Corrida", "Bike", "Caminhada", "Aquecimento").forEach { k ->
+                    androidx.compose.material3.FilterChip(selected = kind == k, onClick = { kind = k }, label = { Text(k) })
+                }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                androidx.compose.material3.OutlinedTextField(
+                    value = minutes, onValueChange = { minutes = it.filter(Char::isDigit).take(3) }, label = { Text("Minutos") }, singleLine = true,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number), modifier = Modifier.weight(1f)
+                )
+                androidx.compose.material3.OutlinedTextField(
+                    value = km, onValueChange = { km = it.filter { c -> c.isDigit() || c == ',' || c == '.' }.take(5) }, label = { Text("Km") }, singleLine = true,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal), modifier = Modifier.weight(1f)
+                )
+                androidx.compose.material3.Button(
+                    onClick = {
+                        val m = minutes.toIntOrNull() ?: return@Button
+                        if (m !in 1..599) return@Button
+                        entries = entries + com.vitoroliveira.gymtracker.presentation.workout.CardioEntry(System.currentTimeMillis().toString(), today, kind, m, km.replace(',', '.').toDoubleOrNull()?.takeIf { it > 0 })
+                        com.vitoroliveira.gymtracker.ui.workout.CardioStore.save(ctx, entries)
+                        minutes = ""; km = ""
+                    },
+                    enabled = minutes.isNotBlank()
+                ) { Text("Registrar") }
+            }
+            entries.takeLast(3).reversed().forEach { c ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        "%02d/%02d · ${c.kind} · ${c.minutes} min".format(c.day.dayOfMonth, c.day.monthNumber) + (c.km?.let { " · ${it.toString().replace('.', ',')} km" } ?: ""),
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f)
+                    )
+                    androidx.compose.material3.TextButton(onClick = {
+                        entries = entries.filter { it.id != c.id }
+                        com.vitoroliveira.gymtracker.ui.workout.CardioStore.save(ctx, entries)
+                    }) { Text("Apagar") }
+                }
+            }
+            Text("Fase do treino", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+            androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                com.vitoroliveira.gymtracker.presentation.workout.TrainingPhase.entries.forEach { ph ->
+                    androidx.compose.material3.FilterChip(
+                        selected = phase == ph,
+                        onClick = { phase = ph; com.vitoroliveira.gymtracker.ui.workout.PhaseStore.put(ctx, ph) },
+                        label = { Text(ph.label) }
+                    )
+                }
+            }
+            Text(phase.tip, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

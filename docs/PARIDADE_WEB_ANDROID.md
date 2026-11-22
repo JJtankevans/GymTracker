@@ -14,16 +14,16 @@ Onde ficam as regras: web em `web/src/insights.ts`, `superset.ts`, `tempo.ts`, `
 | Supersérie / bi-set / tri-set / circuito (sem descanso até o fim da rodada, "Agora: próximo") — #575 | ✅ (22/11) | `SupersetAndTempo.kt` + `SupersetStore`; só no layout de lista do treino (o layout "Foco" não tem a ligação). Guardado no aparelho; migração 017 prepara o banco |
 | Cadência `3-1-2-0` opcional e TUT por série — #581 | ✅ (22/11) | `TempoStore`; aparece como "· TUT 1min12" na série. Migração 017 |
 | Sugestão de carga (+2,5/+5 kg ao bater reps) — #559 | ✅ `LoadSuggester` (mais completo) | Não criar de novo |
-| Aquecimento sugerido por exercício — #579 | 🔎 | Android tinha `warmupSets`; conferir se aparece no treino |
+| Aquecimento sugerido por exercício — #579 | ✅ (22/11) | Já existia no detalhe do exercício; agora também aparece no cartão do treino (antes da 1ª série, "Aquecimento: 20×10 → …") |
 | Nota por exercício (banco, pegada) — #582 | ❌ | Web: só no aparelho (`gt-note-<id>`) |
 | Descanso próprio por exercício — #576 | ❌ | Android lembra um descanso único; falta por exercício |
 | Modo foco (um exercício por vez) — #584 | ❌ | |
-| Série cronometrada ao vivo (fases da cadência com bip) — #599 | ❌ | Web: `training.ts` (`liveSchedule`/`phaseAt`) + `LiveTimer.tsx` |
-| 1RM estimado na série e aviso de recorde estimado — #605 | ❌ | Web: `liveOneRm`/`isEstimatedRecord` |
-| Marcas de série: aquecimento (não conta em volume/recordes), drop-set, rest-pause, falha — #603/#604 | ❌ | Web: `FlagMap` no aparelho; aquecimento sai de `loadHistory()` (use `keepWarmups` onde quiser ver tudo) |
+| Série cronometrada ao vivo (fases da cadência com bip) — #599 | ✅ (22/11) | `TrainingExtras.kt` (`liveSchedule`/`phaseAt`) + `LiveSetTimer.kt` (ToneGenerator); conferido no emulador |
+| 1RM estimado na série e aviso de recorde estimado — #605 | ✅ parcial (22/11) | Mostra o 1RM estimado; o aviso compara com a **última vez** ("acima da última vez"), não com o melhor 1RM histórico (o app não tem esse número por exercício no treino) |
+| Marcas de série: aquecimento (não conta em volume/recordes), drop-set, rest-pause, falha — #603/#604 | ⚠️ parcial (22/11) | `FlagStore`; marca, mostra na lista e **tira o aquecimento só do resumo do treino**. NÃO tira de Histórico/Evolução/"Hoje"/recordes: esses números vêm do servidor sem o id da série (falta guardar a marca no banco; ver migração 017 ou criar coluna `kind`) |
 | Modelos de treino salvos (cargas, reps, cadência, supersérie) — #602 | ❌ | Web: `Template` no aparelho; lista na tela de escolha |
 | Notas de voz (ditado) nas notas do exercício — #607 | ❌ | Web: Web Speech API; no Android usar `SpeechRecognizer` |
-| Fase do treino (Volume/Força/Definição) ajusta a meta de repetições da sugestão — #609 | ❌ | Web: Mais → Fase do treino; `phaseTargetReps` |
+| Fase do treino (Automático/Volume/Força/Definição) ajusta a meta de repetições da sugestão — #609 | ✅ (22/11) | Escolha no cartão de cardio da Home; padrão **Automático** (usa as reps do exercício) nas duas plataformas |
 
 ## Home
 | Funcionalidade (web) | Android | Notas |
@@ -32,8 +32,8 @@ Onde ficam as regras: web em `web/src/insights.ts`, `superset.ts`, `tempo.ts`, `
 | Resumo da semana (sex–dom) — #585 | ❌ | Só cartão; notificação depende de push |
 | Atalhos de grupos favoritos — #583 | ❌ | O Android tem linha "Atalhos" fixa (Grupos/Histórico), não favoritos |
 | Sono e energia do dia — #587 | ❌ | Só no aparelho |
-| Lembrete inteligente (meta da semana não batida e há dia livre) — #610 | ❌ | Web: `smartReminder`; só cartão (notificação real depende de push #534) |
-| Cardio da semana (registrar tempo/km, soma na Home) — #601 | ❌ | Web: só no aparelho |
+| Lembrete inteligente (meta da semana não batida e há dia livre) — #610 | ✅ (22/11) | `ReminderCard` na Home; só cartão (notificação real depende de push) |
+| Cardio da semana (registrar tempo/km, soma na Home) — #601 | ✅ (22/11) | `CardioCard` + `CardioStore`; só no aparelho |
 
 ## Evolução / Análises
 | Funcionalidade (web) | Android | Notas |

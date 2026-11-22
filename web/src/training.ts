@@ -103,16 +103,18 @@ export function fatigueWeeks(items: HistItem[], rpe: Record<string, number>, wel
 }
 
 // ───────── #609 metas por fase ─────────
-export type PhaseId = 'volume' | 'strength' | 'cut'
+export type PhaseId = 'auto' | 'volume' | 'strength' | 'cut'
 export const PHASES: Record<PhaseId, { name: string; reps: [number, number]; tip: string }> = {
+  auto: { name: 'Automático', reps: [0, 0], tip: 'Usa as repetições planejadas de cada exercício.' },
   volume: { name: 'Volume', reps: [8, 12], tip: 'Hipertrofia: 8 a 12 repetições, 10 a 20 séries por músculo na semana.' },
   strength: { name: 'Força', reps: [3, 6], tip: 'Força: 3 a 6 repetições com cargas altas e descanso longo (2 a 4 min).' },
   cut: { name: 'Definição', reps: [12, 15], tip: 'Definição: manter a carga, 12 a 15 repetições e mais cardio.' },
 }
-export const loadPhase = (): PhaseId => { const v = read<string>('gt-phase', 'volume'); return v in PHASES ? (v as PhaseId) : 'volume' }
+export const loadPhase = (): PhaseId => { const v = read<string>('gt-phase', 'auto'); return v in PHASES ? (v as PhaseId) : 'auto' }
 export const savePhase = (p: PhaseId) => write('gt-phase', p)
 /** Repetições-alvo da fase; mantém o alvo do exercício quando ele já cabe na faixa da fase. */
 export const phaseTargetReps = (phase: PhaseId, exerciseDefault: number): number => {
+  if (phase === 'auto') return exerciseDefault
   const [lo, hi] = PHASES[phase].reps
   return exerciseDefault >= lo && exerciseDefault <= hi ? exerciseDefault : hi
 }
@@ -124,7 +126,7 @@ export function smartReminder({ now, weeklyDone, goal, trainedToday, nextGroup }
   const missing = goal - weeklyDone
   if (missing <= 0 || trainedToday) return null
   const daysLeft = 7 - ((now.getDay() + 6) % 7) // hoje conta (segunda = 7 dias restantes, domingo = 1)
-  if (daysLeft < missing) return `Faltam ${missing} treinos e só restam ${daysLeft} dias: hoje é dia de treinar${nextGroup ? ` (${nextGroup})` : ''}.`
+  if (daysLeft < missing) return `Faltam ${missing} treinos e só restam ${daysLeft} ${daysLeft === 1 ? 'dia' : 'dias'}: hoje é dia de treinar${nextGroup ? ` (${nextGroup})` : ''}.`
   if (daysLeft === missing) return `Para bater a meta, treine em todos os dias que restam, inclusive hoje${nextGroup ? ` (${nextGroup})` : ''}.`
   return `Faltam ${missing} ${missing === 1 ? 'treino' : 'treinos'} para a meta e ${daysLeft} dias pela frente. Que tal hoje${nextGroup ? `: ${nextGroup}` : ''}?`
 }
