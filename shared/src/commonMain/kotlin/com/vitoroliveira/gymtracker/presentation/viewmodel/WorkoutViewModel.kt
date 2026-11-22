@@ -25,6 +25,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.coroutines.cancellation.CancellationException
+import com.vitoroliveira.gymtracker.presentation.workout.settleIfStale
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -112,7 +113,8 @@ class WorkoutViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
             try {
-                val active = workoutRepository.getActiveWorkout()
+                // Treino esquecido aberto (mais de 1 h sem série): encerra sozinho e segue como se não houvesse.
+                val active = workoutRepository.getActiveWorkout()?.let { workoutRepository.settleIfStale(it, Clock.System.now()) }
                 if (active != null) {
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,

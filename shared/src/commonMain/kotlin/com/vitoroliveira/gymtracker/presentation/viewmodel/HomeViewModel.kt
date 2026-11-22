@@ -11,6 +11,7 @@ import com.vitoroliveira.gymtracker.presentation.DashboardCalculator
 import com.vitoroliveira.gymtracker.presentation.WeekBucket
 import com.vitoroliveira.gymtracker.domain.repository.MuscleGroupRepository
 import com.vitoroliveira.gymtracker.domain.resolveGroupName
+import com.vitoroliveira.gymtracker.presentation.workout.settleIfStale
 import com.vitoroliveira.gymtracker.presentation.workout.suggestNextGroup
 import com.vitoroliveira.gymtracker.domain.repository.ProfileRepository
 import com.vitoroliveira.gymtracker.domain.repository.WorkoutRepository
@@ -40,6 +41,11 @@ data class HomeUiState(
     val suggestedGroupId: String? = null,
     /** Nome do grupo sugerido (para o cartão "Próximo treino" da Home). */
     val suggestedGroupName: String? = null,
+    /** Treino iniciado e ainda não finalizado (para o aviso "Retomar" da Home). */
+    val activeWorkoutStartedAt: String? = null,
+    val activeWorkoutGroupId: String? = null,
+    val activeWorkoutGroupName: String? = null,
+    val hasActiveWorkout: Boolean = false,
     /** Pedidos para me seguir esperando resposta (selo no ícone do Social). */
     val pendingFollowRequests: Int = 0,
     val errorMessage: String? = null
@@ -81,6 +87,7 @@ class HomeViewModel(
                 val weeklyHistory = DashboardCalculator.weeklyBuckets(workoutDates, today, weeks = 8)
 
                 val lastWorkout = history.firstOrNull()
+                val active = try { workoutRepository.getActiveWorkout()?.let { workoutRepository.settleIfStale(it, Clock.System.now()) } } catch (e: Exception) { if (e is CancellationException) throw e; null }
                 val lastWorkoutGroupName = lastWorkout?.resolveGroupName(muscleGroups.associateBy { it.id })
 
                 _uiState.value = _uiState.value.copy(
@@ -93,6 +100,10 @@ class HomeViewModel(
                     suggestedGroupId = suggestNextGroup(muscleGroups, history),
                     suggestedGroupName = suggestNextGroup(muscleGroups, history)?.let { id -> muscleGroups.firstOrNull { it.id == id }?.name },
                     pendingFollowRequests = countFollowRequestsQuietly(),
+                    hasActiveWorkout = active != null,
+                    activeWorkoutStartedAt = active?.startedAt,
+                    activeWorkoutGroupId = active?.muscleGroupId,
+                    activeWorkoutGroupName = active?.resolveGroupName(muscleGroups.associateBy { it.id }),
                     lastWorkoutDate = lastWorkout?.let { formatDate(it.startedAt) },
                     lastWorkoutMuscleGroupName = lastWorkout?.let {
                         lastWorkoutGroupName ?: "Treino livre"

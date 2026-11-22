@@ -49,7 +49,8 @@ data class HomeActions(
     val onGroups: () -> Unit,
     val onHistory: () -> Unit,
     val onStart: () -> Unit,
-    val onStartGroup: (String, String) -> Unit = { _, _ -> }
+    val onStartGroup: (String, String) -> Unit = { _, _ -> },
+    val onResume: (String?, String) -> Unit = { _, _ -> }
 )
 
 /** Layouts que desenham o próprio botão de iniciar (sem FAB). */
@@ -85,6 +86,7 @@ private fun HomeUiState.remainingText(): String {
 @Composable
 private fun ClassicHome(state: HomeUiState, a: HomeActions, modifier: Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        ResumeWorkoutBanner(state, a)
         NextWorkoutCard(state, a)
         WeeklyGoalCard(state.weeklyCount, state.weeklyGoal)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -96,6 +98,29 @@ private fun ClassicHome(state: HomeUiState, a: HomeActions, modifier: Modifier) 
         Text("Atalhos", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         QuickAccessRow(a.onGroups, a.onHistory)
         Spacer(Modifier.height(72.dp))
+    }
+}
+
+/** Aviso no topo da Home quando há um treino iniciado e não finalizado. */
+@Composable
+fun ResumeWorkoutBanner(state: HomeUiState, a: HomeActions) {
+    if (!state.hasActiveWorkout) return
+    val cs = MaterialTheme.colorScheme
+    val name = state.activeWorkoutGroupName?.let { prettyGroupName(it) } ?: "Treino livre"
+    ThemedCard(
+        Modifier.fillMaxWidth(),
+        containerColor = cs.tertiaryContainer,
+        contentColor = cs.onTertiaryContainer,
+        onClick = { a.onResume(state.activeWorkoutGroupId, name) }
+    ) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("Treino em andamento", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                Text("$name · iniciado ${com.vitoroliveira.gymtracker.ui.components.timeAgoText(state.activeWorkoutStartedAt)}", style = MaterialTheme.typography.bodySmall)
+            }
+            Text("Retomar", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Black)
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, null, Modifier.padding(start = 4.dp).size(18.dp))
+        }
     }
 }
 
@@ -161,6 +186,7 @@ internal fun ProgressRing(
 @Composable
 private fun BentoHome(state: HomeUiState, a: HomeActions, modifier: Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        ResumeWorkoutBanner(state, a)
         NextWorkoutCard(state, a)
         Row(Modifier.fillMaxWidth().height(206.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             ThemedCard(Modifier.weight(1.25f).fillMaxHeight(), containerColor = MaterialTheme.colorScheme.primaryContainer) {

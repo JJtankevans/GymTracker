@@ -157,7 +157,8 @@ fun GymTrackerNavHost() {
                 onNavigateToEvolution = { navController.navigate(Screen.Evolution.route) },
                 onNavigateToRecords = { navController.navigate(Screen.Records.route) },
                 onNavigateToSocial = { navController.navigate(Screen.Social.route) },
-                onStartGroup = { id, name -> navController.navigate(Screen.ActiveWorkout.createRoute(id, name)) }
+                onStartGroup = { id, name -> navController.navigate(Screen.ActiveWorkout.createRoute(id, name)) },
+                onResumeWorkout = { id, name -> navController.navigate(Screen.ActiveWorkout.createRoute(id, name)) }
             )
 
             if (showStartWorkoutSheet) {

@@ -12,6 +12,8 @@ import com.vitoroliveira.gymtracker.data.model.WorkoutSet
 interface WorkoutRepository {
     suspend fun startWorkout(muscleGroupId: String?): Workout
     suspend fun finishWorkout(workoutId: String)
+    /** Encerra o treino num horário passado (treino esquecido aberto: usa o horário da última série). */
+    suspend fun finishWorkoutAt(workoutId: String, finishedAtIso: String) = finishWorkout(workoutId)
     suspend fun deleteWorkout(workoutId: String)
     suspend fun getActiveWorkout(): Workout?
     suspend fun updateFinishedExercises(workoutId: String, finishedExerciseIds: List<String>)

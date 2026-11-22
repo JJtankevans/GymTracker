@@ -46,6 +46,13 @@ class WorkoutRepositoryImpl(
             }
     }
 
+    override suspend fun finishWorkoutAt(workoutId: String, finishedAtIso: String) {
+        supabase.postgrest["workouts"]
+            .update({ set("finished_at", finishedAtIso) }) {
+                filter { eq("id", workoutId) }
+            }
+    }
+
     override suspend fun deleteWorkout(workoutId: String) {
         supabase.postgrest["workouts"]
             .delete {

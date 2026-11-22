@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material3.AlertDialog
+import androidx.compose.animation.animateContentSize
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -222,7 +223,7 @@ fun ActiveWorkoutScreenContent(
                     Column {
                         Text("Treino Ativo")
                         val subtitle = listOfNotNull(
-                            muscleGroupName,
+                            muscleGroupName?.let { com.vitoroliveira.gymtracker.ui.components.prettyGroupName(it) },
                             if (uiState.activeWorkout != null) formatElapsed(elapsedSeconds) else null
                         ).joinToString("  ·  ")
                         if (subtitle.isNotEmpty()) {
@@ -370,12 +371,17 @@ fun ActiveWorkoutScreenContent(
         AlertDialog(
             onDismissRequest = { },
             title = { Text("Treino em andamento") },
-            text = { Text("Você tem um treino iniciado anteriormente. Deseja continuar ou iniciar um novo?") },
+            text = {
+                Text(
+                    "Você começou um treino " + com.vitoroliveira.gymtracker.ui.components.timeAgoText(uiState.activeWorkoutToRecover!!.startedAt) +
+                        ". Continue de onde parou ou descarte-o e comece outro."
+                )
+            },
             confirmButton = {
                 Button(onClick = { onResumeWorkout(uiState.activeWorkoutToRecover!!) }) { Text("Continuar") }
             },
             dismissButton = {
-                TextButton(onClick = onDiscardWorkout) { Text("Iniciar Novo") }
+                TextButton(onClick = onDiscardWorkout) { Text("Descartar e iniciar novo") }
             }
         )
     }
@@ -508,7 +514,9 @@ fun ExerciseWorkoutCard(
         modifier = Modifier.fillMaxWidth(),
         border = borderStroke
     ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+        // animateContentSize: quando a sugestão aparece/some o cartão cresce/encolhe suave,
+        // em vez de empurrar os botões de um frame para outro (causava toque no lugar errado).
+        Column(modifier = Modifier.fillMaxWidth().animateContentSize().padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,

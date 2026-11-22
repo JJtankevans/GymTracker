@@ -18,3 +18,17 @@ fun prettyGroupName(raw: String): String {
         }
     }.joinToString(" ")
 }
+
+/** "há 12 min", "há 2 h 15 min" ou "há 3 dias": quanto tempo faz que o treino aberto foi iniciado. */
+fun timeAgoText(startedAt: String?): String {
+    val start = runCatching { java.time.OffsetDateTime.parse(startedAt).toInstant() }.getOrNull()
+        ?: return "anteriormente"
+    val minutes = java.time.Duration.between(start, java.time.Instant.now()).toMinutes().coerceAtLeast(0)
+    return when {
+        minutes < 1 -> "agora há pouco"
+        minutes < 60 -> "há $minutes min"
+        minutes < 24 * 60 -> "há ${minutes / 60} h" + (if (minutes % 60 > 0) " ${minutes % 60} min" else "")
+        else -> "há ${minutes / (24 * 60)} dia(s)"
+    }
+}
+

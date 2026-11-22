@@ -44,6 +44,7 @@ fun HomeScreen(
     onNavigateToRecords: () -> Unit = {},
     onNavigateToSocial: () -> Unit = {},
     onStartGroup: (String, String) -> Unit = { _, _ -> },
+    onResumeWorkout: (String?, String) -> Unit = { _, _ -> },
     viewModel: HomeViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -65,6 +66,7 @@ fun HomeScreen(
         onNavigateToRecords = onNavigateToRecords,
         onNavigateToSocial = onNavigateToSocial,
         onStartGroup = onStartGroup,
+        onResumeWorkout = onResumeWorkout,
         onClearError = { viewModel.clearError() }
     )
 }
@@ -83,6 +85,7 @@ fun HomeScreenContent(
     onNavigateToRecords: () -> Unit = {},
     onNavigateToSocial: () -> Unit = {},
     onStartGroup: (String, String) -> Unit = { _, _ -> },
+    onResumeWorkout: (String?, String) -> Unit = { _, _ -> },
     topSlot: @Composable () -> Unit = {}
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -143,7 +146,7 @@ fun HomeScreenContent(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
                 icon = { Icon(Icons.Default.PlayArrow, contentDescription = null) },
-                text = { Text("Iniciar Treino") }
+                text = { Text(if (uiState.suggestedGroupName != null) "Escolher treino" else "Iniciar Treino") }
             )
         }
     ) { padding ->
@@ -161,7 +164,7 @@ fun HomeScreenContent(
             HomeBody(
                 layout = layout,
                 state = uiState,
-                actions = HomeActions(onNavigateToMuscleGroups, onNavigateToHistory, onStartWorkoutClick, onStartGroup),
+                actions = HomeActions(onNavigateToMuscleGroups, onNavigateToHistory, onStartWorkoutClick, onStartGroup, onResumeWorkout),
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
