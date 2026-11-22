@@ -28,7 +28,7 @@ O `CLAUDE.md` manda ler este arquivo ao começar a sessão. Quem esquecer, repet
 - Aviso vermelho no login "gerado sem o endereço do Supabase" = faltou `SUPABASE_URL/KEY` no `local.properties`.
 - Não digitar senha de conta no app (CLAUDE.md); o Thiago digita. Conta de teste dele: pode criar e apagar treinos nela.
 - O app/banco é de **outra conta** (projeto `ygbrrypyydxnuskrobeu`): migrações não se aplicam daqui; vão para `docs/MIGRACOES_PENDENTES.md` com o SQL pronto e a ordem.
-- **Testes de galeria (Robolectric) NÃO rodam no Windows:**  completo falha com `UnsatisfiedLinkError ... RenderNode.nCreate` (gráficos nativos do Robolectric só existem em Linux/Mac; o CI do GitHub roda). Aqui valem: `:shared:testDebugUnitTest` e `:app:testDebugUnitTest --tests '*ThemeContrastTest*'`. Não gaste tempo caçando essas 13 falhas.
+- **Testes de galeria (Robolectric) NÃO rodam no Windows:** o `:app:testDebugUnitTest` completo falha com `UnsatisfiedLinkError ... RenderNode.nCreate` (gráficos nativos do Robolectric só existem em Linux/Mac; o CI do GitHub roda). Aqui valem: `:shared:testDebugUnitTest` e `:app:testDebugUnitTest --tests '*ThemeContrastTest*'`. Não gaste tempo caçando essas 13 falhas.
 - Disco: o C: enche (qBittorrent). Antes de compilar, `df -h /c`; Gradle/emulador pedem ~10 GB livres.
 
 ## 4. Gestão da context window (economizar token)
