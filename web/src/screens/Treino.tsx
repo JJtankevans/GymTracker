@@ -4,6 +4,7 @@ import {
   type Exercise, type Group, type LastPerf, type SetRow, type Workout,
 } from '../data'
 import { formatKg, prettyGroupName, staleEndsAt, suggestNextGroup } from '../rules'
+import { shareCard } from '../shareCard'
 
 const REST_OPTIONS = [30, 45, 60, 90, 120]
 const restLabel = (s: number) => (s < 60 ? `${s}s` : s % 60 === 0 ? `${s / 60}min` : `${Math.floor(s / 60)}min${s % 60}`)
@@ -21,7 +22,7 @@ function useNow(ms = 1000) {
   return now
 }
 
-interface Summary { minutes: number; exercises: number; sets: number; reps: number; volume: number }
+interface Summary { group: string | null; minutes: number; exercises: number; sets: number; reps: number; volume: number }
 
 export function Treino({ pending, clearPending, onDone }: { pending: string | null; clearPending: () => void; onDone: () => void }) {
   const [state, setState] = useState<'loading' | 'pick' | 'active' | 'summary'>('loading')
@@ -88,12 +89,23 @@ export function Treino({ pending, clearPending, onDone }: { pending: string | nu
 
   async function removeSet(id: string) { await deleteSet(id); setSets((p) => p.filter((s) => s.id !== id)) }
 
+  async function shareSummary() {
+    if (!summary) return
+    try {
+      await shareCard({
+        title: summary.group ?? 'Treino livre', subtitle: new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' }),
+        stats: [[`${summary.minutes} min`, 'duração'], [String(summary.sets), 'séries'], [String(summary.reps), 'repetições'], [`${formatKg(summary.volume)} kg`, 'volume']],
+      }, 'gymtracker_treino.png')
+    } catch (e) { if ((e as Error).name !== 'AbortError') setError((e as Error).message) }
+  }
+
   async function finish() {
     if (!workout) return
     try {
       if (sets.length === 0) { await deleteWorkout(workout.id); setConfirmEnd(false); setWorkout(null); onDone(); return }
       await finishWorkout(workout.id)
       setSummary({
+        group: workout.muscle_group_name ? prettyGroupName(workout.muscle_group_name) : null,
         minutes: Math.max(1, Math.round((Date.now() - Date.parse(workout.started_at)) / 60000)),
         exercises: new Set(sets.map((s) => s.exercise_id)).size,
         sets: sets.length, reps: sets.reduce((a, s) => a + s.reps, 0), volume: sets.reduce((a, s) => a + s.reps * Number(s.weight_kg), 0),
@@ -134,6 +146,7 @@ export function Treino({ pending, clearPending, onDone }: { pending: string | nu
           <div key={k} className="row" style={{ padding: '6px 0' }}><span className="grow muted">{k}</span><b className="num">{v}</b></div>
         ))}
       </div>
+      <button className="btn block" onClick={shareSummary}>Compartilhar imagem</button>
       <button className="btn primary block" onClick={() => { setWorkout(null); onDone() }}>Concluir</button>
     </>
   )
