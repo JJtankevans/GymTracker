@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   activeWorkout, addSet, deleteSet, deleteWorkout, finishWorkout, groupExercises, lastPerformance, loadHome, startWorkout, workoutSets,
   type Exercise, type Group, type LastPerf, type SetRow, type Workout,
 } from '../data'
 import { formatKg, prettyGroupName, staleEndsAt, suggestNextGroup } from '../rules'
 import { shareCard } from '../shareCard'
+import { restOverAlert, unlockAudio } from '../alerts'
 
 const REST_OPTIONS = [30, 45, 60, 90, 120]
 const restLabel = (s: number) => (s < 60 ? `${s}s` : s % 60 === 0 ? `${s / 60}min` : `${Math.floor(s / 60)}min${s % 60}`)
@@ -78,6 +79,7 @@ export function Treino({ pending, clearPending, onDone }: { pending: string | nu
   }
 
   async function register(ex: Exercise, reps: number, kg: number): Promise<SetRow> {
+    unlockAudio() // dentro do toque do usuário: libera o bip do fim do descanso
     const n = sets.filter((s) => s.exercise_id === ex.id).length + 1
     const row = await addSet(workout!.id, ex.id, n, reps, kg)
     setSets((p) => [...p, row])
@@ -116,6 +118,11 @@ export function Treino({ pending, clearPending, onDone }: { pending: string | nu
   }
 
   const resting = restEnd > now
+  const alertedFor = useRef(0)
+  useEffect(() => {
+    // o descanso acabou há pouco (até 3 s) e ainda não avisamos por este fim
+    if (restEnd > 0 && now >= restEnd && now - restEnd < 3000 && alertedFor.current !== restEnd) { alertedFor.current = restEnd; restOverAlert() }
+  }, [now, restEnd])
   const restLeft = restEnd - now
 
   if (state === 'loading') return <><div className="title">Treino</div>{error ? <div className="card"><p className="error">{error}</p><button className="btn" onClick={boot}>Tentar de novo</button></div> : <div className="skel" />}</>

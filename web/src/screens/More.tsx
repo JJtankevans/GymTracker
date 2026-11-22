@@ -5,6 +5,7 @@ import { Evolucao } from './Evolucao'
 import { Recordes } from './Recordes'
 import { Conquistas } from './Conquistas'
 import { clampGoal, loadHome, setWeeklyGoal } from '../data'
+import { setSoundEnabled, soundEnabled } from '../alerts'
 import { applyImport, downloadBackup, parseBackup } from '../backup'
 
 type Sub = null | 'evolucao' | 'recordes' | 'conquistas'
@@ -29,6 +30,7 @@ export function More() {
     setGoal(next); setGoalErr('')
     try { setGoal(await setWeeklyGoal(next)) } catch (e) { setGoal(goal); setGoalErr('Não foi possível salvar: ' + (e as Error).message) }
   }
+  const [sound, setSound] = useState(soundEnabled)
   const fileRef = useRef<HTMLInputElement>(null)
   const doImport = async (f: File | undefined) => {
     if (!f) return
@@ -72,6 +74,11 @@ export function More() {
           <button className="btn" aria-label="Aumentar meta" disabled={goal === null || goal >= 7} onClick={() => changeGoal(1)}>+</button>
         </div>
         {goalErr && <p className="error">{goalErr}</p>}
+      </div>
+
+      <div className="card row">
+        <div className="grow"><b>Aviso do descanso</b><div className="muted">Bip (e vibração, onde houver) quando o descanso acaba</div></div>
+        <button className={'chip' + (sound ? ' on' : '')} aria-pressed={sound} onClick={() => { setSound(!sound); setSoundEnabled(!sound) }}>{sound ? 'Ligado' : 'Desligado'}</button>
       </div>
 
       <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
