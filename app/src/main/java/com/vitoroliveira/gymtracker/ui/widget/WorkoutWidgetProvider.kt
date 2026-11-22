@@ -18,13 +18,25 @@ import com.vitoroliveira.gymtracker.R
  */
 class WorkoutWidgetProvider : AppWidgetProvider() {
     override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
-        ids.forEach { manager.updateAppWidget(it, build(context)) }
+        ids.forEach { manager.updateAppWidget(it, forSizes(context)) }
+    }
+
+    override fun onAppWidgetOptionsChanged(context: Context, manager: AppWidgetManager, id: Int, newOptions: android.os.Bundle) {
+        manager.updateAppWidget(id, forSizes(context))
     }
 
     companion object {
-        fun build(context: Context): RemoteViews {
+        /** Android 12+: o sistema escolhe o layout pelo tamanho que o widget tem na tela; antes disso, o médio. */
+        fun forSizes(context: Context): RemoteViews =
+            if (android.os.Build.VERSION.SDK_INT >= 31) RemoteViews(mapOf(
+                android.util.SizeF(110f, 40f) to build(context, R.layout.widget_workout_small),
+                android.util.SizeF(180f, 80f) to build(context, R.layout.widget_workout),
+                android.util.SizeF(250f, 160f) to build(context, R.layout.widget_workout_large)
+            )) else build(context)
+
+        fun build(context: Context, layout: Int = R.layout.widget_workout): RemoteViews {
             val s = WorkoutWidgetState.read(context)
-            val v = RemoteViews(context.packageName, R.layout.widget_workout)
+            val v = RemoteViews(context.packageName, layout)
             val active = s.activeSinceMs > 0
             v.setTextViewText(R.id.widget_label, if (active) "TREINO EM ANDAMENTO" else "PRÓXIMO TREINO")
             v.setTextViewText(R.id.widget_title, (if (active) s.activeName else s.nextName).ifBlank { if (active) "Treino livre" else "Escolher treino" })
@@ -47,7 +59,7 @@ class WorkoutWidgetProvider : AppWidgetProvider() {
             val app = context.applicationContext
             val mgr = AppWidgetManager.getInstance(app)
             val ids = mgr.getAppWidgetIds(ComponentName(app, WorkoutWidgetProvider::class.java))
-            if (ids.isNotEmpty()) ids.forEach { mgr.updateAppWidget(it, build(app)) }
+            if (ids.isNotEmpty()) ids.forEach { mgr.updateAppWidget(it, forSizes(app)) }
         }
     }
 }
