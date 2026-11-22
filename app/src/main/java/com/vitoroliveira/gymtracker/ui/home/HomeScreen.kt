@@ -21,6 +21,8 @@ import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
+import kotlinx.datetime.isoDayNumber
+import kotlinx.datetime.toLocalDateTime
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,8 +57,18 @@ fun HomeScreen(
         viewModel.loadDashboard()
     }
 
+    // Agenda semanal (Grupos → calendário): se há grupo marcado para hoje, ele vira o "Próximo treino".
+    val schedule: com.vitoroliveira.gymtracker.presentation.schedule.ScheduleRepository = org.koin.compose.koinInject()
+    val plan by schedule.plan.collectAsState()
+    val shown = remember(uiState, plan) {
+        val zone = kotlinx.datetime.TimeZone.currentSystemDefault()
+        val today = kotlin.time.Clock.System.now().toLocalDateTime(zone).date
+        val planned = com.vitoroliveira.gymtracker.presentation.schedule.plannedGroupFor(plan, today.dayOfWeek.isoDayNumber, uiState.groupNames.keys)
+        if (planned != null) uiState.copy(suggestedGroupId = planned, suggestedGroupName = uiState.groupNames[planned], suggestedFromSchedule = true) else uiState
+    }
+
     HomeScreenContent(
-        uiState = uiState,
+        uiState = shown,
         onNavigateToMuscleGroups = onNavigateToMuscleGroups,
         onNavigateToHistory = onNavigateToHistory,
         onNavigateToProfile = onNavigateToProfile,

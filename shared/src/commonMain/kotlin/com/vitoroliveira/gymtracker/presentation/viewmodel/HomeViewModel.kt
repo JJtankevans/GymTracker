@@ -52,6 +52,10 @@ data class HomeUiState(
     val suggestedGroupId: String? = null,
     /** Nome do grupo sugerido (para o cartão "Próximo treino" da Home). */
     val suggestedGroupName: String? = null,
+    /** true quando o grupo sugerido vem da agenda semanal de hoje (e não da rotação). */
+    val suggestedFromSchedule: Boolean = false,
+    /** id → nome de todos os grupos (a tela cruza com a agenda de hoje). */
+    val groupNames: Map<String, String> = emptyMap(),
     /** Treino iniciado e ainda não finalizado (para o aviso "Retomar" da Home). */
     val activeWorkoutStartedAt: String? = null,
     val activeWorkoutGroupId: String? = null,
@@ -122,6 +126,7 @@ class HomeViewModel(
                     weeklyHistory = weeklyHistory,
                     totalWorkouts = history.size,
                     suggestedGroupId = suggestNextGroup(muscleGroups, history),
+                    groupNames = muscleGroups.mapNotNull { g -> g.id?.let { it to g.name } }.toMap(),
                     suggestedGroupName = suggestNextGroup(muscleGroups, history)?.let { id -> muscleGroups.firstOrNull { it.id == id }?.name },
                     pendingFollowRequests = pendingFollows,
                     hasActiveWorkout = active != null,

@@ -140,10 +140,10 @@ fun NextWorkoutCard(state: HomeUiState, a: HomeActions) {
     ) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 18.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(if (name != null) "PRÓXIMO TREINO" else "HORA DE TREINAR", style = MaterialTheme.typography.labelMedium, color = cs.onPrimary.copy(alpha = 0.75f), fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                Text(if (name != null) (if (state.suggestedFromSchedule) "AGENDADO PARA HOJE" else "PRÓXIMO TREINO") else "HORA DE TREINAR", style = MaterialTheme.typography.labelMedium, color = cs.onPrimary.copy(alpha = 0.75f), fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                 Spacer(Modifier.height(2.dp))
                 Text(name ?: "Escolher treino", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black, color = cs.onPrimary)
-                if (name != null) Text("Sugerido pela sua rotação · toque para começar", style = MaterialTheme.typography.bodySmall, color = cs.onPrimary.copy(alpha = 0.75f))
+                if (name != null) Text((if (state.suggestedFromSchedule) "Da sua agenda semanal" else "Sugerido pela sua rotação") + " · toque para começar", style = MaterialTheme.typography.bodySmall, color = cs.onPrimary.copy(alpha = 0.75f))
             }
             Icon(Icons.Default.PlayArrow, contentDescription = "Iniciar", tint = cs.onPrimary, modifier = Modifier.size(40.dp))
         }
