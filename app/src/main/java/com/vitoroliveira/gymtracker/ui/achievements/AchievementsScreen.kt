@@ -17,6 +17,16 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.EmojiEvents
+import com.vitoroliveira.gymtracker.presentation.achievements.AchievementFamily
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Scale
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -90,6 +100,16 @@ fun AchievementsContent(state: AchievementsUiState, onBack: () -> Unit, onRetry:
     }
 }
 
+/** Um ícone por família de conquista (traço do Material, sem emoji). */
+private fun AchievementFamily.icon(): ImageVector = when (this) {
+    AchievementFamily.WORKOUTS -> Icons.Default.FitnessCenter
+    AchievementFamily.STREAK -> Icons.Default.LocalFireDepartment
+    AchievementFamily.WEEKS -> Icons.Default.DateRange
+    AchievementFamily.VOLUME -> Icons.Default.Scale
+    AchievementFamily.RECORDS -> Icons.Default.EmojiEvents
+    AchievementFamily.SPECIAL -> Icons.Default.Star
+}
+
 @Composable
 private fun AchievementCard(a: Achievement) {
     val cs = MaterialTheme.colorScheme
@@ -98,12 +118,18 @@ private fun AchievementCard(a: Achievement) {
         containerColor = if (a.unlocked) cs.primaryContainer else cs.surfaceContainerHighest
     ) {
         Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                if (a.unlocked) Icons.Default.EmojiEvents else Icons.Default.Lock,
-                contentDescription = if (a.unlocked) "Desbloqueada" else "Bloqueada",
-                tint = if (a.unlocked) cs.primary else cs.outline,
-                modifier = Modifier.size(32.dp)
-            )
+            // Ícone por família (antes todas eram o mesmo troféu); desbloqueada ganha um disco de destaque.
+            Box(
+                Modifier.size(44.dp).background(if (a.unlocked) cs.primary else Color.Transparent, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    if (a.unlocked) a.family.icon() else Icons.Default.Lock,
+                    contentDescription = if (a.unlocked) "Desbloqueada" else "Bloqueada",
+                    tint = if (a.unlocked) cs.onPrimary else cs.outline,
+                    modifier = Modifier.size(if (a.unlocked) 26.dp else 32.dp)
+                )
+            }
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
                 Text(

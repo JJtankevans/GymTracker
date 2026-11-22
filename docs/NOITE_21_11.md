@@ -8,6 +8,10 @@ Auditoria completa (`AUDITORIA_DESIGN.md`) · Home com "Próximo treino" + aviso
 ## Feito na noite (parte 2)
 #523 ícone · #445 roteiro · #365 vibração · #364 backup (falta importar) · #355 imagem do treino · #353 mapa muscular · #354 retrospectiva do mês · #350 RPE local · atalhos do ícone · agenda no "Próximo treino" · 3 temas novos (Comando, Pergaminho, Industrial) · descanso automático + ilha · Retomar direto.
 
+## Feito na noite (parte 3)
+#357 notificação viva · respeita "remover animações" · esqueletos · abas do Social com direção · reação "like" (OriginKit) · Wake Slider na meta (OriginKit) · filtro do Histórico com contadores · ícones de Conquistas · Conquistas dentro de Recordes.
+**Ainda aberto:** importar backup (#364) · retrospectiva anual · widget de tela inicial (#357) · `holo-flip-badge` nas Conquistas · `hyaline-level` no RPE · `selenite-chips` · Evolução em Data-Dense Pro (#360) · cartão "Próximo treino" nos layouts de Home além de Classic/Bento · alvos 48 dp na barra superior.
+
 ## Fila original (ordem; fáceis primeiro, sem depender de banco)
 1. **#523 Ícone do app** — ícone adaptativo (primeiro plano vetorial + fundo + monocromático Android 13+), claro/escuro, conferir no launcher e no relógio. Traço único, sem emoji; acento lima do Carbon.
 2. **#445 Roteiro único de validação no aparelho** — já existe em `PROCESSOS.md` §5; só comentar e mover.
