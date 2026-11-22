@@ -1,5 +1,5 @@
 // Dados falsos para ver a interface sem login (?mock). Determinísticos, relativos a "hoje"; escrevem só em memória.
-import type { Exercise, Group, HomeData, LastPerf, SetRow, Workout } from './data'
+import type { Exercise, Group, HistItem, HomeData, LastPerf, SetRow, Workout } from './data'
 
 const iso = (daysAgo: number, hour = 18) => {
   const d = new Date()
@@ -8,7 +8,7 @@ const iso = (daysAgo: number, hour = 18) => {
   return d.toISOString()
 }
 
-const groups: Group[] = [
+let groups: Group[] = [
   { id: 'g1', name: 'PEITO E TRICEPS', color_hex: '#4CAF50' },
   { id: 'g2', name: 'Biceps Costa', color_hex: '#2196F3' },
   { id: 'g3', name: 'Quadriceps e Panturrilha', color_hex: '#3F51B5' },
@@ -16,7 +16,7 @@ const groups: Group[] = [
   { id: 'g5', name: 'Glúteos e Posterior', color_hex: '#4CAF50' },
 ]
 
-const exercises: Record<string, Exercise[]> = {
+let exercises: Record<string, Exercise[]> = {
   g1: [
     { id: 'e1', name: 'Supino Reto', default_sets: 4, default_reps: 10 },
     { id: 'e2', name: 'Tríceps Corda', default_sets: 3, default_reps: 12 },
@@ -36,7 +36,21 @@ let workouts: Workout[] = [1, 2, 4, 6, 9, 13, 16, 18, 21, 25, 30, 33].map((ago, 
 let sets: SetRow[] = []
 let n = 0
 
+const names = ['Supino Reto', 'Tríceps Corda', 'Crucifixo Inclinado']
+const histSets = (w: Workout, i: number) => names.flatMap((nm, e) => [1, 2, 3].map((k) => ({
+  id: `hs${i}-${e}-${k}`, reps: 12 - k, weight_kg: 20 + e * 10 + i, set_number: k,
+  completed_at: new Date(Date.parse(w.started_at) + (e * 3 + k) * 4 * 60000).toISOString(), exercise: { name: nm },
+})))
+
 export const mockStore = {
+  async history(): Promise<HistItem[]> { return workouts.filter((w) => w.finished_at).map((w, i) => ({ ...w, sets: histSets(w, i) })) },
+  async counts(): Promise<Record<string, number>> { return Object.fromEntries(groups.map((g) => [g.id, (exercises[g.id] ?? []).length])) },
+  async createGroup(name: string, color: string): Promise<Group> { const g = { id: `ng${++n}`, name, color_hex: color }; groups = [...groups, g]; return g },
+  async deleteGroup(id: string) { groups = groups.filter((g) => g.id !== id) },
+  async addExercise(groupId: string, name: string, sets: number, reps: number) {
+    exercises = { ...exercises, [groupId]: [...(exercises[groupId] ?? []), { id: `ne${++n}`, name, default_sets: sets, default_reps: reps }] }
+  },
+  async removeFromGroup(groupId: string, exerciseId: string) { exercises = { ...exercises, [groupId]: (exercises[groupId] ?? []).filter((e) => e.id !== exerciseId) } },
   async home(): Promise<HomeData> { return { groups, workouts: [...workouts], goal: 5 } },
   async groupExercises(groupId: string): Promise<Exercise[]> { return exercises[groupId] ?? [] },
   async lastPerformance(ids: string[]): Promise<Record<string, LastPerf>> {

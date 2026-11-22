@@ -98,3 +98,61 @@ export async function deleteWorkout(id: string): Promise<void> {
   if (MOCK) return mockStore.deleteWorkout(id)
   await must(supabase.from('workouts').delete().eq('id', id).select('id'))
 }
+
+// ───────────── histórico e grupos ─────────────
+export interface HistSet { id: string; reps: number; weight_kg: number; set_number: number; completed_at: string; exercise: { name: string } | null }
+export interface HistItem extends Workout { sets: HistSet[] }
+
+export async function loadHistory(): Promise<HistItem[]> {
+  if (MOCK) return mockStore.history()
+  const rows = await must<(Workout & { workout_sets: (Omit<HistSet, 'exercise'> & { exercise: { name: string } | null })[] })[]>(
+    supabase
+      .from('workouts')
+      .select('id,muscle_group_id,muscle_group_name,started_at,finished_at,workout_sets(id,reps,weight_kg,set_number,completed_at,exercise:exercises(name))')
+      .not('finished_at', 'is', null)
+      .order('started_at', { ascending: false })
+      .limit(300),
+  )
+  return rows.map(({ workout_sets, ...w }) => ({ ...w, sets: workout_sets ?? [] }))
+}
+
+/** Quantos exercícios há em cada grupo. */
+export async function groupCounts(): Promise<Record<string, number>> {
+  if (MOCK) return mockStore.counts()
+  const rows = await must<{ group_id: string }[]>(supabase.from('group_exercises').select('group_id'))
+  const out: Record<string, number> = {}
+  for (const r of rows) out[r.group_id] = (out[r.group_id] ?? 0) + 1
+  return out
+}
+
+export async function createGroup(name: string, color: string): Promise<Group> {
+  if (MOCK) return mockStore.createGroup(name, color)
+  // O id nasce no cliente: INSERT ... RETURNING pode ser barrado pela RLS (mesma regra do app Android).
+  const id = crypto.randomUUID()
+  await must(supabase.from('muscle_groups').insert({ id, profile_id: await uid(), name: name.trim(), color_hex: color }))
+  return { id, name: name.trim(), color_hex: color }
+}
+
+export async function deleteGroup(id: string): Promise<void> {
+  if (MOCK) return mockStore.deleteGroup(id)
+  await must(supabase.from('muscle_groups').delete().eq('id', id).select('id'))
+}
+
+/** Liga um exercício ao grupo; reaproveita o que já existe com o mesmo nome (nome é único por usuário). */
+export async function addExerciseToGroup(groupId: string, name: string, sets: number, reps: number): Promise<void> {
+  if (MOCK) return mockStore.addExercise(groupId, name, sets, reps)
+  const profile_id = await uid()
+  const clean = name.trim()
+  const found = await must<{ id: string }[]>(supabase.from('exercises').select('id').eq('name', clean).limit(1))
+  let exerciseId = found[0]?.id
+  if (!exerciseId) {
+    exerciseId = crypto.randomUUID()
+    await must(supabase.from('exercises').insert({ id: exerciseId, profile_id, name: clean, default_sets: sets, default_reps: reps }))
+  }
+  await must(supabase.from('group_exercises').upsert({ group_id: groupId, exercise_id: exerciseId, profile_id }, { onConflict: 'group_id,exercise_id', ignoreDuplicates: true }))
+}
+
+export async function removeFromGroup(groupId: string, exerciseId: string): Promise<void> {
+  if (MOCK) return mockStore.removeFromGroup(groupId, exerciseId)
+  await must(supabase.from('group_exercises').delete().eq('group_id', groupId).eq('exercise_id', exerciseId).select('group_id'))
+}

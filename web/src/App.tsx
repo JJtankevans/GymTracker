@@ -4,8 +4,9 @@ import { MOCK, supabase } from './supabase'
 import { Login } from './screens/Login'
 import { Home } from './screens/Home'
 import { More } from './screens/More'
-import { Placeholder } from './screens/Placeholder'
 import { Treino } from './screens/Treino'
+import { Historico } from './screens/Historico'
+import { Grupos } from './screens/Grupos'
 
 export type Tab = 'home' | 'treino' | 'historico' | 'grupos' | 'mais'
 
@@ -40,8 +41,8 @@ export function App() {
         <div className="page">
           {tab === 'home' && <Home go={goTo} />}
           {tab === 'treino' && <Treino pending={pending} clearPending={() => setPending(null)} onDone={() => setTab('home')} />}
-          {tab === 'historico' && <Placeholder title="Histórico" />}
-          {tab === 'grupos' && <Placeholder title="Grupos" />}
+          {tab === 'historico' && <Historico />}
+          {tab === 'grupos' && <Grupos />}
           {tab === 'mais' && <More />}
         </div>
       </div>
