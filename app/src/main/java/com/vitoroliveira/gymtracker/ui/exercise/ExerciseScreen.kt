@@ -143,9 +143,7 @@ fun ExerciseScreenContent(
             )
 
             if (uiState.isLoading) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
+                com.vitoroliveira.gymtracker.ui.components.ListSkeleton(rows = 6, rowHeight = 72.dp)
             } else if (uiState.exercises.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {

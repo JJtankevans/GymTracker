@@ -173,12 +173,7 @@ fun MuscleGroupScreenContent(
     ) { padding ->
 
         if (uiState.isLoading) {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
+            com.vitoroliveira.gymtracker.ui.components.ListSkeleton(Modifier.padding(padding), rows = 5, rowHeight = 76.dp)
         } else if (uiState.muscleGroups.isEmpty()) {
             // Empty state
             Box(

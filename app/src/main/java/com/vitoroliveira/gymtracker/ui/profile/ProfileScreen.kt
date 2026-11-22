@@ -181,12 +181,7 @@ fun ProfileScreenContent(
     ) { padding ->
 
         if (uiState.isLoading && uiState.profile == null) {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
+            com.vitoroliveira.gymtracker.ui.components.ListSkeleton(Modifier.padding(padding), rows = 5, rowHeight = 96.dp)
         } else {
             Column(
                 modifier = Modifier

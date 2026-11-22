@@ -300,12 +300,7 @@ fun ActiveWorkoutScreenContent(
     ) { padding ->
 
         if (uiState.isLoading && uiState.activeWorkout == null) {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
+            com.vitoroliveira.gymtracker.ui.components.ListSkeleton(Modifier.padding(padding), rows = 3, rowHeight = 240.dp)
         } else {
             val isFocus = com.vitoroliveira.gymtracker.ui.theme.LocalThemeExtras.current.workoutLayout ==
                 com.vitoroliveira.gymtracker.ui.theme.WorkoutLayout.FOCUS

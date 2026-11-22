@@ -146,7 +146,7 @@ fun SocialContent(state: SocialUiState, a: SocialActions, onBack: () -> Unit) {
             if (state.loadError != null && !state.isLoading) {
                 Box(Modifier.fillMaxSize(), Alignment.Center) { com.vitoroliveira.gymtracker.ui.components.ErrorState(state.loadError!!, a.refresh) }
             } else if (state.isLoading && state.feed.isEmpty() && state.myGroups.isEmpty() && state.challenges.isEmpty()) {
-                Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
+                com.vitoroliveira.gymtracker.ui.components.ListSkeleton(rows = 4, rowHeight = 150.dp)
             } else when (tab) {
                 0 -> FeedTab(state, a, onOpenSettings = { showSettings = true })
                 1 -> GroupsTab(state, a, onCreate = { showGroupDialog = true }, onCode = { showCodeDialog = true })

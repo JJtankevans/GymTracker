@@ -68,7 +68,7 @@ fun RecordsContent(state: RecordsUiState, onBack: () -> Unit, onRetry: () -> Uni
         }
     ) { padding ->
         when {
-            state.isLoading -> Box(Modifier.fillMaxSize().padding(padding), Alignment.Center) { CircularProgressIndicator() }
+            state.isLoading -> com.vitoroliveira.gymtracker.ui.components.ListSkeleton(Modifier.padding(padding), rows = 7, rowHeight = 80.dp)
             state.errorMessage != null && state.records.isEmpty() -> Box(Modifier.fillMaxSize().padding(padding), Alignment.Center) {
                 com.vitoroliveira.gymtracker.ui.components.ErrorState(state.errorMessage!!, onRetry)
             }

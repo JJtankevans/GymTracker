@@ -57,7 +57,7 @@ fun AchievementsContent(state: AchievementsUiState, onBack: () -> Unit, onRetry:
         }
     ) { padding ->
         when {
-            state.isLoading -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+            state.isLoading -> com.vitoroliveira.gymtracker.ui.components.ListSkeleton(Modifier.padding(padding), rows = 6, rowHeight = 88.dp)
             state.errorMessage != null -> Column(
                 Modifier.fillMaxSize().padding(padding).padding(32.dp),
                 verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally
