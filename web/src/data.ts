@@ -156,3 +156,15 @@ export async function removeFromGroup(groupId: string, exerciseId: string): Prom
   if (MOCK) return mockStore.removeFromGroup(groupId, exerciseId)
   await must(supabase.from('group_exercises').delete().eq('group_id', groupId).eq('exercise_id', exerciseId).select('group_id'))
 }
+
+export const GOAL_MIN = 1
+export const GOAL_MAX = 7
+export const clampGoal = (n: number) => Math.min(GOAL_MAX, Math.max(GOAL_MIN, Math.round(n)))
+
+/** Meta semanal de treinos (1 a 7), a mesma do app Android (profiles.weekly_goal). */
+export async function setWeeklyGoal(goal: number): Promise<number> {
+  const g = clampGoal(goal)
+  if (MOCK) { mockStore.setGoal(g); return g }
+  await must(supabase.from('profiles').update({ weekly_goal: g }).eq("id", await uid()).select("id"))
+  return g
+}

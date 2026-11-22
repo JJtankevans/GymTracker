@@ -57,3 +57,12 @@ describe('datas', () => {
 describe('prettyGroupName', () => {
   it('normaliza CAIXA ALTA', () => expect(prettyGroupName('PEITO E TRICEPS')).toBe('Peito e Triceps'))
 })
+
+import { clampGoal } from './data'
+describe('meta semanal', () => {
+  it('fica entre 1 e 7 e arredonda', () => {
+    expect(clampGoal(0)).toBe(1)
+    expect(clampGoal(9)).toBe(7)
+    expect(clampGoal(3.6)).toBe(4)
+  })
+})

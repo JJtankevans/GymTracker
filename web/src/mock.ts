@@ -8,6 +8,7 @@ const iso = (daysAgo: number, hour = 18) => {
   return d.toISOString()
 }
 
+let mockGoal = 5
 let groups: Group[] = [
   { id: 'g1', name: 'PEITO E TRICEPS', color_hex: '#4CAF50' },
   { id: 'g2', name: 'Biceps Costa', color_hex: '#2196F3' },
@@ -51,7 +52,8 @@ export const mockStore = {
     exercises = { ...exercises, [groupId]: [...(exercises[groupId] ?? []), { id: `ne${++n}`, name, default_sets: sets, default_reps: reps }] }
   },
   async removeFromGroup(groupId: string, exerciseId: string) { exercises = { ...exercises, [groupId]: (exercises[groupId] ?? []).filter((e) => e.id !== exerciseId) } },
-  async home(): Promise<HomeData> { return { groups, workouts: [...workouts], goal: 5 } },
+  async home(): Promise<HomeData> { return { groups, workouts: [...workouts], goal: mockGoal } },
+  setGoal(n: number) { mockGoal = n },
   async groupExercises(groupId: string): Promise<Exercise[]> { return exercises[groupId] ?? [] },
   async lastPerformance(ids: string[]): Promise<Record<string, LastPerf>> {
     return Object.fromEntries(ids.map((id, i) => [id, { reps: 10 + (i % 3), weight_kg: 20 + i * 12.5 }]))
