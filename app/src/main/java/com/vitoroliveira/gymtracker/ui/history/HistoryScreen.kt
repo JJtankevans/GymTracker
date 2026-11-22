@@ -6,6 +6,7 @@ import com.vitoroliveira.gymtracker.ui.theme.ThemedCard
 import com.vitoroliveira.gymtracker.ui.theme.ThemedScaffold
 import com.vitoroliveira.gymtracker.ui.theme.ThemedTopAppBar
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -71,6 +72,15 @@ fun HistoryScreenContent(
             kotlin.time.Clock.System.now().toLocalDateTime(tz).date
         )
     }
+    // Filtro por grupo com contadores (Moxen "faceta"): toque de novo no chip ativo para limpar.
+    var groupFilter by remember { mutableStateOf<String?>(null) }
+    val groupCounts = remember(uiState.workouts) {
+        uiState.workouts.groupingBy { com.vitoroliveira.gymtracker.ui.components.prettyGroupName(it.muscleGroupName) }.eachCount()
+            .entries.sortedByDescending { it.value }
+    }
+    val shownWorkouts = remember(uiState.workouts, groupFilter) {
+        groupFilter?.let { g -> uiState.workouts.filter { com.vitoroliveira.gymtracker.ui.components.prettyGroupName(it.muscleGroupName) == g } } ?: uiState.workouts
+    }
     // Ao sair da tela com um "Desfazer" ainda aberto, a exclusão pendente é concluída.
     androidx.compose.runtime.DisposableEffect(Unit) { onDispose { onCommitDelete() } }
 
@@ -115,7 +125,18 @@ fun HistoryScreenContent(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     item(key = "heatmap") { TrainingHeatmap(calendar) }
-                    items(uiState.workouts, key = { it.workoutId }) { workout ->
+                    if (groupCounts.size > 1) item(key = "filters") {
+                        androidx.compose.foundation.layout.Row(
+                            Modifier.fillMaxWidth().horizontalScroll(androidx.compose.foundation.rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            FilterChip(groupFilter == null, { groupFilter = null }, { Text("Todos (${uiState.workouts.size})") })
+                            groupCounts.forEach { (name, count) ->
+                                FilterChip(groupFilter == name, { groupFilter = if (groupFilter == name) null else name }, { Text("$name ($count)") })
+                            }
+                        }
+                    }
+                    items(shownWorkouts, key = { it.workoutId }) { workout ->
                         WorkoutHistoryCard(
                             item = workout,
                             onClick = { onWorkoutClick(workout.workoutId, workout.muscleGroupName) },
