@@ -11,8 +11,8 @@ Onde ficam as regras: web em `web/src/insights.ts`, `superset.ts`, `tempo.ts`, `
 ## Treino
 | Funcionalidade (web) | Android | Notas |
 |---|---|---|
-| Supersérie / bi-set / tri-set / circuito (sem descanso até o fim da rodada, "Agora: próximo") — #575 | ⚠️ ver `CONTEXTO_SESSAO.md` (porte em andamento em 22/11) | Web guarda a ligação no aparelho (`gt-ss-<treino>`); migração 017 prepara o banco |
-| Cadência `3-1-2-0` opcional e TUT por série — #581 | ⚠️ ver `CONTEXTO_SESSAO.md` (porte em andamento em 22/11) | Web: `tempo.ts`; migração 017 |
+| Supersérie / bi-set / tri-set / circuito (sem descanso até o fim da rodada, "Agora: próximo") — #575 | ✅ (22/11) | `SupersetAndTempo.kt` + `SupersetStore`; só no layout de lista do treino (o layout "Foco" não tem a ligação). Guardado no aparelho; migração 017 prepara o banco |
+| Cadência `3-1-2-0` opcional e TUT por série — #581 | ✅ (22/11) | `TempoStore`; aparece como "· TUT 1min12" na série. Migração 017 |
 | Sugestão de carga (+2,5/+5 kg ao bater reps) — #559 | ✅ `LoadSuggester` (mais completo) | Não criar de novo |
 | Aquecimento sugerido por exercício — #579 | 🔎 | Android tinha `warmupSets`; conferir se aparece no treino |
 | Nota por exercício (banco, pegada) — #582 | ❌ | Web: só no aparelho (`gt-note-<id>`) |

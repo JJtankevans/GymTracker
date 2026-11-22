@@ -233,6 +233,24 @@ fun ActiveWorkoutScreenContent(
     topSlot: @Composable () -> Unit = {}
 ) {
     var showFinishDialog by remember { mutableStateOf(false) }
+    // Supersérie (#575): ligação entre exercícios guardada no aparelho; em grupo o descanso só vem no fim da rodada.
+    val appCtx = androidx.compose.ui.platform.LocalContext.current
+    val workoutKey = uiState.activeWorkout?.id
+    var links by remember(workoutKey) { mutableStateOf(SupersetStore.load(appCtx, workoutKey)) }
+    val exerciseIds = uiState.exercises.mapNotNull { it.id }
+    val rounds = remember(exerciseIds, links) { com.vitoroliveira.gymtracker.presentation.workout.supersetGroups(exerciseIds, links) }
+    var roundNextId by remember { mutableStateOf<String?>(null) }
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+    var roundSetCount by remember { mutableIntStateOf(uiState.completedSets.size) }
+    LaunchedEffect(uiState.completedSets.size) {
+        if (uiState.completedSets.size > roundSetCount) {
+            val next = uiState.completedSets.lastOrNull()?.let { com.vitoroliveira.gymtracker.presentation.workout.nextInRound(rounds, it.exerciseId) }
+            roundNextId = next
+            val idx = uiState.exercises.indexOfFirst { it.id == next }
+            if (next != null && idx >= 0) listState.animateScrollToItem(1 + idx) // item 0 = topSlot
+        }
+        roundSetCount = uiState.completedSets.size
+    }
     // Vibração (#365): série registrada e recorde. Ignora a primeira composição (séries já existentes ao abrir/retomar).
     val hapticContext = androidx.compose.ui.platform.LocalContext.current
     var lastSetCount by remember { mutableIntStateOf(uiState.completedSets.size) }
@@ -317,6 +335,7 @@ fun ActiveWorkoutScreenContent(
                     topSlot = topSlot
                 )
             } else LazyColumn(
+                state = listState,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding),
@@ -349,7 +368,19 @@ fun ActiveWorkoutScreenContent(
                         onAddSet = { reps, weight -> exercise.id?.let { onAddSet(it, reps, weight) } },
                         onEditSet = { editingSet = it },
                         onStartTimer = onStartTimer,
-                        onToggleFinished = { exercise.id?.let { onToggleExerciseFinished(it) } }
+                        onToggleFinished = { exercise.id?.let { onToggleExerciseFinished(it) } },
+                        groupTag = exercise.id?.let { com.vitoroliveira.gymtracker.presentation.workout.groupLabel(com.vitoroliveira.gymtracker.presentation.workout.groupOf(rounds, it).size) },
+                        linkable = uiState.exercises.size > 1 && exercise.id != null && exercise.id != uiState.exercises.last().id,
+                        linked = exercise.id in links,
+                        onToggleLink = {
+                            exercise.id?.let { id ->
+                                links = com.vitoroliveira.gymtracker.presentation.workout.toggleLink(exerciseIds, links, id)
+                                SupersetStore.save(appCtx, workoutKey, links)
+                                roundNextId = null
+                            }
+                        },
+                        skipRest = exercise.id?.let { com.vitoroliveira.gymtracker.presentation.workout.nextInRound(rounds, it) } != null,
+                        isUpNext = exercise.id != null && exercise.id == roundNextId
                     )
                 }
 
@@ -591,8 +622,19 @@ fun ExerciseWorkoutCard(
     hasNewRecord: Boolean = false,
     onEditSet: (WorkoutSet) -> Unit = {},
     /** Série deste exercício sendo gravada: o botão fica desligado até terminar (toque duplo não duplica). */
-    isSaving: Boolean = false
+    isSaving: Boolean = false,
+    /** Supersérie (#575): "Bi-set"/"Tri-set"/"Circuito" quando ligado a outros; null fora de grupo. */
+    groupTag: String? = null,
+    linkable: Boolean = false,
+    linked: Boolean = false,
+    onToggleLink: () -> Unit = {},
+    /** No meio de uma supersérie: registrar a série não inicia o descanso (só no último da rodada). */
+    skipRest: Boolean = false,
+    /** É o próximo exercício da rodada ("Agora"). */
+    isUpNext: Boolean = false
 ) {
+    val tempoCtx = androidx.compose.ui.platform.LocalContext.current
+    var tempo by remember { mutableStateOf(TempoStore.getDefault(tempoCtx, exercise.id)) }
     var reps by remember { mutableStateOf(exercise.defaultReps.toString()) }
     var weight by remember { mutableStateOf("") }
     var weightError by remember { mutableStateOf(false) }
@@ -617,14 +659,20 @@ fun ExerciseWorkoutCard(
     var seenCount by remember { mutableIntStateOf(completedSets.size) }
     LaunchedEffect(completedSets.size) {
         if (completedSets.size > seenCount) {
-            showTimerOptions = true
-            if (rememberedRest > 0) onStartTimer(rememberedRest)
+            // cadência digitada vale para a série que acabou de entrar (a mais nova deste exercício)
+            com.vitoroliveira.gymtracker.presentation.workout.parseTempo(tempo)?.let { t ->
+                completedSets.maxByOrNull { it.setNumber }?.let { TempoStore.putForSet(tempoCtx, it.id, com.vitoroliveira.gymtracker.presentation.workout.tempoText(t)) }
+            }
+            if (!skipRest) {
+                showTimerOptions = true
+                if (rememberedRest > 0) onStartTimer(rememberedRest)
+            }
         }
         seenCount = completedSets.size
     }
 
     val successColor = LocalThemeExtras.current.success
-    val borderStroke = if (isFinished) BorderStroke(2.dp, successColor) else null
+    val borderStroke = if (isFinished) BorderStroke(2.dp, successColor) else if (isUpNext) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else if (groupTag != null) BorderStroke(1.dp, MaterialTheme.colorScheme.primary) else null
 
     ThemedCard(
         modifier = Modifier.fillMaxWidth(),
@@ -633,6 +681,15 @@ fun ExerciseWorkoutCard(
         // animateContentSize: quando a sugestão aparece/some o cartão cresce/encolhe suave,
         // em vez de empurrar os botões de um frame para outro (causava toque no lugar errado).
         Column(modifier = Modifier.fillMaxWidth().animateContentSize().padding(16.dp)) {
+            if (isUpNext || groupTag != null) {
+                Text(
+                    text = (if (isUpNext) "AGORA · " else "") + (groupTag ?: ""),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(Modifier.height(4.dp))
+            }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -711,7 +768,9 @@ fun ExerciseWorkoutCard(
                         val rpeContext = androidx.compose.ui.platform.LocalContext.current
                         val savedRpe = RpeStore.get(rpeContext, set.id)
                         Text(
-                            text = "${set.reps} reps × ${formatKg(set.weightKg)} kg" + (if (savedRpe > 0) " · RPE $savedRpe" else ""),
+                            text = "${set.reps} reps × ${formatKg(set.weightKg)} kg" + (if (savedRpe > 0) " · RPE $savedRpe" else "") +
+                                (TempoStore.getForSet(rpeContext, set.id)?.let { com.vitoroliveira.gymtracker.presentation.workout.parseTempo(it) }
+                                    ?.let { " · TUT ${com.vitoroliveira.gymtracker.presentation.workout.formatTut(com.vitoroliveira.gymtracker.presentation.workout.tutSeconds(set.reps, it))}" } ?: ""),
                             style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.Medium
                         )
@@ -779,6 +838,30 @@ fun ExerciseWorkoutCard(
                     onMinus = { weight = com.vitoroliveira.gymtracker.ui.utils.stepKgText(weight, -2.5); weightError = false },
                     onPlus = { weight = com.vitoroliveira.gymtracker.ui.utils.stepKgText(weight, 2.5); weightError = false },
                     modifier = Modifier.weight(1f),
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            val tempoInvalid = tempo.isNotBlank() && com.vitoroliveira.gymtracker.presentation.workout.parseTempo(tempo) == null
+            OutlinedTextField(
+                value = tempo,
+                onValueChange = {
+                    tempo = it.filter { c -> c.isDigit() || c == ' ' || c == '-' || c == 'x' || c == '.' }.take(9)
+                    if (tempo.isBlank() || com.vitoroliveira.gymtracker.presentation.workout.parseTempo(tempo) != null) TempoStore.putDefault(tempoCtx, exercise.id, tempo)
+                },
+                label = { Text("Cadência (opcional, ex.: 3-1-2-0)") },
+                isError = tempoInvalid,
+                supportingText = if (tempoInvalid) ({ Text("4 dígitos: descida, pausa embaixo, subida, pausa em cima") }) else null,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+            if (linkable) {
+                Spacer(modifier = Modifier.height(4.dp))
+                FilterChip(
+                    selected = linked,
+                    onClick = onToggleLink,
+                    label = { Text(if (linked) "Ligado ao próximo (supersérie)" else "Ligar ao próximo (supersérie / bi-set)") }
                 )
             }
 
