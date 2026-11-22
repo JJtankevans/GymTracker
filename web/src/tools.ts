@@ -47,3 +47,14 @@ export function warmupFor(work: number, bar = 20, step = 2.5): WarmupSet[] {
   }
   return out
 }
+
+export interface RepMaxRow { reps: number; kg: number; percent: number }
+
+/** Cargas estimadas para cada nº de repetições a partir do 1RM (Epley invertido), arredondadas ao degrau de [step] kg. Estimativa, não prescrição. */
+export function repMaxTable(oneRm: number, reps = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15], step = 2.5): RepMaxRow[] {
+  if (!(oneRm > 0)) return []
+  return reps.map((r) => {
+    const raw = r <= 1 ? oneRm : oneRm / (1 + r / 30)
+    return { reps: r, kg: Math.round(raw / step) * step, percent: Math.round((raw / oneRm) * 100) }
+  })
+}

@@ -37,3 +37,17 @@ describe('recordes', () => {
   })
   it('série de 1RM por dia', () => expect(oneRmSeries(sets, 'Supino')).toHaveLength(2))
 })
+
+import { isNewRecord } from './achievements'
+describe('novo recorde ao registrar série', () => {
+  it('só quando a carga passa do melhor anterior', () => {
+    expect(isNewRecord(80, 82.5, 5)).toBe(true)
+    expect(isNewRecord(80, 80, 5)).toBe(false)
+    expect(isNewRecord(80, 70, 12)).toBe(false)
+  })
+  it('primeira vez do exercício ou série sem repetições não é recorde', () => {
+    expect(isNewRecord(undefined, 50, 8)).toBe(false)
+    expect(isNewRecord(0, 50, 8)).toBe(false)
+    expect(isNewRecord(40, 50, 0)).toBe(false)
+  })
+})

@@ -48,3 +48,17 @@ describe('aquecimento', () => {
     expect(roundTo(52)).toBe(52.5)
   })
 })
+
+import { repMaxTable } from './tools'
+describe('tabela de repetições', () => {
+  it('1 rep é o próprio 1RM e as cargas caem com as reps', () => {
+    const t = repMaxTable(100)
+    expect(t[0]).toEqual({ reps: 1, kg: 100, percent: 100 })
+    expect(t.find((r) => r.reps === 10)).toEqual({ reps: 10, kg: 75, percent: 75 })
+    expect(t.map((r) => r.kg)).toEqual([...t.map((r) => r.kg)].sort((a, b) => b - a))
+  })
+  it('1RM inválido não gera tabela', () => {
+    expect(repMaxTable(0)).toEqual([])
+    expect(repMaxTable(NaN)).toEqual([])
+  })
+})

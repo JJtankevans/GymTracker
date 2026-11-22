@@ -78,3 +78,6 @@ export function oneRmSeries(sets: SetLite[], exercise: string): { day: string; v
   }
   return [...byDay.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([day, value]) => ({ day, value }))
 }
+
+/** Série nova bate o recorde de carga? Só conta se já havia histórico (a primeira vez de um exercício não é recorde). */
+export const isNewRecord = (bestKg: number | undefined, kg: number, reps: number): boolean => !!bestKg && bestKg > 0 && reps >= 1 && kg > bestKg

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 const formatKg = (n: number) => String(Math.round(n * 100) / 100).replace('.', ',')
-import { platesFor, warmupFor } from '../tools'
+import { platesFor, repMaxTable, warmupFor } from '../tools'
 
 const num = (s: string) => { const n = parseFloat(s.replace(',', '.')); return Number.isFinite(n) ? n : NaN }
 const BARS = [20, 15, 10]
@@ -10,6 +10,8 @@ export function Ferramentas() {
   const [target, setTarget] = useState('')
   const [bar, setBar] = useState(20)
   const t = num(target)
+  const [oneRm, setOneRm] = useState('')
+  const table = useMemo(() => repMaxTable(num(oneRm)), [oneRm])
   const plan = useMemo(() => (t > 0 ? platesFor(t, bar) : null), [t, bar])
   const warm = useMemo(() => (t > 0 ? warmupFor(t, bar) : []), [t, bar])
 
@@ -44,6 +46,15 @@ export function Ferramentas() {
           ))}
         </div>
       )}
+      <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <label className="label" htmlFor="onerm">Tabela de repetições (1RM em kg)</label>
+        <input id="onerm" inputMode="decimal" placeholder="Ex.: 100" value={oneRm} onChange={(e) => setOneRm(e.target.value)}
+          style={{ fontSize: 22, padding: 12, borderRadius: 'var(--radius)', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)' }} />
+        {table.map((r) => (
+          <div key={r.reps} className="row"><span className="grow muted">{r.reps} {r.reps === 1 ? 'repetição' : 'repetições'} · {r.percent}%</span><b className="num">{formatKg(r.kg)} kg</b></div>
+        ))}
+        {table.length > 0 && <div className="muted" style={{ fontSize: 12 }}>Estimativa (Epley), não prescrição.</div>}
+      </div>
     </>
   )
 }

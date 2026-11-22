@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
-  activeWorkout, addSet, deleteSet, deleteWorkout, finishWorkout, groupExercises, lastPerformance, loadHome, startWorkout, workoutSets,
+  activeWorkout, addSet, deleteSet, deleteWorkout, finishWorkout, groupExercises, lastPerformance, loadHistory, loadHome, startWorkout, workoutSets,
   type Exercise, type Group, type LastPerf, type SetRow, type Workout,
 } from '../data'
 import { formatKg, prettyGroupName, staleEndsAt, suggestNextGroup } from '../rules'
 import { shareCard } from '../shareCard'
 import { restOverAlert, unlockAudio } from '../alerts'
+import { isNewRecord, recordsOf } from '../achievements'
 
 const REST_OPTIONS = [30, 45, 60, 90, 120]
 const restLabel = (s: number) => (s < 60 ? `${s}s` : s % 60 === 0 ? `${s / 60}min` : `${Math.floor(s / 60)}min${s % 60}`)
@@ -39,6 +40,8 @@ export function Treino({ pending, clearPending, onDone }: { pending: string | nu
   const [restEnd, setRestEnd] = useState<number>(() => Number(localStorage.getItem('gt-rest-end') ?? 0))
   const [restSec, setRestSec] = useState<number>(() => Number(localStorage.getItem('gt-rest') ?? 90))
   const [confirmEnd, setConfirmEnd] = useState(false)
+  const bests = useRef<Record<string, number>>({}) // melhor carga por exercício (nome) no histórico, para avisar de recorde
+  const [prBanner, setPrBanner] = useState<string | null>(null)
   const now = useNow()
 
   const open = useCallback(async (w: Workout) => {
@@ -47,6 +50,11 @@ export function Treino({ pending, clearPending, onDone }: { pending: string | nu
     setExercises(ex)
     setSets(s)
     setLast(await lastPerformance(ex.map((e) => e.id)))
+    // recordes anteriores: se falhar, só não avisamos de recorde
+    loadHistory().then((h) => {
+      const rows = recordsOf(h.flatMap((x) => x.sets.map((st) => ({ exercise: st.exercise?.name ?? '', reps: st.reps, kg: Number(st.weight_kg), at: st.completed_at }))))
+      bests.current = Object.fromEntries(rows.map((r) => [r.exercise, r.bestKg]))
+    }).catch(() => {})
     setState('active')
   }, [])
 
@@ -83,6 +91,12 @@ export function Treino({ pending, clearPending, onDone }: { pending: string | nu
     const n = sets.filter((s) => s.exercise_id === ex.id).length + 1
     const row = await addSet(workout!.id, ex.id, n, reps, kg)
     setSets((p) => [...p, row])
+    if (isNewRecord(bests.current[ex.name], kg, reps)) {
+      bests.current[ex.name] = kg
+      setPrBanner(`Novo recorde em ${ex.name}: ${formatKg(kg)} kg!`)
+      try { navigator.vibrate?.([60, 40, 60, 40, 140]) } catch { /* sem vibração */ }
+      setTimeout(() => setPrBanner(null), 6000)
+    }
     const end = Date.now() + restSec * 1000
     setRestEnd(end)
     localStorage.setItem('gt-rest-end', String(end))
@@ -167,6 +181,7 @@ export function Treino({ pending, clearPending, onDone }: { pending: string | nu
         </div>
         <button className="btn primary" onClick={() => setConfirmEnd(true)}>Finalizar</button>
       </div>
+      {prBanner && <div className="card hero" role="status" style={{ cursor: "default" }}><b>🏆 {prBanner}</b></div>}
       {note && <div className="card muted">{note}</div>}
       {error && <div className="card error">{error}</div>}
       {exercises.length === 0 && <div className="card muted">Este treino não tem exercícios. Adicione exercícios ao grupo no app.</div>}
