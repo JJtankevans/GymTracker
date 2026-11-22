@@ -209,3 +209,9 @@ Caminhos curtos: `shared/...` = `shared/src/commonMain/kotlin/com/vitoroliveira/
 ## Preferências do Thiago
 Quer autonomia ("yolo, sem perguntas"), mas **antes de commitar/encerrar a sessão ou limpar disco, avisar e pedir autorização** (ver `CLAUDE.md`); temas variados e profissionais (contidos e impactantes), referências de design levadas a sério, e relatório honesto do que não foi testado no aparelho. Gosta de ícones/desenhos em vez de emojis. Baixar arquivos externos ele autorizou uma vez; pedir de novo para outros. Não apagar dados dele. Mensagens em português do Brasil, diretas.
 
+
+## 22/11/2026 (manhã, job das 10:53) — feito, compilado, conferido no emulador
+- **holo-flip-badge** nas Conquistas (`ui/components/HoloFlipBadge.kt`): toque no selo desbloqueado vira com as molas do original (giro 60/16, balanço 48/20, chute 70, passo 1/240 s) e mostra o verso holográfico. Commit 8a72f31.
+- **hyaline-level** no RPE (`ui/components/HyalineLevel.kt`): trilha escura com pontos, vidro, cursor, nome que rola, assenta no degrau em 0,18 s; só aparece depois de registrar uma série; grava em `RpeStore` ao soltar. Commit 2484971. Os dois: **não testados em celular real**.
+- O teste no emulador criou 3 treinos de teste na conta do emulador; já apagados pelo Histórico.
+- **Falta (fila):** Evolução "denso em dados" (#360), Grupos com "N exercícios · último treino", alvos 48 dp, widget (#357).

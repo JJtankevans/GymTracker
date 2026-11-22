@@ -48,8 +48,8 @@ Os do OriginKit são web; portamos a **ideia** com código próprio (cache em `R
 | `direction-aware-tabs` (Cult UI) | abas do Social com direção | ✅ |
 | `selenite-chips` | filtros multi-seleção (histórico por grupo) | ⏳ |
 | `like` | reação do feed (estalo, anel e 12 partículas) | ✅ |
-| `holo-flip-badge` | selos de Conquistas | ⏳ |
-| `hyaline-level` / `wake-slider` | meta semanal e RPE da série (#350) | ⏳ |
+| `holo-flip-badge` | selos de Conquistas (toque vira para o verso holográfico) | ✅ |
+| `hyaline-level` / `wake-slider` | meta semanal (wake) e RPE da série (hyaline, #350) | ✅ |
 | `stretch-pill-toggle` | interruptores (modo circuito, privacidade) | ⏳ |
 
 ## 7. Checklist de entrega
