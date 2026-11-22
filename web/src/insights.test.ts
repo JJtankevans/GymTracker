@@ -79,3 +79,9 @@ describe('metas do mês', () => {
     expect(b).toHaveLength(3); expect(b[0].target).toBe(12); expect(b[0].progress).toBe(1); expect(b[1].progress).toBe(1)
   })
 })
+
+import { exerciseWeeklyVolume } from './insights'
+it('volume semanal de um exercício', () => {
+  const v = exerciseWeeklyVolume([hist('a', 0, [['X', 10, 10], ['Y', 5, 5]])], 'X', new Date(now), 4)
+  expect(v).toEqual([0, 0, 0, 100])
+})

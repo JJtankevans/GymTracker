@@ -206,3 +206,10 @@ export function monthlyBadges(items: HistItem[], weeklyGoal: number, now = new D
     mk('volume', `${name} pesado`, 'Levante 50 toneladas no mês', Math.round(volume / 1000), 50),
   ]
 }
+
+// ───────── #580 volume por exercício ─────────
+/** Volume (kg) de um exercício por semana nas últimas [n] semanas (a atual por último). */
+export function exerciseWeeklyVolume(items: HistItem[], exercise: string, now = new Date(), n = 8): number[] {
+  const sub = items.map((w) => ({ ...w, sets: w.sets.filter((s) => (s.exercise?.name ?? 'Exercício') === exercise) }))
+  return weeklyVolumes(sub, now, n)
+}

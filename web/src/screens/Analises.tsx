@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { loadHistory, type HistItem } from '../data'
 import { loadWeights } from '../body'
-import { bandRecords, compareWorkouts, estimateKcal, heatmap, historyCsv, imbalances, plateaus, RM_BANDS, searchHistory } from '../insights'
+import { bandRecords, compareWorkouts, estimateKcal, exerciseWeeklyVolume, heatmap, historyCsv, imbalances, plateaus, RM_BANDS, searchHistory } from '../insights'
 import { formatKg, prettyGroupName, realDurationMinutes } from '../rules'
 import { setsOf } from './Evolucao'
 
@@ -20,6 +20,7 @@ export function Analises() {
   const [bodyKg, setBodyKg] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [q, setQ] = useState('')
+  const [exSel, setExSel] = useState('')
   const [pair, setPair] = useState<[string, string]>(['', ''])
   const load = () => { setError(null); Promise.all([loadHistory(), loadWeights().catch(() => [])]).then(([h, w]) => { setHist(h); setBodyKg(w.length ? w[w.length - 1].weight_kg : null) }).catch((e: Error) => setError(e.message)) }
   useEffect(load, [])
@@ -36,6 +37,10 @@ export function Analises() {
   if (error) return <><div className="title">Análises</div><div className="card"><p className="error">{error}</p><button className="btn" onClick={load}>Tentar de novo</button></div></>
   if (!hist || !v) return <><div className="title">Análises</div><div className="skel" /><div className="skel" /></>
 
+  const exNames = [...new Set(hist.flatMap((w) => w.sets.map((x) => x.exercise?.name ?? 'Exercício')))].sort((x, y) => x.localeCompare(y, 'pt-BR'))
+  const exName = exSel || exNames[0] || ''
+  const exVol = exName ? exerciseWeeklyVolume(hist, exName) : []
+  const exMax = Math.max(1, ...exVol)
   const hits = searchHistory(hist, q)
   const a = hist.find((w) => w.id === pair[0]), b = hist.find((w) => w.id === pair[1])
   const byExercise = new Map<string, typeof v.bands>()
@@ -90,6 +95,20 @@ export function Analises() {
             {RM_BANDS.map((n) => { const r = rs.find((x) => x.band === n); return <span key={n} className="num muted" style={{ minWidth: 64, textAlign: 'right' }}>{n}RM {r ? formatKg(r.kg) : '–'}</span> })}
           </div>
         ))}
+      </div>
+
+      <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div className="label">Volume por exercício (8 semanas)</div>
+        <select aria-label="Exercício" value={exName} onChange={(e) => setExSel(e.target.value)}>{exNames.map((n) => <option key={n}>{n}</option>)}</select>
+        <div className="bars" role="img" aria-label={`Volume semanal de ${exName}`}>
+          {exVol.map((vol, i) => (
+            <div key={i} className={'bar' + (i === exVol.length - 1 ? ' cur' : '')}>
+              {vol > 0 && <b className="num">{vol >= 1000 ? `${Math.round(vol / 100) / 10}t` : Math.round(vol)}</b>}
+              <span style={{ height: `${(vol / exMax) * 80}%` }} />
+              <small className="muted num">{i === exVol.length - 1 ? 'atual' : `-${exVol.length - 1 - i}`}</small>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

@@ -1,4 +1,5 @@
 import { nextProgression } from '../insights'
+import { warmupFor } from '../tools'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   activeWorkout, addSet, deleteSet, deleteWorkout, finishWorkout, groupExercises, lastPerformance, loadHistory, loadHome, startWorkout, workoutSets,
@@ -235,6 +236,9 @@ function ExerciseCard({ ex, last, sets, onRegister, onRemove }: {
   const [err, setErr] = useState<string | null>(null)
   const [, bump] = useState(0)
   const lastSet = sets[sets.length - 1]
+  const noteKey = `gt-note-${ex.id}`
+  const [note, setNote] = useState(() => { try { return localStorage.getItem(noteKey) ?? '' } catch { return '' } })
+  const saveNote = (v: string) => { try { v.trim() ? localStorage.setItem(noteKey, v.trim()) : localStorage.removeItem(noteKey) } catch { /* sem armazenamento */ } }
 
   const step = (field: 'reps' | 'kg', d: number) => {
     if (field === 'reps') setReps(String(Math.min(999, Math.max(0, (Number.isFinite(parseNum(reps)) ? parseNum(reps) : 0) + d))))
@@ -253,6 +257,11 @@ function ExerciseCard({ ex, last, sets, onRegister, onRemove }: {
   return (
     <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <div><b style={{ fontSize: 18 }}>{ex.name}</b><div className="muted">{ex.default_sets} séries × {ex.default_reps} reps{sugg ? ` · ${sugg}` : ''}</div></div>
+      {sets.length === 0 && (() => { const w = warmupFor(parseNum(kg)); return w.length > 0 ? <div className="muted" style={{ fontSize: 13 }}>Aquecimento: {w.map((x) => `${formatKg(x.kg)} × ${x.reps}`).join(' → ')}</div> : null })()}
+      <details open={!!note}>
+        <summary className="muted" style={{ cursor: 'pointer' }}>{note ? 'Nota do exercício' : 'Adicionar nota (banco, pegada…)'}</summary>
+        <textarea aria-label={`Nota de ${ex.name}`} rows={2} maxLength={200} value={note} onChange={(e) => setNote(e.target.value)} onBlur={(e) => saveNote(e.target.value)} style={{ width: '100%', marginTop: 6 }} />
+      </details>
       {sets.map((s) => (
         <div key={s.id} className="row">
           <span className="muted grow">Série {s.set_number}</span>
