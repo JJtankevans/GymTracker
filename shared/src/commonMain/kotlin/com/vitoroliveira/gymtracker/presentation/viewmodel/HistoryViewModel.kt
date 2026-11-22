@@ -22,7 +22,10 @@ data class WorkoutHistoryItem(
     val muscleGroupColorHex: String,
     val startedAt: Instant,
     val finishedAt: Instant?,
-    val durationMinutes: Long?
+    val durationMinutes: Long?,
+    /** Séries e volume do treino (null = ainda não carregou ou não disponível). */
+    val sets: Int? = null,
+    val volumeKg: Double? = null
 )
 
 /** Treino que saiu da lista mas ainda não foi apagado de verdade: dá tempo de desfazer. */
@@ -34,6 +37,27 @@ data class HistoryUiState(
     val pendingUndo: PendingDelete? = null,
     val errorMessage: String? = null
 )
+
+/**
+ * Treino que ficou aberto por horas e foi finalizado tarde tem duração absurda (ex.: 17 h), e às vezes as últimas
+ * séries também foram lançadas horas depois. Nesses casos (mais de 4 h) o treino termina na última série **antes de
+ * uma pausa maior que 1 h** (mesma regra do treino esquecido, `StaleWorkoutPolicy`). Sem séries, mantém o do banco.
+ */
+internal fun realDuration(w: WorkoutHistoryItem, setTimes: List<String>): Long? {
+    val recorded = w.durationMinutes
+    if (recorded != null && recorded in 1..MAX_REAL_MINUTES) return recorded
+    val times = setTimes.mapNotNull { iso -> runCatching { Instant.parse(iso) }.getOrNull() }.sorted()
+    if (times.isEmpty()) return recorded
+    var last = times.first()
+    for (t in times.drop(1)) {
+        if (t - last > com.vitoroliveira.gymtracker.presentation.workout.StaleWorkoutPolicy.IDLE_LIMIT) break
+        last = t
+    }
+    val fromSets = (last - w.startedAt).inWholeMinutes
+    return if (fromSets in 1..MAX_REAL_MINUTES) fromSets else recorded
+}
+
+private const val MAX_REAL_MINUTES = 240L
 
 class HistoryViewModel(
     private val workoutRepository: WorkoutRepository,
@@ -74,7 +98,23 @@ class HistoryViewModel(
                     )
                 }
 
-                _uiState.value = _uiState.value.copy(isLoading = false, workouts = items)
+                // séries e volume por treino são um extra: se a consulta falhar, a lista aparece sem eles
+                val stats = try {
+                    workoutRepository.getAllSetsForExport().filter { it.workouts?.id != null }.groupBy { it.workouts!!.id!! }
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                    emptyMap()
+                }
+                val enriched = items.map { w ->
+                    val s = stats[w.workoutId]
+                    if (s == null) w else w.copy(
+                        sets = s.size,
+                        volumeKg = s.sumOf { it.reps * it.weightKg },
+                        durationMinutes = realDuration(w, s.mapNotNull { it.completedAt })
+                    )
+                }
+
+                _uiState.value = _uiState.value.copy(isLoading = false, workouts = enriched)
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 _uiState.value = _uiState.value.copy(

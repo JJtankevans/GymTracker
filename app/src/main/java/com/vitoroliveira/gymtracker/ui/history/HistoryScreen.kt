@@ -165,7 +165,8 @@ private fun WorkoutHistoryCard(item: WorkoutHistoryItem, onClick: () -> Unit, on
             Column(Modifier.weight(1f)) {
                 Text(com.vitoroliveira.gymtracker.ui.components.prettyGroupName(item.muscleGroupName), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleMedium)
                 Text(
-                    formatDate(item.startedAt),
+                    formatDate(item.startedAt) + (item.sets?.let { " · $it " + (if (it == 1) "série" else "séries") } ?: "") +
+                        (item.volumeKg?.takeIf { it > 0 }?.let { " · " + com.vitoroliveira.gymtracker.ui.utils.formatVolume(it) } ?: ""),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

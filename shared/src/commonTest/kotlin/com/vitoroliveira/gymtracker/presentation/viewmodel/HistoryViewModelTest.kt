@@ -113,4 +113,30 @@ class HistoryViewModelTest {
         assertEquals(listOf("a"), vm.uiState.value.workouts.map { it.workoutId })
         assertNotNull(vm.uiState.value.errorMessage)
     }
+
+    private fun item(durationMin: Long?) = WorkoutHistoryItem(
+        workoutId = "w", muscleGroupName = "x", muscleGroupColorHex = "#000000",
+        startedAt = kotlin.time.Instant.parse("2026-11-04T10:00:00Z"),
+        finishedAt = durationMin?.let { kotlin.time.Instant.parse("2026-11-04T10:00:00Z") + kotlin.time.Duration.parse("${it}m") },
+        durationMinutes = durationMin
+    )
+
+    @Test fun duracaoAbsurdaUsaOHorarioDaUltimaSerie() {
+        val w = item(1060) // 17 h 40 min: ficou aberto
+        assertEquals(75L, realDuration(w, listOf("2026-11-04T10:30:00Z", "2026-11-04T11:15:00Z")))
+    }
+
+    @Test fun serieLancadaDiasDepoisNaoEsticaOTreino() {
+        val w = item(1060)
+        // pausa de 17 h antes da última série: o treino acabou às 11:15
+        assertEquals(75L, realDuration(w, listOf("2026-11-04T10:30:00Z", "2026-11-04T11:15:00Z", "2026-11-05T04:00:00Z")))
+    }
+
+    @Test fun duracaoNormalNaoMuda() {
+        assertEquals(60L, realDuration(item(60), listOf("2026-11-04T11:30:00Z")))
+    }
+
+    @Test fun semSerieMantemODadoDoBanco() {
+        assertEquals(1060L, realDuration(item(1060), emptyList()))
+    }
 }
