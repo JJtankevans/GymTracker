@@ -98,6 +98,9 @@ Lido: `Runtime/docs/REFERENCIAS_DESIGN.md`, notas do Vault, caches `originkit-ca
 | **shadcn** | Acessibilidade e teclado de componentes base ⚪ (app é toque) | Só `semantics`/rótulos de acessibilidade |
 | **Cult UI / Skiper (web-only)**: hover, cursor, scroll-reveal | ⚪ não se aplicam a toque | — |
 
+### Já portado/aplicado (21/11, noite)
+rolling-number (Cult UI) · ilha do descanso (Dynamic Island, Skiper/Cult UI) · Deshacer/Esqueleto (Moxen) · retomar/descanso automático (UX de treino) · mapa muscular e retrospectiva (UI UX Pro Max: gamificação) · 3 temas do Refero (Raycast, Superhuman, teenage engineering).
+
 ### Fila de implementação (ordem)
 1. Seletor de temas em grade + teste de contraste (feito/em andamento).
 2. Finalização automática de treino esquecido (feito).

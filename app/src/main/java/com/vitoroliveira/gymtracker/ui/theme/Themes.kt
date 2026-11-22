@@ -354,6 +354,64 @@ object AppThemes {
         )
     )
 
+
+    // ── Temas novos (21/11/2026): tokens lidos do Refero Styles e guardados no Vault (nt-ref-03) ──
+
+    /** Central de comando (Raycast): quase preto, UMA cor coral, cartões em grafite fino. */
+    val Comando = AppThemeSpec(
+        id = "comando", name = "Comando", tagline = "Quase preto, uma única cor coral. Central de comando",
+        category = ThemeCategory.PRO, isDark = true,
+        colors = makeScheme(
+            dark = true,
+            primary = hex(0xFF6363), secondary = hex(0x9C9C9D), tertiary = hex(0xFFB020),
+            background = hex(0x040506), surface = hex(0x111214), onSurface = hex(0xE6E6E6),
+            outline = hex(0x2A2B2E), cardColor = hex(0x111214), onPrimary = hex(0x1A0505)
+        ),
+        typography = makeTypography(ThemeFonts.Inter, ThemeFonts.Inter, FontWeight.SemiBold, (-0.3).sp),
+        shapes = roundedShapes(8.dp, 12.dp, 16.dp),
+        extras = ThemeExtras(
+            cardBorderWidth = 1.dp, cardBorderColor = hex(0x1E1F22),
+            success = hex(0x3DD68C)
+        )
+    )
+
+    /** Pergaminho quente (Superhuman): nunca branco puro; vinho e violeta, títulos leves. */
+    val Pergaminho = AppThemeSpec(
+        id = "pergaminho", name = "Pergaminho", tagline = "Papel quente, vinho e violeta. Elegante e calmo",
+        category = ThemeCategory.PRO, isDark = false,
+        colors = makeScheme(
+            dark = false,
+            primary = hex(0x421D24), secondary = hex(0x714CB6), tertiary = hex(0xB4561B),
+            background = hex(0xF2F0EB), surface = hex(0xFAF8F4), onSurface = hex(0x292827),
+            outline = hex(0xD8D3C8), cardColor = hex(0xFAF8F4), onPrimary = hex(0xF7EFE8)
+        ),
+        typography = makeTypography(ThemeFonts.Playfair, ThemeFonts.Inter, FontWeight.Normal, (-0.2).sp),
+        shapes = roundedShapes(10.dp, 16.dp, 22.dp),
+        extras = ThemeExtras(
+            homeLayout = HomeLayout.EDITORIAL,
+            cardBorderWidth = 1.dp, cardBorderColor = hex(0xE3DED2),
+            success = hex(0x2E7D4F)
+        )
+    )
+
+    /** Catálogo industrial (teenage engineering): tipografia fina, só o conteúdo tem peso. */
+    val Industrial = AppThemeSpec(
+        id = "industrial", name = "Industrial", tagline = "Catálogo técnico, tipografia ultrafina, azul de painel",
+        category = ThemeCategory.PRO, isDark = false,
+        colors = makeScheme(
+            dark = false,
+            primary = hex(0x0071BB), secondary = hex(0x006837), tertiary = hex(0xE0521E),
+            background = hex(0xF6F8F7), surface = hex(0xFFFFFF), onSurface = hex(0x0F0E12),
+            outline = hex(0xC9D0CD), cardColor = hex(0xFFFFFF), onPrimary = hex(0xFFFFFF)
+        ),
+        typography = makeTypography(ThemeFonts.SpaceGrotesk, ThemeFonts.Inter, FontWeight.Light, (-0.2).sp, labelWeight = FontWeight.Medium),
+        shapes = roundedShapes(4.dp, 8.dp, 12.dp),
+        extras = ThemeExtras(
+            cardBorderWidth = 1.dp, cardBorderColor = hex(0xDDE3E0),
+            success = hex(0x006837)
+        )
+    )
+
     val Cobalto = AppThemeSpec(
         id = "cobalto", name = "Cobalto", tagline = "Azul-aço com luz suave no topo",
         category = ThemeCategory.PRO, isDark = true,
@@ -630,7 +688,7 @@ object AppThemes {
 
     /** Ordem = ordem de exibição dentro de cada categoria. */
     val all: List<AppThemeSpec> = listOf(
-        System, Studio, Carbon, Oceano, Tinta, Nordico, Obsidiana, Cobalto, Floresta,
+        System, Studio, Carbon, Oceano, Tinta, Nordico, Obsidiana, Comando, Pergaminho, Industrial, Cobalto, Floresta,
         Papel, Blueprint, Brutal, Neon, Terminal, Arena, Ouro,
         Aurora, Sunset, Confete, Magma, Artico,
         Matrix, Hipnose, Hiperespaco, Glitch, Lava, Arcade, Carnaval

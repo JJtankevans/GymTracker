@@ -6,7 +6,8 @@ Tudo abaixo foi **compilado, testado (:shared 270+ testes, contraste dos temas) 
 - **Temas:** teste de contraste (`ThemeContrastTest`): corrigidos Brutal e Arena. Os 29 temas × layouts (6 de Home, 2 de treino) foram fotografados (folhas de contato em `scratchpad/themes`).
 - **Treino esquecido:** >1 h sem série ⇒ encerra no horário da última série (ou apaga se não houve série). `StaleWorkoutPolicy` + 6 testes. Diálogo de retomada diz há quanto tempo; **Retomar** da Home continua direto (sem diálogo).
 - **Funcionalidades:** #523 ícone do app (halter lima/grafite); #364 backup completo em JSON (falta importar); #365 vibração ao registrar série/recorde (+ chave no Perfil); #355 compartilhar treino como imagem; #353 mapa muscular da semana; #354 retrospectiva do mês (+ imagem); #350 esforço por série (RPE) **local** até a migração 014.
-- **Vault:** 277 itens (+20 notas do GymTracker; o importador lê `GymTracker/docs/*.md`).
+- **Mais (noite, parte 2):** **atalhos no ícone do app** (Iniciar treino, Histórico, Evolução; testados com `am start -a ...`); cartão **Agendado para hoje** (agenda semanal tem prioridade sobre a rotação); **3 temas novos** (Comando, Pergaminho, Industrial; tokens do Refero; passam no contraste) → agora 31 temas; nomes de grupo normalizados também na folha de início.
+- **Vault:** 277+ itens (+20 notas do GymTracker; o importador lê `GymTracker/docs/*.md`).
 - **Cards (Runtime):** movidos para Revisão: #523, #445, #364, #365, #355, #353, #354; comentados #348 e #346. Falta você conferir no celular (roteiro em PROCESSOS.md §5).
 - **Pendências/ideias:** importar backup; retrospectiva anual; layouts de Home além de CLASSIC/BENTO ainda sem o cartão Próximo treino; Social (abas com direção, `like`); Evolução (Data-Dense Pro); 2–3 temas novos (Refero); onboarding; esqueleto no Perfil; toque mínimo 48 dp na barra superior.
 

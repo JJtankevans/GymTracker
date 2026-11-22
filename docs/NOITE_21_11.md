@@ -5,7 +5,10 @@ Regras desta noite: seguir `docs/PROCESSOS.md` e `docs/DESIGN.md`; commits peque
 ## Já feito (21/11, noite)
 Auditoria completa (`AUDITORIA_DESIGN.md`) · Home com "Próximo treino" + aviso "Retomar" em todos os temas · FABs na cor de marca · Perfil em seções · menu ⋮ e **Desfazer** ao apagar treino · finalização automática de treino esquecido (>1 h sem série) · **seletor de temas em grade** com miniaturas · teste de contraste de todos os temas (Brutal e Arena corrigidos) · Home em paralelo · números que rolam, esqueleto de carregamento e **ilha do descanso** (escritos; ver CONTEXTO) · `DESIGN.md` com mapa de todas as referências · `PROCESSOS.md` · Vault 277 itens.
 
-## Fila (ordem; fáceis primeiro, sem depender de banco)
+## Feito na noite (parte 2)
+#523 ícone · #445 roteiro · #365 vibração · #364 backup (falta importar) · #355 imagem do treino · #353 mapa muscular · #354 retrospectiva do mês · #350 RPE local · atalhos do ícone · agenda no "Próximo treino" · 3 temas novos (Comando, Pergaminho, Industrial) · descanso automático + ilha · Retomar direto.
+
+## Fila original (ordem; fáceis primeiro, sem depender de banco)
 1. **#523 Ícone do app** — ícone adaptativo (primeiro plano vetorial + fundo + monocromático Android 13+), claro/escuro, conferir no launcher e no relógio. Traço único, sem emoji; acento lima do Carbon.
 2. **#445 Roteiro único de validação no aparelho** — já existe em `PROCESSOS.md` §5; só comentar e mover.
 3. **#365 Sons e vibração refinados** — háptico ao registrar série (confirmação curta), ao bater recorde (padrão duplo) e ao fim do descanso; chave "vibração/sons" em Aparência; respeitar o modo silencioso.
