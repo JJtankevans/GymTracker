@@ -4,6 +4,9 @@ import { levelFor, liftFor, nextLevel, oneRepMaxByLevel, type Sex } from '../str
 import { loadHistory, type HistItem } from '../data'
 import { oneRmSeries, type SetLite } from '../achievements'
 import { dayKey, formatKg } from '../rules'
+import { weeklySetsByMuscle, WEEKLY_SETS_RANGE } from '../muscle'
+import { MuscleMap } from './MuscleMap'
+import { RecapCard } from './RecapCard'
 import { LineChart } from './LineChart'
 
 const short = (iso: string) => { const [, m, d] = iso.slice(0, 10).split('-'); return `${d}/${m}` }
@@ -30,6 +33,8 @@ export function Evolucao() {
 
   const load = () => { setError(null); Promise.all([loadWeights(), loadHistory()]).then(([w, h]) => { setWeights(w); setHist(h) }).catch((e: Error) => setError(e.message)) }
   useEffect(load, [])
+
+  const muscles = useMemo(() => weeklySetsByMuscle(setsOf(hist ?? [])), [hist])
 
   const lifts = useMemo(() => {
     const sets = setsOf(hist ?? [])
@@ -70,6 +75,23 @@ export function Evolucao() {
         {weights.slice(-5).reverse().map((w) => (
           <div key={w.id} className="row"><span className="grow num">{short(w.measured_on)} · {formatKg(w.weight_kg)} kg</span><button className="icon" aria-label={`Apagar ${short(w.measured_on)}`} onClick={async () => { await deleteWeight(w.id); setWeights(await loadWeights()) }}>×</button></div>
         ))}
+      </div>
+
+      <RecapCard items={hist} />
+
+      <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="label">Séries por músculo (7 dias)</div>
+        <MuscleMap rows={muscles} fullAt={WEEKLY_SETS_RANGE[1]} />
+        {muscles.filter((r) => r.sets > 0).map((r) => {
+          const ok = r.sets >= WEEKLY_SETS_RANGE[0] && r.sets <= WEEKLY_SETS_RANGE[1]
+          return (
+            <div key={r.muscle ?? 'outros'} className="row">
+              <span className="grow">{r.muscle ?? 'Outros'}</span><b className="num">{r.sets}</b>
+              <span className="muted" style={{ width: 120, textAlign: 'right' }}>{r.muscle === null ? 'fora do catálogo' : ok ? 'na faixa' : r.sets < WEEKLY_SETS_RANGE[0] ? 'abaixo' : 'acima'}</span>
+            </div>
+          )
+        })}
+        <div className="muted" style={{ fontSize: 12 }}>Faixa comum para hipertrofia: {WEEKLY_SETS_RANGE[0]} a {WEEKLY_SETS_RANGE[1]} séries por semana.</div>
       </div>
 
       <div className="title" style={{ fontSize: 22 }}>Cargas por exercício</div>
