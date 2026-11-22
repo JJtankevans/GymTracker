@@ -43,6 +43,8 @@ export function Treino({ pending, clearPending, onDone }: { pending: string | nu
   const [error, setError] = useState<string | null>(null)
   const [note, setNote] = useState<string | null>(null)
   const [restEnd, setRestEnd] = useState<number>(() => Number(localStorage.getItem('gt-rest-end') ?? 0))
+  const [focus, setFocus] = useState(() => { try { return localStorage.getItem('gt-focus') === '1' } catch { return false } })
+  const [focusIdx, setFocusIdx] = useState<number | null>(null)
   const lastRestEx = useRef<string | null>(null)
   const [restSelected, setRestSelected] = useState<number | null>(null)
   const [restSec, setRestSec] = useState<number>(() => Number(localStorage.getItem('gt-rest') ?? 90))
@@ -142,6 +144,9 @@ export function Treino({ pending, clearPending, onDone }: { pending: string | nu
     } catch (e) { setError((e as Error).message) }
   }
 
+  // exercício atual: o primeiro que ainda não fechou as séries planejadas (ou o último)
+  const autoAt = Math.max(0, exercises.findIndex((e) => sets.filter((x) => x.exercise_id === e.id).length < e.default_sets))
+  const focusAt = Math.min(exercises.length - 1, focusIdx ?? (exercises.some((e) => sets.filter((x) => x.exercise_id === e.id).length < e.default_sets) ? autoAt : exercises.length - 1))
   const resting = restEnd > now
   const alertedFor = useRef(0)
   useEffect(() => {
@@ -197,7 +202,15 @@ export function Treino({ pending, clearPending, onDone }: { pending: string | nu
       {note && <div className="card muted">{note}</div>}
       {error && <div className="card error">{error}</div>}
       {exercises.length === 0 && <div className="card muted">Este treino não tem exercícios. Adicione exercícios ao grupo no app.</div>}
-      {exercises.map((ex) => (
+      {exercises.length > 1 && (
+        <div className="row">
+          <button className={'chip' + (focus ? ' on' : '')} aria-pressed={focus} onClick={() => { setFocus(!focus); setFocusIdx(null); try { localStorage.setItem('gt-focus', focus ? '' : '1') } catch { /* sem armazenamento */ } }}>Modo foco</button>
+          {focus && <><span className="grow muted num" style={{ textAlign: 'right' }}>{focusAt + 1} de {exercises.length}</span>
+            <button className="btn" disabled={focusAt === 0} onClick={() => setFocusIdx(focusAt - 1)} aria-label="Exercício anterior">‹</button>
+            <button className="btn" disabled={focusAt >= exercises.length - 1} onClick={() => setFocusIdx(focusAt + 1)} aria-label="Próximo exercício">›</button></>}
+        </div>
+      )}
+      {(focus && exercises.length > 1 ? [exercises[focusAt]] : exercises).map((ex) => (
         <ExerciseCard key={ex.id} ex={ex} last={last[ex.id]} sets={sets.filter((s) => s.exercise_id === ex.id)} onRegister={register} onRemove={removeSet} />
       ))}
 
