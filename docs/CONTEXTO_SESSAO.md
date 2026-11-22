@@ -251,3 +251,4 @@ Quer autonomia ("yolo, sem perguntas"), mas **antes de commitar/encerrar a sess�
 - **Web (22/11):** descanso próprio por exercício no Treino (#576, localStorage `gt-rest-ex`; o tempo escolhido depois de uma série vira o do exercício) e selos do mês em Conquistas (#564, `monthlyBadges`). 150 testes. Descanso por exercício e selos não vistos no navegador.
 - **Web (22/11):** aquecimento sugerido e nota por exercício no Treino (#579, #582; nota em localStorage, só neste aparelho), volume semanal por exercício em Análises (#580). 151 testes, build ok; não vistos no navegador.
 - **Web (22/11):** variações sugeridas no platô (#588), séries por equipamento em Análises (#590), meta de peso com projeção de data na Evolução (#586; meta só em localStorage). 154 testes. Análises conferida no ?mock; o campo de meta de peso não foi visto na tela.
+- **Web (22/11):** Resumo da semana na Home (sex a dom; #585), só dentro do app (sem notificação). 154 testes.

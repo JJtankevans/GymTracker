@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { loadHistory, loadHome, type HistItem, type HomeData } from '../data'
 import { needsDeload, weeklyVolumes } from '../insights'
-import { formatVolume } from '../recap'
+import { compareWeeks, formatVolume } from '../recap'
 import { prettyGroupName, streakDays, suggestNextGroup, weeklyHistory, weekStart } from '../rules'
 import type { Tab } from '../App'
 
@@ -66,6 +66,17 @@ export function Home({ go }: { go: (t: Tab, groupId?: string) => void }) {
             <div className="row"><span className="grow">Carga da semana</span><b className="num">{formatVolume(cur)}</b><span className="muted num" style={{ marginLeft: 10 }}>{prev > 0 ? `${cur >= prev ? '+' : '−'}${Math.round(Math.abs(cur - prev) / prev * 100)}% vs. anterior` : ''}</span></div>
             {lastDay !== null && <div className="row"><span className="grow">Descanso</span><b className="num">{lastDay === 0 ? 'treinou hoje' : `${lastDay} ${lastDay === 1 ? 'dia' : 'dias'} sem treinar`}</b></div>}
             {needsDeload(v) && <div className="muted" style={{ marginTop: 6 }}>Quatro semanas pesadas seguidas: considere uma semana de descarga (cerca de 60% do volume).</div>}
+          </div>
+        )
+      })()}
+
+      {hist && [0, 5, 6].includes(new Date().getDay()) && (() => {
+        const c = compareWeeks(hist)
+        return (
+          <div className="card">
+            <div className="label">Resumo da semana</div>
+            <div className="muted">{c.workouts[0]} {c.workouts[0] === 1 ? 'treino' : 'treinos'}, {c.sets[0]} séries, {formatVolume(c.volumeKg[0])}{c.workouts[1] ? ` (semana passada: ${c.workouts[1]} treinos)` : ''}.</div>
+            <div>{view.weekly >= goal ? 'Meta batida: aproveite para planejar a próxima semana.' : `Ainda dá tempo: faltam ${goal - view.weekly} para a meta.`}{view.next ? ` Sugestão para começar: ${prettyGroupName(view.next.name)}.` : ''}</div>
           </div>
         )
       })()}
