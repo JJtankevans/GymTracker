@@ -277,3 +277,22 @@ export function challengeStatus(c: PersonalChallenge, items: HistItem[], now = n
   const done = progress >= def.target
   return { progress, target: def.target, daysLeft: Math.max(0, Math.ceil((end - now.getTime()) / DAY)), done, expired: !done && now.getTime() >= end }
 }
+
+// ───────── #591 intensidade (RPE) e fadiga ─────────
+export interface IntensityWeek { start: Date; avgRpe: number | null; rated: number; hard: number }
+
+/** RPE médio por semana (a atual por último) a partir de um mapa série → RPE; [hard] = séries com RPE ≥ 9. */
+export function intensityByWeek(items: HistItem[], rpe: Record<string, number>, now = new Date(), n = 4): IntensityWeek[] {
+  const mondayOf = (d: Date) => { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x }
+  const cur = mondayOf(now).getTime()
+  const weeks = Array.from({ length: n }, (_, i) => ({ start: new Date(cur - (n - 1 - i) * 7 * DAY), sum: 0, rated: 0, hard: 0 }))
+  for (const w of items) {
+    const i = n - 1 - Math.round((cur - mondayOf(new Date(w.started_at)).getTime()) / (7 * DAY))
+    if (i < 0 || i >= n) continue
+    for (const s of w.sets) { const v = rpe[s.id]; if (v) { weeks[i].sum += v; weeks[i].rated++; if (v >= 9) weeks[i].hard++ } }
+  }
+  return weeks.map((w) => ({ start: w.start, avgRpe: w.rated ? w.sum / w.rated : null, rated: w.rated, hard: w.hard }))
+}
+
+/** Fadiga acumulada: as duas últimas semanas com RPE médio ≥ 8,5. */
+export const fatigued = (w: IntensityWeek[]): boolean => w.length >= 2 && w.slice(-2).every((x) => x.avgRpe !== null && x.avgRpe >= 8.5)

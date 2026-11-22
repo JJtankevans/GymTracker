@@ -116,3 +116,15 @@ describe('desafios pessoais', () => {
     expect(challengeStatus({ kind: 'workouts12', start: at(40) }, items, new Date(now)).expired).toBe(true)
   })
 })
+
+import { fatigued, intensityByWeek } from './insights'
+describe('intensidade', () => {
+  it('média por semana e fadiga', () => {
+    const items = [hist('a', 1, [['X', 5, 5], ['X', 5, 5]]), hist('b', 8, [['X', 5, 5]])]
+    const rpe = { a0: 9, a1: 10, b0: 9 }
+    const w = intensityByWeek(items, rpe, new Date(now), 2)
+    expect(w[1].avgRpe).toBe(9.5); expect(w[1].hard).toBe(2); expect(w[0].avgRpe).toBe(9)
+    expect(fatigued(w)).toBe(true)
+    expect(fatigued(intensityByWeek(items, {}, new Date(now), 2))).toBe(false)
+  })
+})

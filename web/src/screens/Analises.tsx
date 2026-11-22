@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { loadHistory, type HistItem } from '../data'
 import { loadWeights } from '../body'
-import { equipmentSets, variationsFor, bandRecords, compareWorkouts, estimateKcal, exerciseWeeklyVolume, heatmap, historyCsv, imbalances, plateaus, RM_BANDS, searchHistory } from '../insights'
+import { fatigued, intensityByWeek, equipmentSets, variationsFor, bandRecords, compareWorkouts, estimateKcal, exerciseWeeklyVolume, heatmap, historyCsv, imbalances, plateaus, RM_BANDS, searchHistory } from '../insights'
 import { formatKg, prettyGroupName, realDurationMinutes } from '../rules'
 import { setsOf } from './Evolucao'
 
@@ -31,7 +31,7 @@ export function Analises() {
     const now = new Date()
     const month = hist.filter((w) => { const d = new Date(w.started_at); return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() })
     const minutes = month.reduce((a, w) => a + (realDurationMinutes(null, w.started_at, w.sets.map((s) => s.completed_at)) ?? 0), 0)
-    return { bands: bandRecords(sets), imb: imbalances(sets), plat: plateaus(sets), heat: heatmap(hist, now), equip: equipmentSets(sets), month: month.length, minutes }
+    return { bands: bandRecords(sets), imb: imbalances(sets), plat: plateaus(sets), heat: heatmap(hist, now), equip: equipmentSets(sets), inten: intensityByWeek(hist, (() => { try { return JSON.parse(localStorage.getItem('gt-rpe') ?? '{}') } catch { return {} } })()), month: month.length, minutes }
   }, [hist])
 
   if (error) return <><div className="title">Análises</div><div className="card"><p className="error">{error}</p><button className="btn" onClick={load}>Tentar de novo</button></div></>
@@ -85,6 +85,16 @@ export function Analises() {
         {v.plat.map((p) => (
           <div key={p.exercise}><b>{p.exercise}</b><div className="muted">Sem novo recorde há {p.weeks} semanas (1RM {formatKg(p.bestOneRm)} kg). Tente uma semana leve (deload) ou uma variação{variationsFor(p.exercise).length ? `: ${variationsFor(p.exercise).join(', ')}` : ''}.</div></div>
         ))}
+      </div>
+
+      <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div className="label">Intensidade (esforço médio, RPE)</div>
+        {v.inten.every((w) => w.avgRpe === null)
+          ? <div className="muted">Marque o esforço das séries no treino para ver a média por semana (guardado só neste aparelho).</div>
+          : <>
+              {v.inten.map((w, i) => <div key={i} className="row"><span className="grow">{i === v.inten.length - 1 ? 'Esta semana' : `Semana de ${w.start.getDate()}/${w.start.getMonth() + 1}`}</span><b className="num">{w.avgRpe === null ? '–' : formatKg(w.avgRpe)}</b><span className="muted num" style={{ minWidth: 70, textAlign: 'right' }}>{w.hard} no limite</span></div>)}
+              <div className="muted">{fatigued(v.inten) ? 'Esforço alto por duas semanas: fadiga acumulada, considere uma semana mais leve.' : 'Sem sinal de fadiga acumulada.'}</div>
+            </>}
       </div>
 
       <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

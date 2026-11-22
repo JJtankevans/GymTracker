@@ -255,3 +255,4 @@ Quer autonomia ("yolo, sem perguntas"), mas **antes de commitar/encerrar a sess�
 - **Web (22/11):** favoritar grupo (★ Atalho no detalhe do grupo) e atalhos na Home (#583; só neste aparelho). 155 testes; conferido no ?mock.
 - **Web (22/11):** desafio pessoal de 30 dias em Conquistas (#592; 3 presets, progresso calculado do histórico, estado em localStorage). 156 testes; conferido no ?mock.
 - **Web (22/11):** Modo foco no Treino (#584): um exercício por vez (o primeiro com séries incompletas), setas ‹ ›, preferência em localStorage. Conferido no ?mock; o descanso continua aparecendo no mesmo lugar (não revisado em detalhe).
+- **Web (22/11):** intensidade (RPE médio por semana e aviso de fadiga) em Análises (#591). O RPE da web é só local (`gt-rpe`), então só vale para este aparelho. 157 testes; a tela só foi compilada, não vista com RPE preenchido.
