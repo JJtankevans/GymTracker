@@ -14,7 +14,7 @@ Onde ficam as regras: web em `web/src/insights.ts`, `superset.ts`, `tempo.ts`, `
 | Supersérie / bi-set / tri-set / circuito (sem descanso até o fim da rodada, "Agora: próximo") — #575 | ✅ (22/11) | `SupersetAndTempo.kt` + `SupersetStore`; só no layout de lista do treino (o layout "Foco" não tem a ligação). Guardado no aparelho; migração 017 prepara o banco |
 | Cadência `3-1-2-0` opcional e TUT por série — #581 | ✅ (22/11) | `TempoStore`; aparece como "· TUT 1min12" na série. Migração 017 |
 | Sugestão de carga (+2,5/+5 kg ao bater reps) — #559 | ✅ `LoadSuggester` (mais completo) | Não criar de novo |
-| Aquecimento sugerido por exercício — #579 | ✅ (22/11) | Já existia no detalhe do exercício; agora também aparece no cartão do treino (antes da 1ª série, "Aquecimento: 20×10 → …") |
+| Aquecimento sugerido por exercício — #579 | ✅ (22/11) | Já existia no detalhe do exercício; agora também aparece no cartão do treino (antes da 1ª série); compilado, mas NÃO visto na tela (a carga de teste era leve demais para gerar aquecimento) |
 | Nota por exercício (banco, pegada) — #582 | ❌ | Web: só no aparelho (`gt-note-<id>`) |
 | Descanso próprio por exercício — #576 | ❌ | Android lembra um descanso único; falta por exercício |
 | Modo foco (um exercício por vez) — #584 | ❌ | |
