@@ -35,7 +35,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font: 16px/1.4 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Inter, system-ui, sans-serif;
+  font: 16px/1.4 var(--font, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Inter, system-ui, sans-serif);
   -webkit-font-smoothing: antialiased;
   overscroll-behavior-y: none;
 }
@@ -149,3 +149,13 @@ button.card { color: inherit; font: inherit; cursor: pointer; }
 @media (prefers-reduced-motion: reduce) { .medal .face { transition: none; } }
 
 :root[data-theme="light"] { --bg: #f5f6f3; --surface: #ffffff; --surface-2: #ecefe9; --line: #dde0d8; --text: #15180f; --muted: #5b6157; --accent: #5b7f00; --on-accent: #ffffff; --danger: #b3261e; color-scheme: light; }
+
+.title, .big { font-family: var(--font-h, inherit); }
+.card, .btn, .field input { border-radius: var(--radius); }
+.btn, .chip { border-radius: min(999px, calc(var(--radius) * 2)); }
+.themes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.theme { text-align: left; padding: 10px; border-radius: var(--radius); border: 2px solid var(--line); background: var(--surface-2); display: flex; flex-direction: column; gap: 4px; cursor: pointer; color: var(--text); }
+.theme.on { border-color: var(--accent); }
+.theme small { font-size: 12px; line-height: 1.25; }
+.swatchbox { display: flex; gap: 6px; padding: 8px; border-radius: 8px; border: 1px solid; height: 44px; }
+.swatchbox i { flex: 1; border-radius: 5px; }

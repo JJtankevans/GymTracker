@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { deleteWeight, loadWeights, logWeight, type Weight } from '../body'
+import { deleteWeight, loadSex, loadWeights, logWeight, type Weight } from '../body'
+import { levelFor, liftFor, nextLevel, oneRepMaxByLevel, type Sex } from '../strength'
 import { loadHistory, type HistItem } from '../data'
 import { oneRmSeries, type SetLite } from '../achievements'
 import { dayKey, formatKg } from '../rules'
@@ -7,6 +8,8 @@ import { LineChart } from './LineChart'
 
 const short = (iso: string) => { const [, m, d] = iso.slice(0, 10).split('-'); return `${d}/${m}` }
 const signed = (v: number) => { const r = Math.round(v * 10) / 10; return (r > 0 ? '+' : '') + formatKg(r) + ' kg' }
+
+const LEVELS_IDX: Record<string, number> = { BEGINNER: 0, NOVICE: 1, INTERMEDIATE: 2, ADVANCED: 3, ELITE: 4 }
 
 export function setsOf(items: HistItem[]): SetLite[] {
   return items.flatMap((w) => w.sets.map((s) => ({ exercise: s.exercise?.name ?? 'Exercício', reps: s.reps, kg: Number(s.weight_kg), at: s.completed_at })))
@@ -22,6 +25,8 @@ export function Evolucao() {
   const [error, setError] = useState<string | null>(null)
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
+  const [sex, setSex] = useState<Sex>(null)
+  useEffect(() => { loadSex().then(setSex).catch(() => {}) }, [])
 
   const load = () => { setError(null); Promise.all([loadWeights(), loadHistory()]).then(([w, h]) => { setWeights(w); setHist(h) }).catch((e: Error) => setError(e.message)) }
   useEffect(load, [])
@@ -71,11 +76,19 @@ export function Evolucao() {
       {lifts.length === 0 && <div className="card muted">Quando você treinar um exercício em pelo menos dois dias, o 1RM estimado aparece aqui.</div>}
       {lifts.map((l) => {
         const v = l.series.map((p) => p.value)
+        const lift = liftFor(l.name)
+        const bw = latest
+        const lvl = lift && bw ? levelFor(lift, Math.max(...v), bw, sex) : null
+        const nxt = lift && bw ? nextLevel(lvl) : null
+        const missing = lift && bw && nxt ? oneRepMaxByLevel(lift, bw, sex)[LEVELS_IDX[nxt.id]] - Math.max(...v) : null
         return (
           <div key={l.name} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <b style={{ fontSize: 17 }}>{l.name}</b>
+            <div className="row"><b className="grow" style={{ fontSize: 17 }}>{l.name}</b>{lift && bw ? <span className="chip on" style={{ minHeight: 32, display: 'inline-flex', alignItems: 'center' }}>{lvl?.label ?? 'Abaixo de Iniciante'}</span> : null}</div>
             <Stats rows={[['Atual', `${formatKg(v[v.length - 1])} kg`], ['Melhor', `${formatKg(Math.max(...v))} kg`], ['Variação', signed(v[v.length - 1] - v[0])], ['Sessões', String(v.length)]]} />
             <LineChart values={v} labels={l.series.map((p) => short(p.day))} height={170} />
+            {lift && !bw && <div className="muted" style={{ fontSize: 13 }}>Registre seu peso corporal para ver as referências de nível.</div>}
+            {nxt && missing != null && <div className="muted" style={{ fontSize: 13 }}>Para {nxt.label}: faltam ~{formatKg(Math.max(0, missing))} kg de 1RM ({nxt.percentile}% das pessoas ficam abaixo desse nível).</div>}
+            {lift && bw && !nxt && <div style={{ fontSize: 13 }}>Nível Elite: mais forte que ~95% dos usuários.</div>}
           </div>
         )
       })}

@@ -31,3 +31,11 @@ export async function deleteWeight(id: string): Promise<void> {
   const { error } = await supabase.from('body_weights').delete().eq('id', id)
   if (error) throw new Error(error.message)
 }
+
+/** Sexo informado no perfil (usado só nas referências de força). */
+export async function loadSex(): Promise<'MALE' | 'FEMALE' | null> {
+  if (MOCK) return 'MALE'
+  const { data } = await supabase.from('profiles').select('sex').maybeSingle()
+  const s = (data as { sex?: string } | null)?.sex
+  return s === 'MALE' || s === 'FEMALE' ? s : null
+}
