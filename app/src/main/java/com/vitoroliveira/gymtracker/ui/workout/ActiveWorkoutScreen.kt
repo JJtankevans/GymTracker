@@ -27,12 +27,18 @@ import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material3.AlertDialog
 import androidx.compose.animation.animateContentSize
 import androidx.compose.material3.Button
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
@@ -90,6 +96,13 @@ import org.koin.compose.viewmodel.koinViewModel
 
 // Opções de tempo de descanso em segundos
 val restOptions = listOf(30, 45, 60, 90, 120)
+
+/** 45 → "45s", 60 → "1min", 90 → "1min30", 120 → "2min" (antes 60 e 90 apareciam os dois como "1min"). */
+fun restLabel(seconds: Int): String = when {
+    seconds < 60 -> "${seconds}s"
+    seconds % 60 == 0 -> "${seconds / 60}min"
+    else -> "${seconds / 60}min${seconds % 60}"
+}
 
 @Composable
 fun ActiveWorkoutScreen(
@@ -266,8 +279,10 @@ fun ActiveWorkoutScreenContent(
                 CircularProgressIndicator()
             }
         } else {
-            if (com.vitoroliveira.gymtracker.ui.theme.LocalThemeExtras.current.workoutLayout ==
-                com.vitoroliveira.gymtracker.ui.theme.WorkoutLayout.FOCUS) {
+            val isFocus = com.vitoroliveira.gymtracker.ui.theme.LocalThemeExtras.current.workoutLayout ==
+                com.vitoroliveira.gymtracker.ui.theme.WorkoutLayout.FOCUS
+            Box(Modifier.fillMaxSize()) {
+            if (isFocus) {
                 FocusWorkoutBody(
                     uiState = uiState,
                     onAddSet = onAddSet,
@@ -278,27 +293,18 @@ fun ActiveWorkoutScreenContent(
                     modifier = Modifier.padding(padding),
                     topSlot = topSlot
                 )
-            } else
-            LazyColumn(
+            } else LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding),
-                contentPadding = PaddingValues(16.dp),
+                contentPadding = PaddingValues(
+                    start = 16.dp, top = 16.dp, end = 16.dp,
+                    // espaço para a ilha do descanso não cobrir o botão da última série
+                    bottom = if (uiState.timerState.totalSeconds > 0) 104.dp else 16.dp
+                ),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 item { topSlot() }
-
-                // Temporizador fixo no topo da lista
-                if (uiState.timerState.totalSeconds > 0) {
-                    item {
-                        TimerCard(
-                            timerState = uiState.timerState,
-                            onPause = onPauseTimer,
-                            onResume = onResumeTimer,
-                            onCancel = onCancelTimer
-                        )
-                    }
-                }
 
                 if (uiState.exercises.isEmpty() && uiState.activeWorkout != null) {
                     item {
@@ -325,6 +331,14 @@ fun ActiveWorkoutScreenContent(
                 }
 
                 item { Spacer(modifier = Modifier.height(16.dp)) }
+            }
+            if (!isFocus) RestIsland(
+                timer = uiState.timerState,
+                onPause = onPauseTimer,
+                onResume = onResumeTimer,
+                onCancel = onCancelTimer,
+                modifier = Modifier.align(Alignment.BottomCenter).padding(padding).padding(bottom = 16.dp)
+            )
             }
         }
     }
@@ -412,6 +426,76 @@ private fun EmptyExercisesHint(groupName: String?, onAdd: (() -> Unit)?) {
     }
 }
 
+/**
+ * Ilha do descanso: pílula flutuante no pé da tela (alcance do polegar) que acompanha a rolagem.
+ * Ideia do Dynamic Island (Skiper/Cult UI): entra com a mola do original (rigidez 400, amortecimento 30,
+ * massa 1 → razão 0,75) e troca de tamanho suavemente ao concluir. Saída mais sutil que a entrada.
+ */
+@Composable
+fun RestIsland(
+    timer: TimerState,
+    onPause: () -> Unit,
+    onResume: () -> Unit,
+    onCancel: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val visible = timer.totalSeconds > 0
+    androidx.compose.animation.AnimatedVisibility(
+        visible = visible,
+        modifier = modifier,
+        enter = androidx.compose.animation.slideInVertically(
+            androidx.compose.animation.core.spring(dampingRatio = 0.75f, stiffness = 400f)
+        ) { it } + androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(150)),
+        exit = androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(120)) +
+            androidx.compose.animation.slideOutVertically(androidx.compose.animation.core.tween(120)) { it / 3 }
+    ) {
+        val done = timer.isFinished
+        val cs = MaterialTheme.colorScheme
+        val container = if (done) cs.tertiaryContainer else cs.primary
+        val content = if (done) cs.onTertiaryContainer else cs.onPrimary
+        androidx.compose.material3.Surface(
+            shape = androidx.compose.foundation.shape.CircleShape,
+            color = container,
+            contentColor = content,
+            shadowElevation = 8.dp,
+            modifier = Modifier.animateContentSize(
+                androidx.compose.animation.core.spring(dampingRatio = 0.75f, stiffness = 400f)
+            )
+        ) {
+            Row(
+                Modifier.padding(start = 18.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                androidx.compose.material3.CircularProgressIndicator(
+                    progress = { timer.progress },
+                    modifier = Modifier.size(26.dp),
+                    color = content,
+                    trackColor = content.copy(alpha = 0.25f),
+                    strokeWidth = 3.dp
+                )
+                Spacer(Modifier.width(12.dp))
+                Text(
+                    text = if (done) "Bora pra próxima série!" else timer.formattedTime,
+                    style = MaterialTheme.typography.titleMedium.copy(fontFeatureSettings = "tnum"),
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.semantics { liveRegion = androidx.compose.ui.semantics.LiveRegionMode.Polite }
+                )
+                if (!done) {
+                    IconButton(onClick = if (timer.isRunning) onPause else onResume) {
+                        Icon(
+                            if (timer.isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
+                            contentDescription = if (timer.isRunning) "Pausar descanso" else "Retomar descanso"
+                        )
+                    }
+                }
+                IconButton(onClick = onCancel) {
+                    Icon(Icons.Default.Close, contentDescription = if (done) "Fechar aviso de descanso" else "Cancelar descanso")
+                }
+            }
+        }
+    }
+}
+
 @Composable
 fun TimerCard(
     timerState: TimerState,
@@ -489,6 +573,10 @@ fun ExerciseWorkoutCard(
     var weightError by remember { mutableStateOf(false) }
     var repsTouched by remember { mutableStateOf(false) }
     var showTimerOptions by remember { mutableStateOf(false) }
+    // Descanso lembrado entre treinos: ao registrar a série ele começa sozinho (pesquisa de UX: não exigir toque extra).
+    val restPrefs = androidx.compose.ui.platform.LocalContext.current
+        .getSharedPreferences("gymtracker_prefs", android.content.Context.MODE_PRIVATE)
+    var rememberedRest by remember { mutableIntStateOf(restPrefs.getInt("rest_seconds", 0)) }
 
     val suggestion = com.vitoroliveira.gymtracker.ui.components.rememberLoadSuggestion(
         exercise.name, baseline?.lastWeightKg, baseline?.lastReps, exercise.defaultReps
@@ -503,7 +591,10 @@ fun ExerciseWorkoutCard(
     // Mostra as opções de descanso só quando uma série foi realmente salva
     var seenCount by remember { mutableIntStateOf(completedSets.size) }
     LaunchedEffect(completedSets.size) {
-        if (completedSets.size > seenCount) showTimerOptions = true
+        if (completedSets.size > seenCount) {
+            showTimerOptions = true
+            if (rememberedRest > 0) onStartTimer(rememberedRest)
+        }
         seenCount = completedSets.size
     }
 
@@ -688,17 +779,19 @@ fun ExerciseWorkoutCard(
             if (showTimerOptions) {
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = "Iniciar descanso:",
+                    text = if (rememberedRest > 0) "Descanso automático. Toque para mudar:" else "Iniciar descanso:",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     restOptions.forEach { seconds ->
-                        val label = if (seconds < 60) "${seconds}s" else "${seconds / 60}min"
+                        val label = restLabel(seconds)
                         FilterChip(
-                            selected = false,
+                            selected = seconds == rememberedRest,
                             onClick = {
+                                rememberedRest = seconds
+                                restPrefs.edit().putInt("rest_seconds", seconds).apply()
                                 onStartTimer(seconds)
                                 showTimerOptions = false
                             },

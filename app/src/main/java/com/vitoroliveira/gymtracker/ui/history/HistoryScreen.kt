@@ -107,7 +107,7 @@ fun HistoryScreenContent(
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             when {
-                uiState.isLoading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
+                uiState.isLoading -> com.vitoroliveira.gymtracker.ui.components.ListSkeleton()
                 uiState.workouts.isEmpty() -> EmptyHistoryState(Modifier.align(Alignment.Center))
                 else -> LazyColumn(
                     modifier = Modifier.fillMaxSize(),

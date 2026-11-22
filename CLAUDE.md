@@ -2,8 +2,15 @@
 
 ## Ao iniciar a sessão
 1. Leia `docs/CONTEXTO_SESSAO.md` primeiro (estado atual, armadilhas, próximos passos).
-2. O histórico longo de decisões está em `docs/PROXIMOS_PASSOS.md`.
-3. Responda em português do Brasil, de forma direta, e relate com honestidade o que não foi testado no aparelho.
+2. Leia `docs/PROCESSOS.md` (como verificar, regras que custaram caro, gestão de contexto, roteiro no aparelho, regra do Vault). Foi puxado das notas do Vault; **não pule**.
+3. **Se for mexer em interface:** leia `docs/DESIGN.md` (regras, movimento, anti-genérico, mapa de TODAS as referências §10) e, se for trazer componente, o processo de componentes do Vault (`Vault/seed-out/seed.json`, notas `nt-processo-*`) e os caches em `Runtime/docs/*-cache/`. Porte fiel, não "do meu jeito".
+4. O **board Runtime** (projeto GymTracker) é a fila de trabalho: liste os cards, faça os fáceis primeiro, comente e mova de coluna.
+5. O histórico longo de decisões está em `docs/PROXIMOS_PASSOS.md`.
+6. Responda em português do Brasil, de forma direta, e relate com honestidade o que não foi testado no aparelho.
+
+## Ambiente no PC do Thiago (Windows)
+- Android SDK em `C:\Android\Sdk`, emulador AVD `gym35`, `local.properties` com `sdk.dir` (barras normais) e chaves do Supabase. Compile e teste **pelo terminal real** (`run_in_terminal` + `.ps1`), não pelo Bash do Claude. Detalhes e armadilhas em `docs/PROCESSOS.md`.
+- Fim de sessão no PC: o Thiago já autorizou commit e push no branch de trabalho durante a noite de 21/11/2026; fora disso, vale a regra abaixo.
 
 ## Ambiente de nuvem
 - O contêiner é efêmero: o que não foi commitado e enviado com push se perde quando a sessão termina ou o espaço em disco acaba.

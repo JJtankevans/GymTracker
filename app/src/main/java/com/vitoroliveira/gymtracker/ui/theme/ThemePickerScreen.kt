@@ -171,7 +171,7 @@ private fun ThemeTile(spec: AppThemeSpec, selected: Boolean, onClick: () -> Unit
             Box(
                 Modifier
                     .fillMaxWidth()
-                    .height(172.dp)
+                    .height(140.dp)
                     .drawBehind { drawThemeBackground(extras, c.background, if (selected && extras.animated) clock() else 0.3f) }
                     .padding(10.dp)
             ) {

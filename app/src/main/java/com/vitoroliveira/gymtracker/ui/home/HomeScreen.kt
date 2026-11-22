@@ -151,12 +151,8 @@ fun HomeScreenContent(
         }
     ) { padding ->
         if (uiState.isLoading) {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
+            // Esqueleto no lugar do spinner: mostra onde o conteúdo vai ficar (DESIGN.md §5).
+            com.vitoroliveira.gymtracker.ui.components.HomeSkeleton(Modifier.padding(padding))
         } else {
             val layout = com.vitoroliveira.gymtracker.ui.theme.LocalThemeExtras.current.homeLayout
             Column(Modifier.fillMaxSize().padding(padding)) {

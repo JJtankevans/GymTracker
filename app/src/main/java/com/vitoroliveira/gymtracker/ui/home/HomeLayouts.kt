@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vitoroliveira.gymtracker.presentation.viewmodel.HomeUiState
 import com.vitoroliveira.gymtracker.ui.components.BarChart
+import com.vitoroliveira.gymtracker.ui.components.RollingNumber
 import com.vitoroliveira.gymtracker.ui.components.prettyGroupName
 import com.vitoroliveira.gymtracker.ui.theme.HomeLayout
 import com.vitoroliveira.gymtracker.ui.theme.ThemedCard
@@ -96,7 +97,7 @@ private fun ClassicHome(state: HomeUiState, a: HomeActions, modifier: Modifier) 
         Spacer(Modifier.height(8.dp))
         Text("Atalhos", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         QuickAccessRow(a.onGroups, a.onHistory)
-        Spacer(Modifier.height(72.dp))
+        Spacer(Modifier.height(104.dp))
     }
 }
 
@@ -191,7 +192,7 @@ private fun BentoHome(state: HomeUiState, a: HomeActions, modifier: Modifier) {
                 Column(Modifier.fillMaxSize().padding(14.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                     ProgressRing(state.progress(), Modifier.size(128.dp), stroke = 12.dp) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("${state.weeklyCount}", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                            RollingNumber(state.weeklyCount, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.onPrimaryContainer)
                             Text("de ${state.weeklyGoal}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
                         }
                     }
@@ -203,7 +204,7 @@ private fun BentoHome(state: HomeUiState, a: HomeActions, modifier: Modifier) {
                 ThemedCard(Modifier.weight(1f).fillMaxWidth()) {
                     Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.Center) {
                         Icon(Icons.Default.LocalFireDepartment, null, tint = MaterialTheme.colorScheme.tertiary)
-                        Text("${state.streakDays}", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
+                        RollingNumber(state.streakDays, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
                         Text("dias seguidos", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
@@ -220,7 +221,7 @@ private fun BentoHome(state: HomeUiState, a: HomeActions, modifier: Modifier) {
             BentoTile("Grupos", Icons.Default.List, Modifier.weight(1f), a.onGroups)
             BentoTile("Histórico", Icons.Default.DateRange, Modifier.weight(1f), a.onHistory)
         }
-        Spacer(Modifier.height(72.dp))
+        Spacer(Modifier.height(104.dp))
     }
 }
 
