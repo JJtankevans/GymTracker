@@ -1,0 +1,45 @@
+package com.vitoroliveira.gymtracker.presentation.body
+
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Instant
+
+class InsightsTest {
+    private val now = Instant.parse("2026-11-22T12:00:00Z")
+    private fun set(ex: String, reps: Int, kg: Double, daysAgo: Int) = AnalysisSet(ex, reps, kg, now - daysAgo.days)
+
+    @Test fun `recorde por faixa usa a maior carga com pelo menos N reps`() {
+        val r = bandRecords(listOf(set("Supino", 10, 60.0, 5), set("Supino", 5, 80.0, 4), set("Supino", 1, 100.0, 3)))
+        fun kg(b: Int) = r.first { it.band == b }.kg
+        assertEquals(listOf(100.0, 80.0, 60.0), listOf(kg(1), kg(5), kg(10)))
+    }
+
+    @Test fun `calorias`() {
+        assertEquals(400, estimateKcal(60.0, 80.0))
+        assertEquals(0, estimateKcal(-5.0, 80.0))
+    }
+
+    @Test fun `desequilibrio avisa quando um lado passa do dobro`() {
+        val sets = List(12) { set("Supino Reto com Barra", 10, 50.0, 2) }
+        val r = imbalances(sets, now)
+        assertEquals(12, r[0].setsA); assertEquals(0, r[0].setsB); assertTrue(r[0].warn)
+        assertFalse(r[1].warn)
+    }
+
+    @Test fun `plato quando o recorde tem 5 semanas e o exercicio foi treinado recentemente`() {
+        val p = plateaus(listOf(set("Agachamento", 5, 100.0, 40), set("Agachamento", 5, 90.0, 3)), now)
+        assertEquals(1, p.size); assertEquals(5, p[0].weeks)
+        assertTrue(plateaus(listOf(set("Agachamento", 5, 90.0, 40), set("Agachamento", 5, 100.0, 3)), now).isEmpty())
+    }
+
+    @Test fun `progressao sobe a carga ao bater as reps`() {
+        assertEquals(Progression(42.5, 12), nextProgression(40.0, 12, 12))
+        assertEquals(Progression(85.0, 8), nextProgression(80.0, 8, 8))
+        assertEquals(Progression(40.0, 10), nextProgression(40.0, 9, 12))
+        assertNull(nextProgression(0.0, 10, 10))
+    }
+}

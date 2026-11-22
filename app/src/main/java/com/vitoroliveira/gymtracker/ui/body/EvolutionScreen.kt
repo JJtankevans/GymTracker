@@ -79,6 +79,7 @@ fun EvolutionContent(
             item(key = "weight") { BodyWeightCard(body, onLog = onLog, onDelete = onDelete, onEditData = { showData = true }) }
             item(key = "measures") { MeasurementsCard(body.measurements, onLogMeasure, onDeleteMeasure) }
             if (evo.recap?.isEmpty == false || evo.yearRecap?.isEmpty == false) item(key = "recap") { RecapCard(evo.recap, evo.yearRecap, onOpenYear) }
+            evo.analysis?.takeIf { !it.isEmpty }?.let { a -> item(key = "analysis") { AnalysisCard(a) } }
             if (evo.weeklySets.any { it.sets > 0 }) item(key = "weekly-sets") { WeeklySetsCard(evo.weeklySets) }
             item(key = "lifts-title") {
                 Text("Cargas nos básicos", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
@@ -102,6 +103,31 @@ fun EvolutionContent(
     }
 
     if (showData) BodyDataDialog(body.profile, onSave = { onSaveProfile(it); showData = false }, onDismiss = { showData = false })
+}
+
+/** Análises (porte da web): equilíbrio muscular, platôs e recordes por faixa de repetições. */
+@Composable
+private fun AnalysisCard(a: com.vitoroliveira.gymtracker.presentation.body.Analysis) {
+    val cs = MaterialTheme.colorScheme
+    fun kg(v: Double) = if (v % 1.0 == 0.0) v.toInt().toString() else "%.1f".format(v).replace('.', ',')
+    com.vitoroliveira.gymtracker.ui.theme.ThemedCard(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Análises", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            a.imbalances.filter { it.warn }.forEach { i ->
+                Text("${i.label}: ${i.setsA} × ${i.setsB} séries em 28 dias. ${if (i.setsA > i.setsB) i.a else i.b} tem mais que o dobro; considere equilibrar.", style = MaterialTheme.typography.bodyMedium, color = cs.onSurfaceVariant)
+            }
+            a.plateaus.take(5).forEach { p ->
+                Text("${p.exercise}: sem novo recorde há ${p.weeks} semanas (1RM ${kg(p.bestOneRm)} kg). Tente uma semana leve ou uma variação.", style = MaterialTheme.typography.bodyMedium, color = cs.onSurfaceVariant)
+            }
+            val top = a.records.groupBy { it.exercise }.entries.take(5)
+            if (top.isNotEmpty()) {
+                Text("Recordes por faixa", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                top.forEach { (name, rs) ->
+                    Text("$name: " + com.vitoroliveira.gymtracker.presentation.body.RM_BANDS.joinToString("  ") { b -> "${b}RM ${rs.firstOrNull { it.band == b }?.let { kg(it.kg) } ?: "–"}" }, style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        }
+    }
 }
 
 private val MONTHS_PT = listOf("Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro")

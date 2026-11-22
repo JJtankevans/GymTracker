@@ -50,7 +50,9 @@ data class EvolutionUiState(
     /** Retrospectiva do ano atual (#354). */
     val yearRecap: MonthlyRecap? = null,
     /** "Meu ano" (#539): treinos por mês, melhor mês, grupos mais treinados, dia favorito, sequência. */
-    val yearReview: YearReview? = null
+    val yearReview: YearReview? = null,
+    /** Análises (platôs, equilíbrio, recordes por faixa); null se não carregou. */
+    val analysis: Analysis? = null
 )
 
 class EvolutionViewModel(
@@ -85,6 +87,7 @@ class EvolutionViewModel(
                 // retrospectiva do mês também é extra: se falhar, o resto da tela continua
                 var yearRecap: MonthlyRecap? = null
                 var yearReview: YearReview? = null
+                var analysis: Analysis? = null
                 val recap = try {
                     val zone = kotlinx.datetime.TimeZone.currentSystemDefault()
                     val today = clock.now().toLocalDateTime(zone).date
@@ -93,12 +96,13 @@ class EvolutionViewModel(
                     val allSets = workoutRepository.getAllSetsForExport()
                     yearRecap = buildYearlyRecap(history, allSets, names, today.year, zone)
                     yearReview = buildYearReview(history, names, today.year, zone)
+                    analysis = buildAnalysis(allSets, exercises.mapNotNull { e -> e.id?.let { it to e.name } }.toMap(), clock.now())
                     buildMonthlyRecap(history, allSets, names, today.year, today.monthNumber, zone)
                 } catch (e: Exception) {
                     if (e is CancellationException) throw e
                     null
                 }
-                _state.value = EvolutionUiState(lifts = lifts, weeklySets = weekly, recap = recap, yearRecap = yearRecap, yearReview = yearReview)
+                _state.value = EvolutionUiState(lifts = lifts, weeklySets = weekly, recap = recap, yearRecap = yearRecap, yearReview = yearReview, analysis = analysis)
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 _state.value = EvolutionUiState(errorMessage = e.toUserMessage("Erro ao carregar a evolução"))
