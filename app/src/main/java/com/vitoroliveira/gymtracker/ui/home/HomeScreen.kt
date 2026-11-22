@@ -67,6 +67,14 @@ fun HomeScreen(
         if (planned != null) uiState.copy(suggestedGroupId = planned, suggestedGroupName = uiState.groupNames[planned], suggestedFromSchedule = true) else uiState
     }
 
+    val appContext = androidx.compose.ui.platform.LocalContext.current
+    LaunchedEffect(uiState.hasActiveWorkout, uiState.activeWorkoutStartedAt, uiState.isLoading) {
+        if (!uiState.isLoading) {
+            val ongoing = com.vitoroliveira.gymtracker.ui.workout.WorkoutOngoingNotifier(appContext)
+            if (uiState.hasActiveWorkout) ongoing.show(uiState.activeWorkoutStartedAt, uiState.activeWorkoutGroupName) else ongoing.cancel()
+        }
+    }
+
     HomeScreenContent(
         uiState = shown,
         onNavigateToMuscleGroups = onNavigateToMuscleGroups,

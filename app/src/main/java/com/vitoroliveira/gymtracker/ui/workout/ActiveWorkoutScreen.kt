@@ -143,6 +143,12 @@ fun ActiveWorkoutScreen(
     // mas esta coleta continua, então o aviso de fim chega mesmo fora do app.
     val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
     val restNotifier = remember { RestNotifier(context) }
+    // Notificação viva do treino (#357): cronômetro na barra/bloqueio enquanto o treino está aberto.
+    val ongoingNotifier = remember { WorkoutOngoingNotifier(context) }
+    LaunchedEffect(uiState.activeWorkout?.id, uiState.summary != null) {
+        val w = uiState.activeWorkout
+        if (w != null && uiState.summary == null) ongoingNotifier.show(w.startedAt, muscleGroupName) else if (uiState.summary != null) ongoingNotifier.cancel()
+    }
     var askedNotificationPermission by rememberSaveable { mutableStateOf(false) }
     val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
     LaunchedEffect(viewModel) {
