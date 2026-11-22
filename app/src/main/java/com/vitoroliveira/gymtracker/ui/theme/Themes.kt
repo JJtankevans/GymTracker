@@ -155,7 +155,7 @@ object AppThemes {
         category = ThemeCategory.BOLD, isDark = false,
         colors = makeScheme(
             dark = false,
-            primary = hex(0xFF4D8D), secondary = hex(0x2EC4B6), tertiary = hex(0xFFD23F),
+            primary = hex(0xF5407F), secondary = hex(0x2EC4B6), tertiary = hex(0xFFD23F),
             background = hex(0xFEF6E4), surface = hex(0xFFFFFF), onSurface = hex(0x000000),
             outline = hex(0x000000), cardColor = hex(0xFFFFFF), onPrimary = hex(0x000000)
         ),
@@ -403,7 +403,7 @@ object AppThemes {
         category = ThemeCategory.BOLD, isDark = true,
         colors = makeScheme(
             dark = true,
-            primary = hex(0xFF2D2D), secondary = hex(0xF2F2F2), tertiary = hex(0xFFC53D),
+            primary = hex(0xE62020), secondary = hex(0xF2F2F2), tertiary = hex(0xFFC53D),
             background = hex(0x0B0B0B), surface = hex(0x141414), onSurface = hex(0xFFFFFF),
             outline = hex(0x5A1414), cardColor = hex(0x1A1A1A), onPrimary = hex(0xFFFFFF)
         ),

@@ -160,11 +160,16 @@ fun HomeScreenContent(
         } else {
             val layout = com.vitoroliveira.gymtracker.ui.theme.LocalThemeExtras.current.homeLayout
             Column(Modifier.fillMaxSize().padding(padding)) {
+            val actions = HomeActions(onNavigateToMuscleGroups, onNavigateToHistory, onStartWorkoutClick, onStartGroup, onResumeWorkout)
             Box(Modifier.padding(start = 16.dp, end = 16.dp, top = 4.dp)) { topSlot() }
+            // Aviso de treino em andamento: fica acima de qualquer layout de Home, em todos os temas.
+            if (uiState.hasActiveWorkout) Box(Modifier.padding(start = 16.dp, end = 16.dp, top = 4.dp)) {
+                com.vitoroliveira.gymtracker.ui.home.ResumeWorkoutBanner(uiState, actions)
+            }
             HomeBody(
                 layout = layout,
                 state = uiState,
-                actions = HomeActions(onNavigateToMuscleGroups, onNavigateToHistory, onStartWorkoutClick, onStartGroup, onResumeWorkout),
+                actions = actions,
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()

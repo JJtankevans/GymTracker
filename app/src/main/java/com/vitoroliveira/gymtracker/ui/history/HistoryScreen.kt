@@ -13,6 +13,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -44,7 +46,9 @@ fun HistoryScreen(
         onWorkoutClick = onWorkoutClick,
         onBack = onBack,
         onDismissError = viewModel::clearError,
-        onDeleteWorkout = viewModel::deleteWorkout
+        onDeleteWorkout = viewModel::deleteWorkout,
+        onUndoDelete = viewModel::undoDelete,
+        onCommitDelete = viewModel::commitPendingDelete
     )
 }
 
@@ -55,7 +59,9 @@ fun HistoryScreenContent(
     onWorkoutClick: (workoutId: String, groupName: String) -> Unit = { _, _ -> },
     onBack: () -> Unit = {},
     onDismissError: () -> Unit = {},
-    onDeleteWorkout: (String) -> Unit = {}
+    onDeleteWorkout: (String) -> Unit = {},
+    onUndoDelete: () -> Unit = {},
+    onCommitDelete: () -> Unit = {}
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val calendar = remember(uiState.workouts) {
@@ -65,7 +71,19 @@ fun HistoryScreenContent(
             kotlin.time.Clock.System.now().toLocalDateTime(tz).date
         )
     }
-    var pendingDelete by remember { mutableStateOf<WorkoutHistoryItem?>(null) }
+    // Ao sair da tela com um "Desfazer" ainda aberto, a exclusão pendente é concluída.
+    androidx.compose.runtime.DisposableEffect(Unit) { onDispose { onCommitDelete() } }
+
+    // Aviso "Treino apagado · Desfazer": se não tocar em Desfazer, a exclusão é concluída.
+    LaunchedEffect(uiState.pendingUndo) {
+        val pending = uiState.pendingUndo ?: return@LaunchedEffect
+        val result = snackbarHostState.showSnackbar(
+            message = "Treino apagado: " + com.vitoroliveira.gymtracker.ui.components.prettyGroupName(pending.item.muscleGroupName),
+            actionLabel = "Desfazer",
+            duration = androidx.compose.material3.SnackbarDuration.Long
+        )
+        if (result == androidx.compose.material3.SnackbarResult.ActionPerformed) onUndoDelete() else onCommitDelete()
+    }
 
     LaunchedEffect(uiState.errorMessage) {
         uiState.errorMessage?.let {
@@ -97,45 +115,22 @@ fun HistoryScreenContent(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     item(key = "heatmap") { TrainingHeatmap(calendar) }
-                    item {
-                        Text(
-                            "Segure um treino para apagar.",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
                     items(uiState.workouts, key = { it.workoutId }) { workout ->
                         WorkoutHistoryCard(
                             item = workout,
                             onClick = { onWorkoutClick(workout.workoutId, workout.muscleGroupName) },
-                            onLongClick = { pendingDelete = workout }
+                            onDelete = { onDeleteWorkout(workout.workoutId) }
                         )
                     }
                 }
             }
         }
     }
-
-    pendingDelete?.let { item ->
-        AlertDialog(
-            onDismissRequest = { pendingDelete = null },
-            title = { Text("Apagar treino?") },
-            text = {
-                Text("${item.muscleGroupName} · ${formatDate(item.startedAt)}. As séries desse treino também são apagadas e podem mudar seus recordes. Não dá para desfazer.")
-            },
-            confirmButton = {
-                TextButton({ onDeleteWorkout(item.workoutId); pendingDelete = null }) {
-                    Text("Apagar", color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = { TextButton({ pendingDelete = null }) { Text("Cancelar") } }
-        )
-    }
 }
 
 @Composable
-private fun WorkoutHistoryCard(item: WorkoutHistoryItem, onClick: () -> Unit, onLongClick: () -> Unit) {
-    ThemedCard(onClick = onClick, onLongClick = onLongClick, modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
+private fun WorkoutHistoryCard(item: WorkoutHistoryItem, onClick: () -> Unit, onDelete: () -> Unit) {
+    ThemedCard(onClick = onClick, onLongClick = onDelete, modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -159,6 +154,20 @@ private fun WorkoutHistoryCard(item: WorkoutHistoryItem, onClick: () -> Unit, on
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium
             )
+            // Apagar tem botão visível (não só gesto de segurar); o "Desfazer" cobre o engano.
+            var menuOpen by remember { mutableStateOf(false) }
+            Box {
+                IconButton(onClick = { menuOpen = true }) {
+                    Icon(androidx.compose.material.icons.Icons.Default.MoreVert, contentDescription = "Mais opções", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                androidx.compose.material3.DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    androidx.compose.material3.DropdownMenuItem(
+                        text = { Text("Apagar treino", color = MaterialTheme.colorScheme.error) },
+                        leadingIcon = { Icon(androidx.compose.material.icons.Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) },
+                        onClick = { menuOpen = false; onDelete() }
+                    )
+                }
+            }
         }
     }
 }

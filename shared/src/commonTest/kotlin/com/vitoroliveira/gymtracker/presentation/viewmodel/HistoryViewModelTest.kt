@@ -65,9 +65,39 @@ class HistoryViewModelTest {
 
         vm.deleteWorkout("a")
 
+        // sai da lista na hora, mas só é apagado de verdade depois do tempo de desfazer
         assertEquals(listOf("b"), vm.uiState.value.workouts.map { it.workoutId })
+        assertEquals(listOf("a", "b"), repo.history.map { it.id })
+        vm.commitPendingDelete()
         assertEquals(listOf("b"), repo.history.map { it.id })
+        assertNull(vm.uiState.value.pendingUndo)
         assertNull(vm.uiState.value.errorMessage)
+    }
+
+    @Test fun desfazerVoltaOTreinoParaOMesmoLugarSemApagar() {
+        val repo = FakeWorkoutRepository().apply { history += workout("a"); history += workout("b"); history += workout("c") }
+        val vm = HistoryViewModel(repo, NoGroups())
+
+        vm.deleteWorkout("b")
+        assertEquals(listOf("a", "c"), vm.uiState.value.workouts.map { it.workoutId })
+        vm.undoDelete()
+
+        assertEquals(listOf("a", "b", "c"), vm.uiState.value.workouts.map { it.workoutId })
+        assertEquals(listOf("a", "b", "c"), repo.history.map { it.id })
+        vm.commitPendingDelete() // não há pendente: não apaga nada
+        assertEquals(listOf("a", "b", "c"), repo.history.map { it.id })
+    }
+
+    @Test fun apagarOutroTreinoFechaOPendenteAnterior() {
+        val repo = FakeWorkoutRepository().apply { history += workout("a"); history += workout("b"); history += workout("c") }
+        val vm = HistoryViewModel(repo, NoGroups())
+
+        vm.deleteWorkout("a")
+        vm.deleteWorkout("b")
+
+        assertEquals(listOf("c"), vm.uiState.value.workouts.map { it.workoutId })
+        assertEquals(listOf("b", "c"), repo.history.map { it.id }) // "a" já foi apagado; "b" está pendente
+        assertEquals("b", vm.uiState.value.pendingUndo?.item?.workoutId)
     }
 
     @Test fun falhaAoApagarMantemOTreinoEMostraErro() {
@@ -78,6 +108,7 @@ class HistoryViewModelTest {
         val vm = HistoryViewModel(repo, NoGroups())
 
         vm.deleteWorkout("a")
+        vm.commitPendingDelete()
 
         assertEquals(listOf("a"), vm.uiState.value.workouts.map { it.workoutId })
         assertNotNull(vm.uiState.value.errorMessage)

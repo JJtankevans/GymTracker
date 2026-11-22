@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.vitoroliveira.gymtracker.domain.repository.MuscleGroupRepository
 import com.vitoroliveira.gymtracker.domain.resolveGroupName
 import com.vitoroliveira.gymtracker.domain.repository.WorkoutRepository
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,9 +25,13 @@ data class WorkoutHistoryItem(
     val durationMinutes: Long?
 )
 
+/** Treino que saiu da lista mas ainda não foi apagado de verdade: dá tempo de desfazer. */
+data class PendingDelete(val item: WorkoutHistoryItem, val index: Int)
+
 data class HistoryUiState(
     val isLoading: Boolean = false,
     val workouts: List<WorkoutHistoryItem> = emptyList(),
+    val pendingUndo: PendingDelete? = null,
     val errorMessage: String? = null
 )
 
@@ -80,15 +85,49 @@ class HistoryViewModel(
         }
     }
 
-    /** Apaga o treino (e as séries dele) e tira da lista; se falhar, a lista fica como estava. */
+    /**
+     * Tira o treino da lista na hora e deixa a exclusão **pendente**: a tela mostra "Desfazer" e só depois
+     * ([commitPendingDelete]) o treino e as séries dele são apagados de verdade. Apagar outro antes
+     * fecha o pendente primeiro.
+     */
     fun deleteWorkout(workoutId: String) {
-        viewModelScope.launch {
+        val index = _uiState.value.workouts.indexOfFirst { it.workoutId == workoutId }
+        if (index < 0) return
+        commitPendingDelete()
+        val state = _uiState.value
+        val item = state.workouts[index]
+        _uiState.value = state.copy(
+            workouts = state.workouts.filterNot { it.workoutId == workoutId },
+            pendingUndo = PendingDelete(item, index)
+        )
+    }
+
+    /** Desfaz a exclusão pendente: o treino volta para o mesmo lugar da lista. */
+    fun undoDelete() {
+        val pending = _uiState.value.pendingUndo ?: return
+        val list = _uiState.value.workouts.toMutableList()
+        list.add(pending.index.coerceAtMost(list.size), pending.item)
+        _uiState.value = _uiState.value.copy(workouts = list, pendingUndo = null)
+    }
+
+    /**
+     * Apaga de verdade o treino pendente. Roda fora do escopo da tela (NonCancellable) para não se perder
+     * se a pessoa sair do Histórico antes do aviso acabar; se falhar, o treino volta para a lista.
+     */
+    fun commitPendingDelete() {
+        val pending = _uiState.value.pendingUndo ?: return
+        _uiState.value = _uiState.value.copy(pendingUndo = null)
+        viewModelScope.launch(NonCancellable) {
             try {
-                workoutRepository.deleteWorkout(workoutId)
-                _uiState.value = _uiState.value.copy(workouts = _uiState.value.workouts.filterNot { it.workoutId == workoutId })
+                workoutRepository.deleteWorkout(pending.item.workoutId)
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
-                _uiState.value = _uiState.value.copy(errorMessage = e.toUserMessage("Erro ao apagar o treino"))
+                val list = _uiState.value.workouts.toMutableList()
+                list.add(pending.index.coerceAtMost(list.size), pending.item)
+                _uiState.value = _uiState.value.copy(
+                    workouts = list,
+                    errorMessage = e.toUserMessage("Erro ao apagar o treino")
+                )
             }
         }
     }

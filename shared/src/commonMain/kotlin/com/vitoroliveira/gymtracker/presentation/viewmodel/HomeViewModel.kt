@@ -15,6 +15,8 @@ import com.vitoroliveira.gymtracker.presentation.workout.settleIfStale
 import com.vitoroliveira.gymtracker.presentation.workout.suggestNextGroup
 import com.vitoroliveira.gymtracker.domain.repository.ProfileRepository
 import com.vitoroliveira.gymtracker.domain.repository.WorkoutRepository
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,6 +27,15 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 import kotlinx.datetime.toLocalDateTime
+
+/** Resultado das consultas paralelas da Home. */
+private data class DashboardData(
+    val profile: com.vitoroliveira.gymtracker.data.model.Profile,
+    val history: List<com.vitoroliveira.gymtracker.data.model.Workout>,
+    val muscleGroups: List<com.vitoroliveira.gymtracker.data.model.MuscleGroup>,
+    val active: com.vitoroliveira.gymtracker.data.model.Workout?,
+    val pendingFollows: Int
+)
 
 data class HomeUiState(
     val isLoading: Boolean = false,
@@ -76,9 +87,23 @@ class HomeViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
             try {
-                val profile = profileRepository.getCurrentProfile()
-                val history = workoutRepository.getHistory()
-                val muscleGroups = muscleGroupRepository.getAll()
+                // As cinco consultas são independentes: rodam juntas (antes eram em fila, uma espera por rede cada).
+                val (profile, history, muscleGroups, active, pendingFollows) = coroutineScope {
+                    val profileD = async { profileRepository.getCurrentProfile() }
+                    val historyD = async { workoutRepository.getHistory() }
+                    val groupsD = async { muscleGroupRepository.getAll() }
+                    // Treino aberto e pedidos para seguir são extras: se falharem, a Home segue sem eles.
+                    val activeD = async {
+                        try {
+                            workoutRepository.getActiveWorkout()?.let { workoutRepository.settleIfStale(it, Clock.System.now()) }
+                        } catch (e: Exception) {
+                            if (e is CancellationException) throw e
+                            null
+                        }
+                    }
+                    val followsD = async { countFollowRequestsQuietly() }
+                    DashboardData(profileD.await(), historyD.await(), groupsD.await(), activeD.await(), followsD.await())
+                }
 
                 val workoutDates = history.mapNotNull { parseLocalDate(it.startedAt) }
                 val today = Clock.System.todayIn(timeZone)
@@ -87,7 +112,6 @@ class HomeViewModel(
                 val weeklyHistory = DashboardCalculator.weeklyBuckets(workoutDates, today, weeks = 8)
 
                 val lastWorkout = history.firstOrNull()
-                val active = try { workoutRepository.getActiveWorkout()?.let { workoutRepository.settleIfStale(it, Clock.System.now()) } } catch (e: Exception) { if (e is CancellationException) throw e; null }
                 val lastWorkoutGroupName = lastWorkout?.resolveGroupName(muscleGroups.associateBy { it.id })
 
                 _uiState.value = _uiState.value.copy(
@@ -99,7 +123,7 @@ class HomeViewModel(
                     totalWorkouts = history.size,
                     suggestedGroupId = suggestNextGroup(muscleGroups, history),
                     suggestedGroupName = suggestNextGroup(muscleGroups, history)?.let { id -> muscleGroups.firstOrNull { it.id == id }?.name },
-                    pendingFollowRequests = countFollowRequestsQuietly(),
+                    pendingFollowRequests = pendingFollows,
                     hasActiveWorkout = active != null,
                     activeWorkoutStartedAt = active?.startedAt,
                     activeWorkoutGroupId = active?.muscleGroupId,

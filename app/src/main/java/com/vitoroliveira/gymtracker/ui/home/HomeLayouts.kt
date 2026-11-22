@@ -86,7 +86,6 @@ private fun HomeUiState.remainingText(): String {
 @Composable
 private fun ClassicHome(state: HomeUiState, a: HomeActions, modifier: Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        ResumeWorkoutBanner(state, a)
         NextWorkoutCard(state, a)
         WeeklyGoalCard(state.weeklyCount, state.weeklyGoal)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -186,7 +185,6 @@ internal fun ProgressRing(
 @Composable
 private fun BentoHome(state: HomeUiState, a: HomeActions, modifier: Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        ResumeWorkoutBanner(state, a)
         NextWorkoutCard(state, a)
         Row(Modifier.fillMaxWidth().height(206.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             ThemedCard(Modifier.weight(1.25f).fillMaxHeight(), containerColor = MaterialTheme.colorScheme.primaryContainer) {
