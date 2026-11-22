@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vitoroliveira.gymtracker.presentation.viewmodel.HomeUiState
 import com.vitoroliveira.gymtracker.ui.components.BarChart
+import com.vitoroliveira.gymtracker.ui.components.prettyGroupName
 import com.vitoroliveira.gymtracker.ui.theme.HomeLayout
 import com.vitoroliveira.gymtracker.ui.theme.ThemedCard
 
@@ -47,7 +48,8 @@ import com.vitoroliveira.gymtracker.ui.theme.ThemedCard
 data class HomeActions(
     val onGroups: () -> Unit,
     val onHistory: () -> Unit,
-    val onStart: () -> Unit
+    val onStart: () -> Unit,
+    val onStartGroup: (String, String) -> Unit = { _, _ -> }
 )
 
 /** Layouts que desenham o próprio botão de iniciar (sem FAB). */
@@ -83,6 +85,7 @@ private fun HomeUiState.remainingText(): String {
 @Composable
 private fun ClassicHome(state: HomeUiState, a: HomeActions, modifier: Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        NextWorkoutCard(state, a)
         WeeklyGoalCard(state.weeklyCount, state.weeklyGoal)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             StreakCard(state.streakDays, Modifier.weight(1f))
@@ -93,6 +96,32 @@ private fun ClassicHome(state: HomeUiState, a: HomeActions, modifier: Modifier) 
         Text("Atalhos", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         QuickAccessRow(a.onGroups, a.onHistory)
         Spacer(Modifier.height(72.dp))
+    }
+}
+
+/**
+ * Destaque da Home: o treino sugerido pela rotação, com início em um toque. Se ainda não há
+ * grupo sugerido (conta nova), vira "Escolher treino" e abre a folha de início.
+ */
+@Composable
+fun NextWorkoutCard(state: HomeUiState, a: HomeActions) {
+    val id = state.suggestedGroupId
+    val name = state.suggestedGroupName?.let { prettyGroupName(it) }
+    val cs = MaterialTheme.colorScheme
+    ThemedCard(
+        Modifier.fillMaxWidth(),
+        containerColor = cs.primary,
+        onClick = { if (id != null && name != null) a.onStartGroup(id, name) else a.onStart() }
+    ) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 18.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(if (name != null) "PRÓXIMO TREINO" else "HORA DE TREINAR", style = MaterialTheme.typography.labelMedium, color = cs.onPrimary.copy(alpha = 0.75f), fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                Spacer(Modifier.height(2.dp))
+                Text(name ?: "Escolher treino", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black, color = cs.onPrimary)
+                if (name != null) Text("Sugerido pela sua rotação · toque para começar", style = MaterialTheme.typography.bodySmall, color = cs.onPrimary.copy(alpha = 0.75f))
+            }
+            Icon(Icons.Default.PlayArrow, contentDescription = "Iniciar", tint = cs.onPrimary, modifier = Modifier.size(40.dp))
+        }
     }
 }
 
@@ -132,6 +161,7 @@ internal fun ProgressRing(
 @Composable
 private fun BentoHome(state: HomeUiState, a: HomeActions, modifier: Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        NextWorkoutCard(state, a)
         Row(Modifier.fillMaxWidth().height(206.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             ThemedCard(Modifier.weight(1.25f).fillMaxHeight(), containerColor = MaterialTheme.colorScheme.primaryContainer) {
                 Column(Modifier.fillMaxSize().padding(14.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {

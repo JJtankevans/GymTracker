@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.sp
 import com.vitoroliveira.gymtracker.presentation.workout.TrainingCalendar
 import com.vitoroliveira.gymtracker.ui.theme.ThemedCard
 
-private val DAY_LETTERS = listOf("S", "", "Q", "", "S", "", "D")
+private val DAY_LETTERS = listOf("S", "T", "Q", "Q", "S", "S", "D")
 
 /** Mapa de calor dos dias treinados (uma coluna por semana, segunda no topo). */
 @Composable

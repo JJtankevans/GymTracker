@@ -1,6 +1,9 @@
 package com.vitoroliveira.gymtracker.ui.profile
 
 import com.vitoroliveira.gymtracker.ui.theme.ThemedScaffold
+import com.vitoroliveira.gymtracker.ui.theme.ThemedCard
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import com.vitoroliveira.gymtracker.ui.theme.ThemedTopAppBar
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -90,6 +93,32 @@ fun ProfileScreen(
         isExporting = export.isExporting,
         onExport = exportVm::export
     )
+}
+
+/** Linha de menu do Perfil: ícone, título, descrição curta e seta. */
+@Composable
+private fun ProfileRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit,
+    enabled: Boolean = true
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+        Spacer(Modifier.width(16.dp))
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -273,51 +302,43 @@ fun ProfileScreenContent(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                OutlinedButton(
-                    onClick = onNavigateToAchievements,
+                Text(
+                    "Seus dados",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(Icons.Default.EmojiEvents, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Conquistas")
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                ThemedCard(Modifier.fillMaxWidth()) {
+                    Column {
+                        ProfileRow(Icons.Default.EmojiEvents, "Conquistas", "Selos e metas que você já bateu", onNavigateToAchievements)
+                        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+                        ProfileRow(Icons.Default.ShowChart, "Evolução e meus dados", "Peso, medidas e progresso de carga", onNavigateToEvolution)
+                        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+                        ProfileRow(
+                            Icons.Default.Download,
+                            if (isExporting) "Exportando..." else "Exportar treinos",
+                            "Baixar todo o histórico em planilha (CSV)",
+                            onExport,
+                            enabled = !isExporting
+                        )
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-                OutlinedButton(
-                    onClick = onNavigateToEvolution,
+                Text(
+                    "Aplicativo",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(Icons.Default.ShowChart, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Evolução e meus dados")
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                ThemedCard(Modifier.fillMaxWidth()) {
+                    ProfileRow(Icons.Default.Palette, "Aparência e temas", "Tema, cores e intensidade", onNavigateToThemes)
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                OutlinedButton(
-                    onClick = onExport,
-                    enabled = !isExporting,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    if (isExporting) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                    else Icon(Icons.Default.Download, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(if (isExporting) "Exportando..." else "Exportar meus treinos (CSV)")
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                OutlinedButton(
-                    onClick = onNavigateToThemes,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(Icons.Default.Palette, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Aparência e temas")
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
                 OutlinedButton(
                     onClick = { showLogoutDialog = true },

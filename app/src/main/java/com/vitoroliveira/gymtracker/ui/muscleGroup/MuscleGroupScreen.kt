@@ -16,6 +16,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
@@ -161,7 +162,11 @@ fun MuscleGroupScreenContent(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showCreateDialog = true }) {
+            FloatingActionButton(
+                onClick = { showCreateDialog = true },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            ) {
                 Icon(Icons.Default.Add, contentDescription = "Adicionar grupo")
             }
         }
@@ -324,36 +329,36 @@ fun MuscleGroupItem(
             Spacer(modifier = Modifier.width(16.dp))
 
             Text(
-                text = muscleGroup.name,
+                text = com.vitoroliveira.gymtracker.ui.components.prettyGroupName(muscleGroup.name),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.weight(1f)
             )
 
-            onShare?.let {
-                IconButton(onClick = it) {
-                    Icon(
-                        Icons.Default.Share,
-                        contentDescription = "Compartilhar com amigos",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+            var menuOpen by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+            Box {
+                IconButton(onClick = { menuOpen = true }) {
+                    Icon(Icons.Default.MoreVert, contentDescription = "Mais opções", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                androidx.compose.material3.DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    onShare?.let {
+                        androidx.compose.material3.DropdownMenuItem(
+                            text = { Text("Compartilhar com amigos") },
+                            leadingIcon = { Icon(Icons.Default.Share, null) },
+                            onClick = { menuOpen = false; it() }
+                        )
+                    }
+                    androidx.compose.material3.DropdownMenuItem(
+                        text = { Text("Editar") },
+                        leadingIcon = { Icon(Icons.Default.Edit, null) },
+                        onClick = { menuOpen = false; onEdit() }
+                    )
+                    androidx.compose.material3.DropdownMenuItem(
+                        text = { Text("Remover", color = MaterialTheme.colorScheme.error) },
+                        leadingIcon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) },
+                        onClick = { menuOpen = false; onDelete() }
                     )
                 }
-            }
-
-            IconButton(onClick = onEdit) {
-                Icon(
-                    Icons.Default.Edit,
-                    contentDescription = "Editar",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            IconButton(onClick = onDelete) {
-                Icon(
-                    Icons.Default.Delete,
-                    contentDescription = "Remover",
-                    tint = MaterialTheme.colorScheme.error
-                )
             }
         }
     }

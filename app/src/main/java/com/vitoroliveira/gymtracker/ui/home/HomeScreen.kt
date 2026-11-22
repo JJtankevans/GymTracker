@@ -43,6 +43,7 @@ fun HomeScreen(
     onNavigateToEvolution: () -> Unit = {},
     onNavigateToRecords: () -> Unit = {},
     onNavigateToSocial: () -> Unit = {},
+    onStartGroup: (String, String) -> Unit = { _, _ -> },
     viewModel: HomeViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -63,6 +64,7 @@ fun HomeScreen(
         onNavigateToEvolution = onNavigateToEvolution,
         onNavigateToRecords = onNavigateToRecords,
         onNavigateToSocial = onNavigateToSocial,
+        onStartGroup = onStartGroup,
         onClearError = { viewModel.clearError() }
     )
 }
@@ -80,6 +82,7 @@ fun HomeScreenContent(
     onNavigateToEvolution: () -> Unit = {},
     onNavigateToRecords: () -> Unit = {},
     onNavigateToSocial: () -> Unit = {},
+    onStartGroup: (String, String) -> Unit = { _, _ -> },
     topSlot: @Composable () -> Unit = {}
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -137,6 +140,8 @@ fun HomeScreenContent(
         floatingActionButton = {
             if (!com.vitoroliveira.gymtracker.ui.theme.LocalThemeExtras.current.homeLayout.hasOwnStart()) ExtendedFloatingActionButton(
                 onClick = onStartWorkoutClick,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
                 icon = { Icon(Icons.Default.PlayArrow, contentDescription = null) },
                 text = { Text("Iniciar Treino") }
             )
@@ -156,7 +161,7 @@ fun HomeScreenContent(
             HomeBody(
                 layout = layout,
                 state = uiState,
-                actions = HomeActions(onNavigateToMuscleGroups, onNavigateToHistory, onStartWorkoutClick),
+                actions = HomeActions(onNavigateToMuscleGroups, onNavigateToHistory, onStartWorkoutClick, onStartGroup),
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()

@@ -156,7 +156,8 @@ fun GymTrackerNavHost() {
                 onNavigateToThemes = { navController.navigate(Screen.Themes.route) },
                 onNavigateToEvolution = { navController.navigate(Screen.Evolution.route) },
                 onNavigateToRecords = { navController.navigate(Screen.Records.route) },
-                onNavigateToSocial = { navController.navigate(Screen.Social.route) }
+                onNavigateToSocial = { navController.navigate(Screen.Social.route) },
+                onStartGroup = { id, name -> navController.navigate(Screen.ActiveWorkout.createRoute(id, name)) }
             )
 
             if (showStartWorkoutSheet) {
@@ -268,7 +269,10 @@ fun GymTrackerNavHost() {
                 muscleGroupId = muscleGroupId,
                 muscleGroupName = muscleGroupName,
                 onWorkoutFinished = { navController.backToFreshHome() },
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onAddExercises = muscleGroupId?.takeIf { it.isNotBlank() }?.let { gid ->
+                    { navController.navigate(Screen.Exercises.createRoute(gid, muscleGroupName.orEmpty())) }
+                }
             )
         }
 

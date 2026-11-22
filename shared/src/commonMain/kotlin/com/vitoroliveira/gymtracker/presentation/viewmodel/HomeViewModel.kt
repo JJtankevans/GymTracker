@@ -38,6 +38,8 @@ data class HomeUiState(
     val lastWorkoutMuscleGroupName: String? = null,
     /** Próximo grupo da rotação (o treinado há mais tempo); null se não há o que sugerir. */
     val suggestedGroupId: String? = null,
+    /** Nome do grupo sugerido (para o cartão "Próximo treino" da Home). */
+    val suggestedGroupName: String? = null,
     /** Pedidos para me seguir esperando resposta (selo no ícone do Social). */
     val pendingFollowRequests: Int = 0,
     val errorMessage: String? = null
@@ -89,6 +91,7 @@ class HomeViewModel(
                     weeklyHistory = weeklyHistory,
                     totalWorkouts = history.size,
                     suggestedGroupId = suggestNextGroup(muscleGroups, history),
+                    suggestedGroupName = suggestNextGroup(muscleGroups, history)?.let { id -> muscleGroups.firstOrNull { it.id == id }?.name },
                     pendingFollowRequests = countFollowRequestsQuietly(),
                     lastWorkoutDate = lastWorkout?.let { formatDate(it.startedAt) },
                     lastWorkoutMuscleGroupName = lastWorkout?.let {

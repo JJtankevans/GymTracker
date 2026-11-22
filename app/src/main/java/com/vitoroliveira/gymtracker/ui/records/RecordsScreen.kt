@@ -129,7 +129,7 @@ private fun RecordCard(r: RecordRow, state: RecordsUiState) {
     val catalog = remember(r.exerciseName) {
         ExerciseCatalog.find(r.exerciseName)
     }
-    val recent = state.today?.let { r.isRecent(it) } == true
+    val recent = state.today?.let { r.isRecent(it, 7) } == true
 
     ThemedCard(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
         Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {

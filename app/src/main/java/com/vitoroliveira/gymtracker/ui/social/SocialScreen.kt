@@ -258,7 +258,7 @@ private fun FeedCard(
             }
             item.post.caption?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ReactionKind.entries.forEach { k ->
+                ReactionKind.entries.filter { it != ReactionKind.HEADPHONES }.forEach { k ->
                     ReactionPill(k, item.reactions.count(k), k in item.reactions.mine) { onReact(k) }
                 }
             }

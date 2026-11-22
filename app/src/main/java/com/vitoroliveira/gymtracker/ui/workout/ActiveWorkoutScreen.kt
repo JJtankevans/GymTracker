@@ -96,6 +96,7 @@ fun ActiveWorkoutScreen(
     muscleGroupName: String?,
     onWorkoutFinished: () -> Unit,
     onBack: () -> Unit = {},
+    onAddExercises: (() -> Unit)? = null,
     viewModel: WorkoutViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -170,7 +171,8 @@ fun ActiveWorkoutScreen(
                 }
                 context.startActivity(android.content.Intent.createChooser(send, "Compartilhar treino"))
             },
-            onBack = onBack
+            onBack = onBack,
+            onAddExercises = onAddExercises
         )
         // explosão de confete ao bater recorde de carga
         RecordCelebration(uiState.recordBursts)
@@ -193,6 +195,7 @@ fun ActiveWorkoutScreenContent(
     onDiscardWorkout: () -> Unit,
     onToggleExerciseFinished: (String) -> Unit,
     onBack: () -> Unit = {},
+    onAddExercises: (() -> Unit)? = null,
     elapsedSeconds: Long = 0,
     onUpdateSet: (setId: String, reps: Int, weightKg: Double) -> Unit = { _, _, _ -> },
     onDeleteSet: (setId: String) -> Unit = {},
@@ -298,7 +301,7 @@ fun ActiveWorkoutScreenContent(
 
                 if (uiState.exercises.isEmpty() && uiState.activeWorkout != null) {
                     item {
-                        EmptyExercisesHint(muscleGroupName)
+                        EmptyExercisesHint(muscleGroupName, onAddExercises)
                     }
                 }
 
@@ -383,7 +386,7 @@ fun ActiveWorkoutScreenContent(
 }
 
 @Composable
-private fun EmptyExercisesHint(groupName: String?) {
+private fun EmptyExercisesHint(groupName: String?, onAdd: (() -> Unit)?) {
     ThemedCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text("Nenhum exercício aqui ainda", style = MaterialTheme.typography.titleMedium)
@@ -392,8 +395,13 @@ private fun EmptyExercisesHint(groupName: String?) {
                 text = if (groupName != null) "Cadastre exercícios no grupo \"$groupName\" pra eles aparecerem no treino."
                 else "Cadastre exercícios pra eles aparecerem no treino.",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
+            if (onAdd != null) {
+                Spacer(Modifier.height(14.dp))
+                Button(onClick = onAdd) { Text("Adicionar exercícios") }
+            }
         }
     }
 }

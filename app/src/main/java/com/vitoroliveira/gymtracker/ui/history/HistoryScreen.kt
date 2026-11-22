@@ -147,7 +147,7 @@ private fun WorkoutHistoryCard(item: WorkoutHistoryItem, onClick: () -> Unit, on
             )
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(item.muscleGroupName, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleMedium)
+                Text(com.vitoroliveira.gymtracker.ui.components.prettyGroupName(item.muscleGroupName), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleMedium)
                 Text(
                     formatDate(item.startedAt),
                     style = MaterialTheme.typography.bodySmall,
@@ -155,7 +155,7 @@ private fun WorkoutHistoryCard(item: WorkoutHistoryItem, onClick: () -> Unit, on
                 )
             }
             Text(
-                item.durationMinutes?.let { formatDuration(it) } ?: "—",
+                item.durationMinutes?.takeIf { it in 1..MAX_PLAUSIBLE_MINUTES }?.let { formatDuration(it) } ?: "—",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium
             )
@@ -185,6 +185,9 @@ private fun formatDate(instant: Instant): String {
     val month = local.monthNumber.toString().padStart(2, '0')
     return "$day/$month/${local.year}"
 }
+
+/** Treino que ficou aberto por horas (esqueceram de finalizar); acima de 4 h não mostramos não tem duração confiável. */
+private const val MAX_PLAUSIBLE_MINUTES = 240L
 
 private fun formatDuration(minutes: Long): String {
     val hours = minutes / 60

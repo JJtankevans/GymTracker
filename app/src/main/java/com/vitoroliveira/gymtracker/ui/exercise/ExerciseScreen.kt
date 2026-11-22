@@ -122,7 +122,11 @@ fun ExerciseScreenContent(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showCatalog = true }) {
+            FloatingActionButton(
+                onClick = { showCatalog = true },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            ) {
                 Icon(Icons.Default.Add, contentDescription = "Adicionar exercício")
             }
         }
