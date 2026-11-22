@@ -4,6 +4,8 @@ import { loadWeights } from '../body'
 import { fatigued, intensityByWeek, equipmentSets, variationsFor, bandRecords, compareWorkouts, estimateKcal, exerciseWeeklyVolume, heatmap, historyCsv, imbalances, plateaus, RM_BANDS, searchHistory } from '../insights'
 import { formatKg, prettyGroupName, realDurationMinutes } from '../rules'
 import { setsOf } from './Evolucao'
+import { energyCompare, loadWellness } from '../wellness'
+import { formatVolume } from '../recap'
 
 const LEVEL_OPACITY = [0.12, 0.35, 0.65, 1]
 const dmy = (iso: string) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
@@ -31,7 +33,7 @@ export function Analises() {
     const now = new Date()
     const month = hist.filter((w) => { const d = new Date(w.started_at); return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() })
     const minutes = month.reduce((a, w) => a + (realDurationMinutes(null, w.started_at, w.sets.map((s) => s.completed_at)) ?? 0), 0)
-    return { bands: bandRecords(sets), imb: imbalances(sets), plat: plateaus(sets), heat: heatmap(hist, now), equip: equipmentSets(sets), inten: intensityByWeek(hist, (() => { try { return JSON.parse(localStorage.getItem('gt-rpe') ?? '{}') } catch { return {} } })()), month: month.length, minutes }
+    return { bands: bandRecords(sets), imb: imbalances(sets), plat: plateaus(sets), heat: heatmap(hist, now), equip: equipmentSets(sets), energy: energyCompare(hist, loadWellness()), inten: intensityByWeek(hist, (() => { try { return JSON.parse(localStorage.getItem('gt-rpe') ?? '{}') } catch { return {} } })()), month: month.length, minutes }
   }, [hist])
 
   if (error) return <><div className="title">Análises</div><div className="card"><p className="error">{error}</p><button className="btn" onClick={load}>Tentar de novo</button></div></>
@@ -95,6 +97,13 @@ export function Analises() {
               {v.inten.map((w, i) => <div key={i} className="row"><span className="grow">{i === v.inten.length - 1 ? 'Esta semana' : `Semana de ${w.start.getDate()}/${w.start.getMonth() + 1}`}</span><b className="num">{w.avgRpe === null ? '–' : formatKg(w.avgRpe)}</b><span className="muted num" style={{ minWidth: 70, textAlign: 'right' }}>{w.hard} no limite</span></div>)}
               <div className="muted">{fatigued(v.inten) ? 'Esforço alto por duas semanas: fadiga acumulada, considere uma semana mais leve.' : 'Sem sinal de fadiga acumulada.'}</div>
             </>}
+      </div>
+
+      <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div className="label">Energia × desempenho</div>
+        {v.energy
+          ? <div className="muted">Em dias de energia alta ({v.energy.highDays} treinos) o volume médio foi {formatVolume(v.energy.highVolumeKg)}; em dias de energia baixa ({v.energy.lowDays} treinos), {formatVolume(v.energy.lowVolumeKg)}. Correlação não prova causa.</div>
+          : <div className="muted">Registre energia na Home por alguns dias (pelo menos 2 treinos com energia alta e 2 com baixa) para ver a comparação. Guardado só neste aparelho.</div>}
       </div>
 
       <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

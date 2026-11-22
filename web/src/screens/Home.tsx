@@ -5,12 +5,15 @@ import { compareWeeks, formatVolume } from '../recap'
 import { prettyGroupName, streakDays, suggestNextGroup, weeklyHistory, weekStart } from '../rules'
 import type { Tab } from '../App'
 import { loadFavs } from '../favs'
+import { loadWellness, saveWellness } from '../wellness'
+import { dayKey } from '../rules'
 
 export function Home({ go }: { go: (t: Tab, groupId?: string) => void }) {
   const [data, setData] = useState<HomeData | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const [hist, setHist] = useState<HistItem[] | null>(null)
+  const [well, setWell] = useState(() => loadWellness()[dayKey(new Date())] ?? {})
   useEffect(() => { loadHistory().then(setHist).catch(() => {}) }, [])
   const load = () => { setError(null); loadHome().then(setData).catch((e: Error) => setError(e.message)) }
   useEffect(load, [])
@@ -91,6 +94,14 @@ export function Home({ go }: { go: (t: Tab, groupId?: string) => void }) {
           </div>
         )
       })()}
+
+      <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div className="label">Como você está hoje?</div>
+        <div className="muted">Sono da noite (horas)</div>
+        <div className="chips" role="group" aria-label="Sono">{[5, 6, 7, 8, 9].map((h) => <button key={h} className={'chip' + (well.sleepH === h ? ' on' : '')} aria-pressed={well.sleepH === h} onClick={() => { saveWellness(dayKey(new Date()), { sleepH: h }); setWell({ ...well, sleepH: h }) }}>{h === 5 ? '≤5' : h === 9 ? '9+' : h}</button>)}</div>
+        <div className="muted">Energia (1 baixa, 5 alta)</div>
+        <div className="chips" role="group" aria-label="Energia">{[1, 2, 3, 4, 5].map((e) => <button key={e} className={'chip' + (well.energy === e ? ' on' : '')} aria-pressed={well.energy === e} onClick={() => { saveWellness(dayKey(new Date()), { energy: e }); setWell({ ...well, energy: e }) }}>{e}</button>)}</div>
+      </div>
 
       <div className="card">
         <div className="label">Meta semanal</div>
