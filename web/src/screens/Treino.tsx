@@ -1,5 +1,7 @@
 import { nextProgression } from '../insights'
 import { warmupFor } from '../tools'
+import { groupLabel, loadLinks, nextInRound, saveLinks, supersetGroups, toggleLink, type Links } from '../superset'
+import { defaultTempo, formatTut, parseTempo, saveDefaultTempo, saveTempoOfSet, tempoOfSet, tutSeconds } from '../tempo'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   activeWorkout, addSet, deleteSet, deleteWorkout, finishWorkout, groupExercises, lastPerformance, loadHistory, loadHome, startWorkout, workoutSets,
@@ -45,6 +47,8 @@ export function Treino({ pending, clearPending, onDone }: { pending: string | nu
   const [restEnd, setRestEnd] = useState<number>(() => Number(localStorage.getItem('gt-rest-end') ?? 0))
   const [focus, setFocus] = useState(() => { try { return localStorage.getItem('gt-focus') === '1' } catch { return false } })
   const [focusIdx, setFocusIdx] = useState<number | null>(null)
+  const [links, setLinks] = useState<Links>({})
+  const [roundHint, setRoundHint] = useState<string | null>(null)
   const lastRestEx = useRef<string | null>(null)
   const [restSelected, setRestSelected] = useState<number | null>(null)
   const [restSec, setRestSec] = useState<number>(() => Number(localStorage.getItem('gt-rest') ?? 90))
@@ -52,6 +56,8 @@ export function Treino({ pending, clearPending, onDone }: { pending: string | nu
   const bests = useRef<Record<string, number>>({}) // melhor carga por exercício (nome) no histórico, para avisar de recorde
   const [prBanner, setPrBanner] = useState<string | null>(null)
   const now = useNow()
+  useEffect(() => { setLinks(workout ? loadLinks(workout.id) : {}) }, [workout?.id])
+  const rounds = useMemo(() => supersetGroups(exercises.map((e) => e.id), links), [exercises, links])
 
   const open = useCallback(async (w: Workout) => {
     setWorkout(w)
@@ -106,6 +112,15 @@ export function Treino({ pending, clearPending, onDone }: { pending: string | nu
       try { navigator.vibrate?.([60, 40, 60, 40, 140]) } catch { /* sem vibração */ }
       setTimeout(() => setPrBanner(null), 6000)
     }
+    const upNext = nextInRound(rounds, ex.id)
+    if (upNext) {
+      // no meio de uma supersérie: sem descanso, só indica o próximo exercício da rodada
+      const nx = exercises.find((e) => e.id === upNext)
+      setRoundHint(nx ? nx.name : null)
+      setTimeout(() => document.getElementById(`ex-${upNext}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50)
+      return row
+    }
+    setRoundHint(null)
     lastRestEx.current = ex.id
     const sec = restMap()[ex.id] ?? restSec
     setRestSelected(sec)
@@ -202,6 +217,7 @@ export function Treino({ pending, clearPending, onDone }: { pending: string | nu
       {note && <div className="card muted">{note}</div>}
       {error && <div className="card error">{error}</div>}
       {exercises.length === 0 && <div className="card muted">Este treino não tem exercícios. Adicione exercícios ao grupo no app.</div>}
+      {roundHint && <div className="card hero" role="status" style={{ cursor: 'default' }}><b>Agora: {roundHint}</b></div>}
       {exercises.length > 1 && (
         <div className="row">
           <button className={'chip' + (focus ? ' on' : '')} aria-pressed={focus} onClick={() => { setFocus(!focus); setFocusIdx(null); try { localStorage.setItem('gt-focus', focus ? '' : '1') } catch { /* sem armazenamento */ } }}>Modo foco</button>
@@ -211,7 +227,10 @@ export function Treino({ pending, clearPending, onDone }: { pending: string | nu
         </div>
       )}
       {(focus && exercises.length > 1 ? [exercises[focusAt]] : exercises).map((ex) => (
-        <ExerciseCard key={ex.id} ex={ex} last={last[ex.id]} sets={sets.filter((s) => s.exercise_id === ex.id)} onRegister={register} onRemove={removeSet} />
+        <ExerciseCard key={ex.id} ex={ex} last={last[ex.id]} sets={sets.filter((s) => s.exercise_id === ex.id)} onRegister={register} onRemove={removeSet}
+          tag={groupLabel(rounds.find((g) => g.includes(ex.id))?.length ?? 1)}
+          linkable={exercises.length > 1 && exercises[exercises.length - 1].id !== ex.id} linked={!!links[ex.id]}
+          onToggleLink={() => { if (!workout) return; const n = toggleLink(exercises.map((e) => e.id), links, ex.id); setLinks(n); saveLinks(workout.id, n); setRoundHint(null) }} />
       ))}
 
       {confirmEnd && (
@@ -239,8 +258,9 @@ export function Treino({ pending, clearPending, onDone }: { pending: string | nu
   )
 }
 
-function ExerciseCard({ ex, last, sets, onRegister, onRemove }: {
+function ExerciseCard({ ex, last, sets, onRegister, onRemove, tag, linkable, linked, onToggleLink }: {
   ex: Exercise; last?: LastPerf; sets: SetRow[]
+  tag: string | null; linkable: boolean; linked: boolean; onToggleLink: () => void
   onRegister: (ex: Exercise, reps: number, kg: number) => Promise<SetRow>; onRemove: (id: string) => Promise<void>
 }) {
   const [reps, setReps] = useState(String(last?.reps ?? ex.default_reps))
@@ -249,6 +269,7 @@ function ExerciseCard({ ex, last, sets, onRegister, onRemove }: {
   const [err, setErr] = useState<string | null>(null)
   const [, bump] = useState(0)
   const lastSet = sets[sets.length - 1]
+  const [tempo, setTempo] = useState(() => defaultTempo(ex.id))
   const noteKey = `gt-note-${ex.id}`
   const [note, setNote] = useState(() => { try { return localStorage.getItem(noteKey) ?? '' } catch { return '' } })
   const saveNote = (v: string) => { try { v.trim() ? localStorage.setItem(noteKey, v.trim()) : localStorage.removeItem(noteKey) } catch { /* sem armazenamento */ } }
@@ -263,12 +284,13 @@ function ExerciseCard({ ex, last, sets, onRegister, onRemove }: {
   async function go() {
     if (!valid || busy) return
     setBusy(true); setErr(null)
-    try { await onRegister(ex, Math.round(repsN), kgN) } catch (e) { setErr((e as Error).message) } finally { setBusy(false) }
+    try { const row = await onRegister(ex, Math.round(repsN), kgN); const tp = parseTempo(tempo); if (tp) saveTempoOfSet(row.id, tp) } catch (e) { setErr((e as Error).message) } finally { setBusy(false) }
   }
   const sugg = useMemo(() => { if (!last) return null; const p = nextProgression({ kg: last.weight_kg, reps: last.reps }, ex.default_reps); return `Última vez: ${formatKg(last.weight_kg)} kg × ${last.reps}` + (p ? ` · ${p.text}` : '') }, [last, ex.default_reps])
 
   return (
-    <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div id={`ex-${ex.id}`} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10, ...(tag ? { borderLeft: '4px solid var(--accent)' } : {}) }}>
+      {tag && <div className="label">{tag}</div>}
       <div><b style={{ fontSize: 18 }}>{ex.name}</b><div className="muted">{ex.default_sets} séries × {ex.default_reps} reps{sugg ? ` · ${sugg}` : ''}</div></div>
       {sets.length === 0 && (() => { const w = warmupFor(parseNum(kg)); return w.length > 0 ? <div className="muted" style={{ fontSize: 13 }}>Aquecimento: {w.map((x) => `${formatKg(x.kg)} × ${x.reps}`).join(' → ')}</div> : null })()}
       <details open={!!note}>
@@ -278,7 +300,7 @@ function ExerciseCard({ ex, last, sets, onRegister, onRemove }: {
       {sets.map((s) => (
         <div key={s.id} className="row">
           <span className="muted grow">Série {s.set_number}</span>
-          <span className="num">{s.reps} reps × {formatKg(Number(s.weight_kg))} kg{rpeGet(s.id) ? ` · RPE ${rpeGet(s.id)}` : ''}</span>
+          <span className="num">{s.reps} reps × {formatKg(Number(s.weight_kg))} kg{rpeGet(s.id) ? ` · RPE ${rpeGet(s.id)}` : ''}{(() => { const t = tempoOfSet(s.id); return t ? ` · TUT ${formatTut(tutSeconds(s.reps, t))}` : '' })()}</span>
           <button className="icon" aria-label={`Apagar série ${s.set_number}`} onClick={() => onRemove(s.id)}>×</button>
         </div>
       ))}
@@ -292,6 +314,12 @@ function ExerciseCard({ ex, last, sets, onRegister, onRemove }: {
         <button className="btn" onClick={() => step('kg', -2.5)}>−2,5</button>
         <button className="btn" onClick={() => step('kg', 2.5)}>+2,5</button>
       </div>
+      <label className="field"><span className="label">Cadência (opcional, ex.: 3-1-2-0)</span>
+        <input inputMode="numeric" aria-label={`Cadência de ${ex.name}`} placeholder="descida-pausa-subida-pausa" value={tempo} maxLength={9}
+          onChange={(e) => setTempo(e.target.value.replace(/[^0-9 .x-]/g, ''))} onBlur={() => saveDefaultTempo(ex.id, parseTempo(tempo) ? tempo.trim() : '')} />
+        {tempo.trim() && !parseTempo(tempo) && <span className="muted">Use 4 dígitos: descida, pausa embaixo, subida, pausa em cima.</span>}
+      </label>
+      {linkable && <button className={'chip' + (linked ? ' on' : '')} aria-pressed={linked} onClick={onToggleLink}>{linked ? 'Ligado ao próximo exercício (supersérie)' : 'Ligar ao próximo (supersérie / bi-set)'}</button>}
       <button className="btn primary block" disabled={!valid || busy} onClick={go}>{busy ? 'Registrando…' : `+ Registrar série ${sets.length + 1}`}</button>
       {err && <div className="error">{err}</div>}
       {lastSet && (
