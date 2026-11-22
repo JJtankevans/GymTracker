@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { addExerciseToGroup, createGroup, deleteGroup, groupCounts, groupExercises, loadHome, removeFromGroup, type Exercise, type Group, type Workout } from '../data'
 import { prettyGroupName } from '../rules'
+import { CatalogPicker, TemplatePicker } from './CatalogPicker'
 
 const COLORS = ['#4CAF50', '#2196F3', '#3F51B5', '#E91E63', '#FF9800', '#9C27B0', '#00BCD4', '#F44336']
 
@@ -16,6 +17,7 @@ export function Grupos() {
   const [error, setError] = useState<string | null>(null)
   const [open, setOpen] = useState<Group | null>(null)
   const [creating, setCreating] = useState(false)
+  const [templates, setTemplates] = useState(false)
 
   const load = () => {
     setError(null)
@@ -29,7 +31,8 @@ export function Grupos() {
 
   return (
     <>
-      <div className="row"><div className="title grow">Grupos</div><button className="btn primary" onClick={() => setCreating(true)}>+ Novo</button></div>
+      <div className="row"><div className="title grow">Grupos</div><button className="btn" onClick={() => setTemplates(true)}>Prontos</button><button className="btn primary" onClick={() => setCreating(true)}>+ Novo</button></div>
+      {templates && <TemplatePicker onClose={() => setTemplates(false)} onCreated={() => { setTemplates(false); load() }} />}
       {creating && <NewGroup onCancel={() => setCreating(false)} onCreated={() => { setCreating(false); load() }} />}
       {groups.length === 0 && !creating && <div className="card muted">Nenhum grupo ainda. Toque em “+ Novo” para criar o primeiro.</div>}
       {groups.map((g) => {
@@ -76,6 +79,7 @@ function GroupDetail({ group, onBack, onDeleted }: { group: Group; onBack: () =>
   const [name, setName] = useState('')
   const [err, setErr] = useState<string | null>(null)
   const [confirm, setConfirm] = useState(false)
+  const [catalog, setCatalog] = useState(false)
   const load = () => groupExercises(group.id).then(setList).catch((e: Error) => setErr(e.message))
   useEffect(() => { void load() }, [group.id])
 
@@ -99,8 +103,9 @@ function GroupDetail({ group, onBack, onDeleted }: { group: Group; onBack: () =>
           <button className="icon" aria-label={`Tirar ${ex.name} do grupo`} onClick={() => remove(ex.id)}>×</button>
         </div>
       ))}
+      {catalog ? <CatalogPicker groupId={group.id} existing={(list ?? []).map((e) => e.name)} onChanged={load} onClose={() => setCatalog(false)} /> : <button className="btn primary block" onClick={() => setCatalog(true)}>+ Adicionar do catálogo</button>}
       <form className="card row" onSubmit={add}>
-        <label className="field grow"><span className="label">Adicionar exercício</span><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Supino Reto" maxLength={60} /></label>
+        <label className="field grow"><span className="label">Ou criar pelo nome</span><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Supino Reto" maxLength={60} /></label>
         <button className="btn primary" style={{ alignSelf: 'flex-end' }} disabled={!name.trim()}>Adicionar</button>
       </form>
       {!confirm ? <button className="btn block danger" onClick={() => setConfirm(true)}>Remover grupo</button> : (
