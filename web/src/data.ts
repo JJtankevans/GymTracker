@@ -168,3 +168,20 @@ export async function setWeeklyGoal(goal: number): Promise<number> {
   await must(supabase.from('profiles').update({ weekly_goal: g }).eq("id", await uid()).select("id"))
   return g
 }
+
+// ───────────── anotação do treino (workouts.notes, a mesma do Android) ─────────────
+export const NOTES_MAX = 500
+const mockNotes = new Map<string, string>()
+
+/** Lida à parte da lista (sob demanda), para um problema nesta coluna nunca derrubar o Histórico. */
+export async function loadWorkoutNote(id: string): Promise<string> {
+  if (MOCK) return mockNotes.get(id) ?? ''
+  const rows = await must<{ notes: string | null }[]>(supabase.from('workouts').select('notes').eq('id', id).limit(1))
+  return rows[0]?.notes ?? ''
+}
+
+export async function saveWorkoutNote(id: string, note: string): Promise<void> {
+  const text = note.trim().slice(0, NOTES_MAX)
+  if (MOCK) { mockNotes.set(id, text); return }
+  await must(supabase.from('workouts').update({ notes: text === '' ? null : text }).eq('id', id).select('id'))
+}

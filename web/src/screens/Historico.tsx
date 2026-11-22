@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { deleteWorkout, loadHistory, type HistItem } from '../data'
+import { deleteWorkout, loadHistory, loadWorkoutNote, NOTES_MAX, saveWorkoutNote, type HistItem } from '../data'
 import { dayKey, formatKg, prettyGroupName, realDurationMinutes, weekStart } from '../rules'
 
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('pt-BR')
@@ -27,6 +27,27 @@ function Heatmap({ items }: { items: HistItem[] }) {
       <div className="heat" role="img" aria-label="Mapa de calor dos treinos">
         {cols.map((col, c) => <div key={c}>{col.map(({ d, n, future }) => <i key={d.getTime()} className={n >= 2 ? 'h2' : n === 1 ? 'h1' : ''} style={future ? { opacity: 0.35 } : undefined} />)}</div>)}
       </div>
+    </div>
+  )
+}
+
+/** Anotação do treino: carrega à parte e salva ao sair do campo. */
+function NoteCard({ id }: { id: string }) {
+  const [text, setText] = useState<string | null>(null)
+  const [saved, setSaved] = useState('')
+  const [msg, setMsg] = useState('')
+  useEffect(() => { loadWorkoutNote(id).then((n) => { setText(n); setSaved(n) }).catch(() => { setText(''); setSaved('') }) }, [id])
+  if (text === null) return null
+  const save = async () => {
+    if (text.trim() === saved.trim()) return
+    try { await saveWorkoutNote(id, text); setSaved(text.trim()); setMsg('Anotação salva.') } catch (e) { setMsg('Não foi possível salvar: ' + (e as Error).message) }
+  }
+  return (
+    <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <label className="label" htmlFor="nota">Anotação do treino</label>
+      <textarea id="nota" rows={3} maxLength={NOTES_MAX} placeholder="Como foi o treino? Dores, sensações, ajustes…" value={text} onChange={(e) => { setText(e.target.value); setMsg('') }} onBlur={save}
+        style={{ fontSize: 16, padding: 10, borderRadius: 'var(--radius)', border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--text)', resize: 'vertical', fontFamily: 'inherit' }} />
+      {msg && <small className="muted">{msg}</small>}
     </div>
   )
 }
@@ -91,6 +112,7 @@ export function Historico() {
           </div>
         ))}
         {byEx.size === 0 && <div className="card muted">Este treino não tem séries.</div>}
+        <NoteCard id={open.id} />
         <button className="btn block danger" onClick={() => remove(open)}>Apagar treino</button>
       </>
     )
