@@ -9,6 +9,7 @@ import { MuscleMap } from './MuscleMap'
 import { RecapCard } from './RecapCard'
 import { LineChart } from './LineChart'
 import { compareWeeks, formatVolume } from '../recap'
+import { projectWeight } from '../insights'
 
 const short = (iso: string) => { const [, m, d] = iso.slice(0, 10).split('-'); return `${d}/${m}` }
 const signed = (v: number) => { const r = Math.round(v * 10) / 10; return (r > 0 ? '+' : '') + formatKg(r) + ' kg' }
@@ -24,6 +25,7 @@ function Stats({ rows }: { rows: [string, string][] }) {
 }
 
 export function Evolucao() {
+  const [goalKg, setGoalKg] = useState<number>(() => { try { return Number(localStorage.getItem('gt-weight-goal')) || 0 } catch { return 0 } })
   const [weights, setWeights] = useState<Weight[] | null>(null)
   const [hist, setHist] = useState<HistItem[] | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -55,6 +57,7 @@ export function Evolucao() {
   if (!weights || !hist) return <><div className="title">Evolução</div>{error ? <div className="card"><p className="error">{error}</p><button className="btn" onClick={load}>Tentar de novo</button></div> : <div className="skel" style={{ height: 260 }} />}</>
 
   const kgs = weights.map((w) => w.weight_kg)
+  const proj = goalKg ? projectWeight(weights.map((w) => ({ day: w.measured_on, kg: w.weight_kg })), goalKg) : null
   const latest = kgs[kgs.length - 1]
   return (
     <>
@@ -72,6 +75,12 @@ export function Evolucao() {
           <label className="field grow"><span className="label">Peso de hoje (kg)</span><input inputMode="decimal" value={input} onChange={(e) => setInput(e.target.value.replace(/[^0-9,.]/g, '').slice(0, 6))} /></label>
           <button className="btn primary" style={{ alignSelf: 'flex-end' }} disabled={busy || !input}>Registrar</button>
         </form>
+        <div className="row">
+          <label className="field grow"><span className="label">Meta de peso (kg)</span><input inputMode="decimal" placeholder="opcional" defaultValue={goalKg ? formatKg(goalKg) : ''} onBlur={(e) => { const n = parseFloat(e.target.value.replace(',', '.')); const v = Number.isFinite(n) && n > 20 && n < 400 ? n : 0; try { v ? localStorage.setItem('gt-weight-goal', String(v)) : localStorage.removeItem('gt-weight-goal') } catch { /* sem armazenamento */ } setGoalKg(v) }} /></label>
+        </div>
+        {goalKg > 0 && (proj
+          ? <div className="muted">{proj.date ? `Ritmo de ${signed(proj.perWeek).replace(' kg', '')} kg por semana: meta por volta de ${proj.date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}.` : 'A tendência atual não leva à meta (ou o peso está estável).'}</div>
+          : <div className="muted">Registre pelo menos 3 pesos nas últimas 8 semanas para projetar a data.</div>)}
         {error && <div className="error">{error}</div>}
         {weights.slice(-5).reverse().map((w) => (
           <div key={w.id} className="row"><span className="grow num">{short(w.measured_on)} · {formatKg(w.weight_kg)} kg</span><button className="icon" aria-label={`Apagar ${short(w.measured_on)}`} onClick={async () => { await deleteWeight(w.id); setWeights(await loadWeights()) }}>×</button></div>

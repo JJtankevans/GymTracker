@@ -85,3 +85,24 @@ it('volume semanal de um exercício', () => {
   const v = exerciseWeeklyVolume([hist('a', 0, [['X', 10, 10], ['Y', 5, 5]])], 'X', new Date(now), 4)
   expect(v).toEqual([0, 0, 0, 100])
 })
+
+import { equipmentSets, projectWeight, variationsFor } from './insights'
+describe('variações, projeção e equipamento', () => {
+  it('variações: mesmo músculo, outro equipamento primeiro', () => {
+    const v = variationsFor('Supino Reto com Barra')
+    expect(v.length).toBeGreaterThan(0); expect(v).not.toContain('Supino Reto com Barra')
+    expect(variationsFor('Exercício que não existe')).toEqual([])
+  })
+  it('projeção de peso: perda de 0,5 kg/semana', () => {
+    const base = new Date(2026, 10, 22)
+    const pts = [0, 1, 2, 3].map((w) => { const d = new Date(base); d.setDate(d.getDate() - 7 * (3 - w)); return { day: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`, kg: 80 - 0.5 * w } })
+    const p = projectWeight(pts, 75, new Date(base.getTime() + 12 * 3600e3))!
+    expect(p.perWeek).toBeCloseTo(-0.5, 1); expect(p.weeksLeft).toBeCloseTo(7, 0)
+    expect(projectWeight(pts, 85, base)!.date).toBeNull() // meta na direção oposta
+    expect(projectWeight(pts.slice(0, 2), 75, base)).toBeNull()
+  })
+  it('séries por equipamento', () => {
+    const r = equipmentSets([set('Supino Reto com Barra', 5, 50, 1), set('Desconhecido', 5, 5, 1), set('Desconhecido', 5, 5, 1)])
+    expect(r[0]).toEqual({ equipment: 'Outros', sets: 2 })
+  })
+})

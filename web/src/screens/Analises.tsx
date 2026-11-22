@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { loadHistory, type HistItem } from '../data'
 import { loadWeights } from '../body'
-import { bandRecords, compareWorkouts, estimateKcal, exerciseWeeklyVolume, heatmap, historyCsv, imbalances, plateaus, RM_BANDS, searchHistory } from '../insights'
+import { equipmentSets, variationsFor, bandRecords, compareWorkouts, estimateKcal, exerciseWeeklyVolume, heatmap, historyCsv, imbalances, plateaus, RM_BANDS, searchHistory } from '../insights'
 import { formatKg, prettyGroupName, realDurationMinutes } from '../rules'
 import { setsOf } from './Evolucao'
 
@@ -31,7 +31,7 @@ export function Analises() {
     const now = new Date()
     const month = hist.filter((w) => { const d = new Date(w.started_at); return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() })
     const minutes = month.reduce((a, w) => a + (realDurationMinutes(null, w.started_at, w.sets.map((s) => s.completed_at)) ?? 0), 0)
-    return { bands: bandRecords(sets), imb: imbalances(sets), plat: plateaus(sets), heat: heatmap(hist, now), month: month.length, minutes }
+    return { bands: bandRecords(sets), imb: imbalances(sets), plat: plateaus(sets), heat: heatmap(hist, now), equip: equipmentSets(sets), month: month.length, minutes }
   }, [hist])
 
   if (error) return <><div className="title">Análises</div><div className="card"><p className="error">{error}</p><button className="btn" onClick={load}>Tentar de novo</button></div></>
@@ -83,7 +83,14 @@ export function Analises() {
         <div className="label">Platôs</div>
         {v.plat.length === 0 && <div className="muted">Nenhum exercício parado há 4 semanas ou mais. Bom sinal.</div>}
         {v.plat.map((p) => (
-          <div key={p.exercise}><b>{p.exercise}</b><div className="muted">Sem novo recorde há {p.weeks} semanas (1RM {formatKg(p.bestOneRm)} kg). Tente uma semana leve (deload) ou uma variação.</div></div>
+          <div key={p.exercise}><b>{p.exercise}</b><div className="muted">Sem novo recorde há {p.weeks} semanas (1RM {formatKg(p.bestOneRm)} kg). Tente uma semana leve (deload) ou uma variação{variationsFor(p.exercise).length ? `: ${variationsFor(p.exercise).join(', ')}` : ''}.</div></div>
+        ))}
+      </div>
+
+      <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div className="label">Séries por equipamento</div>
+        {v.equip.map((e) => (
+          <div key={e.equipment} className="row"><span style={{ width: 96 }}>{e.equipment}</span><div className="prog grow"><i style={{ width: `${(e.sets / v.equip[0].sets) * 100}%` }} /></div><span className="num muted" style={{ minWidth: 36, textAlign: 'right' }}>{e.sets}</span></div>
         ))}
       </div>
 

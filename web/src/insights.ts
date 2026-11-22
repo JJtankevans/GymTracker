@@ -213,3 +213,45 @@ export function exerciseWeeklyVolume(items: HistItem[], exercise: string, now = 
   const sub = items.map((w) => ({ ...w, sets: w.sets.filter((s) => (s.exercise?.name ?? 'Exercício') === exercise) }))
   return weeklyVolumes(sub, now, n)
 }
+
+// ───────── #588 variações no platô ─────────
+import { CATALOG } from './catalog'
+const foldName = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
+
+/** Até [n] exercícios do mesmo músculo, de preferência com outro equipamento, para variar o estímulo. */
+export function variationsFor(exercise: string, n = 3): string[] {
+  const cur = CATALOG.find((e) => foldName(e.name) === foldName(exercise) || (e.aliases ?? []).some((a) => foldName(a) === foldName(exercise)))
+  if (!cur) return []
+  const same = CATALOG.filter((e) => e.muscle === cur.muscle && e.name !== cur.name)
+  return [...same.filter((e) => e.equipment !== cur.equipment), ...same.filter((e) => e.equipment === cur.equipment)].slice(0, n).map((e) => e.name)
+}
+
+// ───────── #586 meta de peso corporal ─────────
+export interface WeightProjection { perWeek: number; weeksLeft: number | null; date: Date | null }
+
+/** Tendência linear (mínimos quadrados) das últimas [days] dias e data estimada para chegar em [goalKg]. */
+export function projectWeight(points: { day: string; kg: number }[], goalKg: number, now = new Date(), days = 56): WeightProjection | null {
+  const from = now.getTime() - days * DAY
+  const pts = points.map((p) => ({ t: new Date(p.day + 'T12:00:00').getTime(), kg: p.kg })).filter((p) => p.t >= from)
+  if (pts.length < 3) return null
+  const mt = pts.reduce((a, p) => a + p.t, 0) / pts.length, mk = pts.reduce((a, p) => a + p.kg, 0) / pts.length
+  const den = pts.reduce((a, p) => a + (p.t - mt) ** 2, 0)
+  if (den === 0) return null
+  const slope = pts.reduce((a, p) => a + (p.t - mt) * (p.kg - mk), 0) / den // kg por ms
+  const perWeek = slope * 7 * DAY
+  const current = mk + slope * (now.getTime() - mt)
+  const toGo = goalKg - current
+  if (Math.abs(perWeek) < 0.02 || Math.sign(toGo) !== Math.sign(perWeek)) return { perWeek, weeksLeft: null, date: null }
+  const ms = toGo / slope
+  return { perWeek, weeksLeft: ms / (7 * DAY), date: new Date(now.getTime() + ms) }
+}
+
+// ───────── #590 estatísticas de equipamento ─────────
+/** Séries por equipamento (exercícios fora do catálogo contam como "Outros"). */
+export function equipmentSets(sets: SetLite[]): { equipment: string; sets: number }[] {
+  const eq = new Map<string, string>()
+  for (const e of CATALOG) eq.set(foldName(e.name), e.equipment)
+  const counts = new Map<string, number>()
+  for (const s of sets) { const k = eq.get(foldName(s.exercise)) ?? 'Outros'; counts.set(k, (counts.get(k) ?? 0) + 1) }
+  return [...counts].map(([equipment, n]) => ({ equipment, sets: n })).sort((a, b) => b.sets - a.sets)
+}
