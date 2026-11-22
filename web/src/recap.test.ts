@@ -34,3 +34,29 @@ describe('retrospectiva', () => {
     expect(formatVolume(850)).toBe('850 kg')
   })
 })
+
+import { buildYearReview } from './recap'
+describe('meu ano', () => {
+  const items = [
+    w('a', '2026-03-02T12:00:00', 'Peito', []), w('b', '2026-03-03T12:00:00', 'Peito', []), w('c', '2026-03-04T12:00:00', 'Costas', []),
+    w('c2', '2026-03-04T20:00:00', 'Costas', []), w('d', '2026-03-09T12:00:00', 'Peito', []), w('e', '2025-03-09T12:00:00', 'Peito', []),
+  ]
+  it('barras por mês, melhor mês e grupos', () => {
+    const r = buildYearReview(items, 2026)
+    expect(r.perMonth[2]).toBe(5)
+    expect(r.perMonth.length).toBe(12)
+    expect(r.bestMonth).toBe(3)
+    expect(r.topGroups[0]).toEqual({ name: 'Peito', workouts: 3 })
+  })
+  it('dia favorito e maior sequência de dias seguidos', () => {
+    const r = buildYearReview(items, 2026)
+    expect(r.favoriteWeekday).toBe(1) // segundas: 02 e 09
+    expect(r.longestStreakDays).toBe(3) // 02, 03, 04
+  })
+  it('ano vazio', () => {
+    const r = buildYearReview([], 2026)
+    expect(r.bestMonth).toBeNull()
+    expect(r.favoriteWeekday).toBeNull()
+    expect(r.longestStreakDays).toBe(0)
+  })
+})

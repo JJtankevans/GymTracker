@@ -55,3 +55,41 @@ export function recapCard(r: Recap): CardSpec {
 }
 
 export const shareRecap = (r: Recap) => shareCard(recapCard(r), 'gymtracker_retrospectiva.png')
+
+// ───────────── "Meu ano" (porte do YearReview do Android) ─────────────
+export interface YearReview {
+  perMonth: number[] // 12 posições, janeiro = 0
+  bestMonth: number | null // 1..12
+  topGroups: { name: string; workouts: number }[]
+  favoriteWeekday: number | null // 0 = domingo … 6 = sábado (Date.getDay)
+  longestStreakDays: number
+}
+
+export const WEEKDAYS = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado']
+
+export function buildYearReview(items: HistItem[], year: number, topN = 3): YearReview {
+  const ws = items.filter((w) => new Date(w.started_at).getFullYear() === year)
+  const perMonth = Array<number>(12).fill(0)
+  for (const w of ws) perMonth[new Date(w.started_at).getMonth()]++
+  const max = Math.max(...perMonth)
+  const groups = new Map<string, number>()
+  for (const w of ws) { const g = w.muscle_group_name ? prettyGroupName(w.muscle_group_name) : 'Treino livre'; groups.set(g, (groups.get(g) ?? 0) + 1) }
+  const wd = Array<number>(7).fill(0)
+  for (const w of ws) wd[new Date(w.started_at).getDay()]++
+  const wdMax = Math.max(...wd)
+  // maior sequência de dias seguidos (vários treinos no mesmo dia contam um)
+  const days = [...new Set(ws.map((w) => dayKey(new Date(w.started_at))))].sort()
+  let best = 0, run = 0
+  days.forEach((d, i) => {
+    const prev = days[i - 1]
+    const gap = prev ? Math.round((Date.parse(d + 'T12:00:00') - Date.parse(prev + 'T12:00:00')) / 86_400_000) : 0
+    run = i > 0 && gap === 1 ? run + 1 : 1
+    best = Math.max(best, run)
+  })
+  return {
+    perMonth, bestMonth: max > 0 ? perMonth.indexOf(max) + 1 : null,
+    topGroups: [...groups.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'pt-BR')).slice(0, topN).map(([name, workouts]) => ({ name, workouts })),
+    favoriteWeekday: wdMax > 0 ? wd.indexOf(wdMax) : null,
+    longestStreakDays: best,
+  }
+}
