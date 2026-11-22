@@ -139,7 +139,7 @@ fun HistoryScreenContent(
                     items(shownWorkouts, key = { it.workoutId }) { workout ->
                         WorkoutHistoryCard(
                             item = workout,
-                            onClick = { onWorkoutClick(workout.workoutId, workout.muscleGroupName) },
+                            onClick = { onWorkoutClick(workout.workoutId, com.vitoroliveira.gymtracker.ui.components.prettyGroupName(workout.muscleGroupName)) },
                             onDelete = { onDeleteWorkout(workout.workoutId) }
                         )
                     }

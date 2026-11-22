@@ -35,7 +35,10 @@ fun summarize(workout: Workout?, groups: List<ExerciseSetGroup>, zone: TimeZone 
     val sets = groups.flatMap { it.sets }
     return WorkoutSummary(
         date = date,
-        durationMinutes = if (start != null && end != null && end > start) (end - start).inWholeMinutes else null,
+        durationMinutes = realDurationMinutes(
+            if (start != null && end != null && end > start) (end - start).inWholeMinutes else null,
+            start, sets.map { it.completedAt }
+        ),
         sets = sets.size,
         reps = sets.sumOf { it.reps },
         volumeKg = sets.sumOf { it.reps * it.weightKg }
