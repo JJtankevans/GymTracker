@@ -17,6 +17,7 @@ atualizado: 2026-11-22 (fim da noite)
 4. Se mexer em interface: `GymTracker/docs/DESIGN.md` (e o Vault/OriginKit para componentes: porte fiel)
 5. Web: `GymTracker/docs/WEB_APP.md` e `GymTracker/web/README.md`
 6. Social e banco: `GymTracker/docs/SOCIAL_DESIGN.md`, `GymTracker/docs/MIGRACOES_PENDENTES.md`
+6b. **`GymTracker/docs/PARIDADE_WEB_ANDROID.md`** (o que a web tem e o Android ainda não) e `GymTracker/docs/PARA_AMANHA.md` (o que só o Thiago pode fazer)
 7. Memória do projeto: `projeto-gymtracker-22-11` (carregada pelo índice MEMORY.md)
 
 ## Como trabalhar

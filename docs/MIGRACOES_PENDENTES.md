@@ -39,3 +39,6 @@ Antes de aplicar, conferir os nomes das colunas reais em `workouts`/`workout_set
 
 ### 016 — Foto do treino no post do feed (ideia 22/11)
 Arquivo pronto: `docs/supabase/016_foto_no_post.sql`. Passos: (1) criar no painel o bucket **privado** `post_photos`; (2) rodar o SQL; (3) depois o app pode enviar a foto (JPEG 1080x1350, ≤ 1 MB) para `<uid>/<post>.jpg`, gravar `feed_posts.photo_path` e mostrar a foto no feed por URL assinada. Leitura segue a visibilidade do post (`can_view_post`). **Aplicado: não.** O app só compartilha a foto por fora (WhatsApp/Instagram) por enquanto.
+
+### 017 — Supersérie e cadência (ideia 22/11, #575 e #581)
+Arquivo pronto: `docs/supabase/017_superset_e_cadencia.sql` (`workout_sets.tempo` com formato `3-1-2-0` e `workouts.superset_links` jsonb). **Aplicado: não.** Enquanto isso, web e app guardam a ligação e a cadência só no aparelho. Depois de aplicar, ligar o código à coluna (card a criar).

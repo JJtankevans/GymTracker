@@ -6,6 +6,7 @@
 3. **Se for mexer em interface:** leia `docs/DESIGN.md` (regras, movimento, anti-genérico, mapa de TODAS as referências §10) e, se for trazer componente, o processo de componentes do Vault (`Vault/seed-out/seed.json`, notas `nt-processo-*`) e os caches em `Runtime/docs/*-cache/`. Porte fiel, não "do meu jeito".
 4. O **board Runtime** (projeto GymTracker) é a fila de trabalho: liste os cards, faça os fáceis primeiro, comente e mova de coluna.
 5. O histórico longo de decisões está em `docs/PROXIMOS_PASSOS.md`.
+5b. **Paridade web → Android (regra do Thiago, 22/11):** tudo que se cria na web tem que ser levado ao Android. Leia `docs/PARIDADE_WEB_ANDROID.md` (fila ❌/✅), e **ao criar algo na web, escreva a linha lá na mesma sessão**. As pendências que dependem do Thiago (migrações, Vercel) ficam em `docs/PARA_AMANHA.md`.
 6. Responda em português do Brasil, de forma direta, e relate com honestidade o que não foi testado no aparelho.
 
 ## Ambiente no PC do Thiago (Windows)
