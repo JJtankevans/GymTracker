@@ -95,3 +95,25 @@ input, select, textarea { font-size: 16px; /* evita o zoom do iOS ao focar */ }
 
 .install { font-size: 14px; }
 .toast { position: fixed; left: 16px; right: 16px; bottom: calc(76px + var(--safe-bottom)); background: #111; color: #fff; border-radius: 14px; padding: 12px 16px; display: flex; gap: 12px; align-items: center; }
+
+/* treino */
+.steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.steps .btn { padding: 0; }
+.chip { min-height: 44px; min-width: 44px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); font-weight: 700; cursor: pointer; }
+.chip.on { background: var(--accent); color: var(--on-accent); border-color: transparent; }
+.icon { width: 44px; height: 44px; border: 0; background: none; color: var(--muted); font-size: 22px; cursor: pointer; }
+.island {
+  position: fixed; left: 12px; right: 12px; bottom: calc(68px + var(--safe-bottom)); z-index: 5;
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 10px 12px;
+  background: var(--text); color: var(--bg); border-radius: 24px; box-shadow: 0 8px 28px rgb(0 0 0 / 0.35);
+}
+.island .chip { background: transparent; color: inherit; border-color: color-mix(in srgb, var(--bg) 35%, transparent); min-height: 36px; min-width: 36px; padding: 0 8px; font-size: 13px; }
+.island .chip.on { background: var(--bg); color: var(--text); }
+button.card { color: inherit; font: inherit; cursor: pointer; }
+.field input { width: 100%; min-width: 0; }
+.field { min-width: 0; }
+.steps.five { grid-template-columns: repeat(5, 1fr); }
+.island { flex-direction: column; align-items: stretch; gap: 8px; }
+.island .top { display: flex; align-items: center; gap: 8px; }
+.island .opts { display: flex; gap: 6px; }
+.island .opts .chip { flex: 1; }

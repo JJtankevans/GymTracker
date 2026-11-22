@@ -5,6 +5,7 @@ import { Login } from './screens/Login'
 import { Home } from './screens/Home'
 import { More } from './screens/More'
 import { Placeholder } from './screens/Placeholder'
+import { Treino } from './screens/Treino'
 
 export type Tab = 'home' | 'treino' | 'historico' | 'grupos' | 'mais'
 
@@ -20,6 +21,8 @@ const labels: Record<Tab, string> = { home: 'Início', treino: 'Treino', histori
 export function App() {
   const [session, setSession] = useState<Session | null | undefined>(MOCK ? null : undefined)
   const [tab, setTab] = useState<Tab>('home')
+  const [pending, setPending] = useState<string | null>(null)
+  const goTo = (t: Tab, groupId?: string) => { if (groupId) setPending(groupId); setTab(t) }
 
   useEffect(() => {
     if (MOCK) return
@@ -35,8 +38,8 @@ export function App() {
     <div className="app">
       <div className="scroll">
         <div className="page">
-          {tab === 'home' && <Home go={setTab} />}
-          {tab === 'treino' && <Placeholder title="Treino" />}
+          {tab === 'home' && <Home go={goTo} />}
+          {tab === 'treino' && <Treino pending={pending} clearPending={() => setPending(null)} onDone={() => setTab('home')} />}
           {tab === 'historico' && <Placeholder title="Histórico" />}
           {tab === 'grupos' && <Placeholder title="Grupos" />}
           {tab === 'mais' && <More />}

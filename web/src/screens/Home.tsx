@@ -3,7 +3,7 @@ import { loadHome, type HomeData } from '../data'
 import { prettyGroupName, streakDays, suggestNextGroup, weeklyHistory, weekStart } from '../rules'
 import type { Tab } from '../App'
 
-export function Home({ go }: { go: (t: Tab) => void }) {
+export function Home({ go }: { go: (t: Tab, groupId?: string) => void }) {
   const [data, setData] = useState<HomeData | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -46,7 +46,7 @@ export function Home({ go }: { go: (t: Tab) => void }) {
         </div>
       )}
 
-      <div className="card hero" role="button" tabIndex={0} onClick={() => go('treino')} onKeyDown={(e) => e.key === 'Enter' && go('treino')}>
+      <div className="card hero" role="button" tabIndex={0} onClick={() => go('treino', view.next?.id)} onKeyDown={(e) => e.key === 'Enter' && go('treino', view.next?.id)}>
         <div className="label">{view.next ? 'Próximo treino' : 'Hora de treinar'}</div>
         <div className="big">{view.next ? prettyGroupName(view.next.name) : 'Escolher treino'}</div>
         <small>{view.next ? 'Sugerido pela sua rotação · toque para começar' : 'Toque para escolher o grupo'}</small>
