@@ -72,14 +72,14 @@ fun HistoryScreenContent(
             kotlin.time.Clock.System.now().toLocalDateTime(tz).date
         )
     }
-    // Filtro por grupo com contadores (Moxen "faceta"): toque de novo no chip ativo para limpar.
-    var groupFilter by remember { mutableStateOf<String?>(null) }
+    // Filtro por grupo com contadores (Moxen "faceta") e escolha múltipla (OriginKit selenite-chips): nenhum marcado = todos.
+    var groupFilter by remember { mutableStateOf<Set<String>>(emptySet()) }
     val groupCounts = remember(uiState.workouts) {
         uiState.workouts.groupingBy { com.vitoroliveira.gymtracker.ui.components.prettyGroupName(it.muscleGroupName) }.eachCount()
             .entries.sortedByDescending { it.value }
     }
     val shownWorkouts = remember(uiState.workouts, groupFilter) {
-        groupFilter?.let { g -> uiState.workouts.filter { com.vitoroliveira.gymtracker.ui.components.prettyGroupName(it.muscleGroupName) == g } } ?: uiState.workouts
+        if (groupFilter.isEmpty()) uiState.workouts else uiState.workouts.filter { com.vitoroliveira.gymtracker.ui.components.prettyGroupName(it.muscleGroupName) in groupFilter }
     }
     // Ao sair da tela com um "Desfazer" ainda aberto, a exclusão pendente é concluída.
     androidx.compose.runtime.DisposableEffect(Unit) { onDispose { onCommitDelete() } }
@@ -126,15 +126,15 @@ fun HistoryScreenContent(
                 ) {
                     item(key = "heatmap") { TrainingHeatmap(calendar) }
                     if (groupCounts.size > 1) item(key = "filters") {
-                        androidx.compose.foundation.layout.Row(
-                            Modifier.fillMaxWidth().horizontalScroll(androidx.compose.foundation.rememberScrollState()),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            FilterChip(groupFilter == null, { groupFilter = null }, { Text("Todos (${uiState.workouts.size})") })
-                            groupCounts.forEach { (name, count) ->
-                                FilterChip(groupFilter == name, { groupFilter = if (groupFilter == name) null else name }, { Text("$name ($count)") })
-                            }
-                        }
+                        com.vitoroliveira.gymtracker.ui.components.SeleniteChips(
+                            labels = groupCounts.map { (name, count) -> "$name ($count)" },
+                            selected = groupCounts.indices.filter { groupCounts[it].key in groupFilter }.toSet(),
+                            onToggle = { i ->
+                                val name = groupCounts[i].key
+                                groupFilter = if (name in groupFilter) groupFilter - name else groupFilter + name
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
                     items(shownWorkouts, key = { it.workoutId }) { workout ->
                         WorkoutHistoryCard(
